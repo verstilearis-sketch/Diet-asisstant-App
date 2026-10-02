@@ -112,9 +112,9 @@ export const COUNTRIES: CountryOption[] = [
     { value: 'Bhubaneswar',  label: 'Bhubaneswar (Odisha)', region: 'east-india' },
     { value: 'Patna',        label: 'Patna (Bihar)', region: 'east-india' },
     { value: 'Guwahati',     label: 'Guwahati (Assam)', region: 'east-india' },
-    { value: 'Nagpur',       label: 'Nagpur (MP)',  region: 'central-india' },
-    { value: 'Bhopal',       label: 'Bhopal (MP)',  region: 'central-india' },
-    { value: 'Indore',       label: 'Indore (MP)',  region: 'central-india' },
+    { value: 'Nagpur',       label: 'Nagpur (MP)',  region: 'north-india' },
+    { value: 'Bhopal',       label: 'Bhopal (MP)',  region: 'north-india' },
+    { value: 'Indore',       label: 'Indore (MP)',  region: 'north-india' },
     { value: 'Other (India)', label: 'Other Indian city', region: 'north-india' },
   ] },
   { code: 'PK', label: 'Pakistan', region: 'pakistan', cities: [
@@ -328,8 +328,8 @@ export const COUNTRIES: CountryOption[] = [
   ] },
 ];
 
-// Add central-india alias to an existing DB key.
-// (handled in food-db as part of north-india fallback family)
+// Central India (MP/Chhattisgarh) resolves to the north-india family,
+// matching the food database fallback in ai-engine.ts.
 
 // ── Resolution ─────────────────────────────────────────────────────────────────
 
@@ -339,7 +339,7 @@ export interface ResolvedLocation {
   region: RegionKey;
   label: string;
   confidence: 'country' | 'city' | 'exact';
-  hemisphere: 'n' | 's';
+  hemisphere: 'n' | 's' | 't' | 'b';
 }
 
 const COUNTRY_BY_CODE = new Map(COUNTRIES.map(c => [c.code, c]));
@@ -355,8 +355,7 @@ const COUNTRY_KEYWORDS: Record<string, string> = {
   'uttar pradesh': 'north-india', 'punjab': 'north-india', 'haryana': 'north-india',
   'rajasthan': 'north-india', 'himachal pradesh': 'north-india', 'uttarakhand': 'north-india',
   'delhi': 'north-india', 'chandigarh': 'north-india', 'jammu': 'north-india', 'ladakh': 'north-india',
-  'madhya pradesh': 'central-india', 'chhattisgarh': 'central-india',
-  'telangana': 'south-india',
+  'madhya pradesh': 'north-india', 'chhattisgarh': 'north-india',
   'pakistan': 'pakistan', 'bangladesh': 'bangladesh', 'nepal': 'nepal', 'srilanka': 'sri-lanka', 'sri lanka': 'sri-lanka',
   'saudi': 'gulf', 'uae': 'gulf', 'emirates': 'gulf', 'kuwait': 'gulf', 'qatar': 'gulf',
   'oman': 'gulf', 'bahrain': 'gulf', 'dubai': 'gulf', 'abu dhabi': 'gulf', 'riyadh': 'gulf', 'jeddah': 'gulf',

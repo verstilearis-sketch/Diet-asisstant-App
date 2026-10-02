@@ -6,37 +6,50 @@ import { getSession, savePlan } from '@/lib/storage';
 import { computeAll, calculateBMI, getBMICategory } from '@/lib/calculations';
 import { generateDietPlan } from '@/lib/ai-engine';
 import type { UserProfile, Gender, ActivityLevel, Goal } from '@/lib/calculations';
+import {
+  UserIcon, TargetIcon, ActivityIcon, GlobeIcon, SparklesIcon,
+  FlameIcon, DumbbellIcon, ScaleIcon, LeafIcon, TrophyIcon,
+  CheckIcon, ArrowRightIcon, ArrowLeftIcon, BrainIcon,
+} from '@/components/icons';
 
-// ── Step definitions ────────────────────────────────────────────────────────
+// ── Step definitions ──────────────────────────────────────────
 
 const STEPS = [
-  { id: 1, label: 'Profile',     icon: '👤' },
-  { id: 2, label: 'Goals',       icon: '🎯' },
-  { id: 3, label: 'Lifestyle',   icon: '🏃' },
-  { id: 4, label: 'Preferences', icon: '🌍' },
-  { id: 5, label: 'Your Plan',   icon: '✨' },
+  { id: 1, label: 'Profile', icon: UserIcon },
+  { id: 2, label: 'Goals', icon: TargetIcon },
+  { id: 3, label: 'Lifestyle', icon: ActivityIcon },
+  { id: 4, label: 'Preferences', icon: GlobeIcon },
+  { id: 5, label: 'Your plan', icon: SparklesIcon },
 ];
 
-const GOALS: { value: Goal; label: string; desc: string; emoji: string }[] = [
-  { value: 'lose_weight',    label: 'Lose Weight',            desc: 'Burn fat with a sustainable calorie deficit', emoji: '🔥' },
-  { value: 'gain_weight',    label: 'Gain Weight / Muscle',   desc: 'Build lean mass with a calorie surplus', emoji: '💪' },
-  { value: 'maintain',       label: 'Maintain Weight',        desc: 'Keep your current weight while eating healthy', emoji: '⚖️' },
-  { value: 'improve_health', label: 'Improve Overall Health', desc: 'Better energy, immunity, and longevity', emoji: '🌿' },
-  { value: 'athletic',       label: 'Athletic Performance',   desc: 'Fuel peak performance and recovery', emoji: '🏅' },
+const GOALS: { value: Goal; label: string; desc: string; icon: typeof FlameIcon }[] = [
+  { value: 'lose_weight', label: 'Lose weight', desc: 'Burn fat with a sustainable calorie deficit', icon: FlameIcon },
+  { value: 'gain_weight', label: 'Gain weight / muscle', desc: 'Build lean mass with a steady calorie surplus', icon: DumbbellIcon },
+  { value: 'maintain', label: 'Maintain weight', desc: 'Stay where you are while eating well', icon: ScaleIcon },
+  { value: 'improve_health', label: 'Improve overall health', desc: 'More energy, better immunity, longevity', icon: LeafIcon },
+  { value: 'athletic', label: 'Athletic performance', desc: 'Fuel training, performance and recovery', icon: TrophyIcon },
 ];
 
 const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string }[] = [
-  { value: 'sedentary',   label: 'Sedentary',          desc: 'Little to no exercise, desk job' },
-  { value: 'light',       label: 'Lightly Active',     desc: '1–3 days of light exercise/week' },
-  { value: 'moderate',    label: 'Moderately Active',  desc: '3–5 days of moderate exercise/week' },
-  { value: 'active',      label: 'Very Active',        desc: '6–7 days of hard exercise/week' },
-  { value: 'very_active', label: 'Extremely Active',   desc: 'Physical job + intense daily training' },
+  { value: 'sedentary', label: 'Sedentary', desc: 'Little to no exercise, mostly desk work' },
+  { value: 'light', label: 'Lightly active', desc: 'Light exercise 1–3 days per week' },
+  { value: 'moderate', label: 'Moderately active', desc: 'Moderate exercise 3–5 days per week' },
+  { value: 'active', label: 'Very active', desc: 'Hard exercise 6–7 days per week' },
+  { value: 'very_active', label: 'Extremely active', desc: 'Physical job plus intense daily training' },
 ];
 
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Keto', 'Low-carb', 'Gluten-free', 'Dairy-free', 'Halal', 'Kosher', 'Paleo'];
-const ALLERGY_OPTIONS  = ['Nuts', 'Shellfish', 'Dairy', 'Eggs', 'Soy', 'Wheat', 'Fish', 'Peanuts'];
+const ALLERGY_OPTIONS = ['Nuts', 'Shellfish', 'Dairy', 'Eggs', 'Soy', 'Wheat', 'Fish', 'Peanuts'];
 
-// ── Initial state ────────────────────────────────────────────────────────────
+const GEN_MESSAGES = [
+  'Analyzing your body metrics',
+  'Calculating calorie targets',
+  'Matching local cuisine preferences',
+  'Building your 7-day meal plan',
+  'Finalizing tips and shopping list',
+];
+
+// ── Initial state ─────────────────────────────────────────────
 
 const initProfile: Partial<UserProfile> = {
   name: '', gender: 'male', age: 25, heightCm: 170, weightKg: 70,
@@ -46,34 +59,34 @@ const initProfile: Partial<UserProfile> = {
   exerciseFrequency: 3, exerciseDuration: 45,
 };
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep]       = useState(1);
+  const [step, setStep] = useState(1);
   const [profile, setProfile] = useState<Partial<UserProfile>>(initProfile);
   const [generating, setGenerating] = useState(false);
-  const [genPhase, setGenPhase]     = useState(0);
-  const [userId, setUserId]         = useState('');
+  const [genPhase, setGenPhase] = useState(0);
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     const session = getSession();
     if (!session) { router.replace('/auth'); return; }
     setUserId(session.userId);
-    setProfile(p => ({ ...p, name: session.name }));
+    setProfile((p) => ({ ...p, name: session.name }));
   }, [router]);
 
   const update = (key: keyof UserProfile, value: unknown) =>
-    setProfile(p => ({ ...p, [key]: value }));
+    setProfile((p) => ({ ...p, [key]: value }));
 
   const toggleArray = (key: 'dietaryRestrictions' | 'allergies', value: string) => {
-    setProfile(p => {
+    setProfile((p) => {
       const arr = p[key] || [];
       const lower = value.toLowerCase();
       return {
         ...p,
-        [key]: arr.map(v => v.toLowerCase()).includes(lower)
-          ? arr.filter(v => v.toLowerCase() !== lower)
+        [key]: arr.map((v) => v.toLowerCase()).includes(lower)
+          ? arr.filter((v) => v.toLowerCase() !== lower)
           : [...arr, value],
       };
     });
@@ -82,19 +95,10 @@ export default function OnboardingPage() {
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setGenPhase(0);
-    const phases = [
-      'Analyzing your body metrics…',
-      'Calculating calorie targets…',
-      'Matching local cuisine preferences…',
-      'Building your 7-day meal plan…',
-      'Finalizing tips and shopping list…',
-    ];
-    // Cycle through phases
-    for (let i = 0; i < phases.length - 1; i++) {
-      await new Promise(r => setTimeout(r, 700));
+    for (let i = 0; i < GEN_MESSAGES.length - 1; i++) {
+      await new Promise((r) => setTimeout(r, 700));
       setGenPhase(i + 1);
     }
-
     const fullProfile = profile as UserProfile;
     const calculations = computeAll(fullProfile);
     const plan = await generateDietPlan(fullProfile, calculations);
@@ -116,165 +120,118 @@ export default function OnboardingPage() {
     return true;
   };
 
-  const GEN_MESSAGES = [
-    'Analyzing your body metrics…',
-    'Calculating calorie targets…',
-    'Matching local cuisine preferences…',
-    'Building your 7-day meal plan…',
-    'Finalizing tips and shopping list…',
-  ];
+  const MOODS = ['Calm', 'Okay', 'Stressed', 'High', 'Burned out'];
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+    <div className="page-shell">
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
 
-      {/* Header */}
-      <header style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        padding: '1rem 2rem',
-        background: 'rgba(10,15,30,0.85)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-      }}>
-        <div style={{ maxWidth: 860, margin: '0 auto' }}>
-          {/* Step indicators */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', justifyContent: 'center' }}>
+      {/* ── Stepper header ─────────────────────────────────── */}
+      <header className="site-nav">
+        <div style={{ maxWidth: 760, margin: '0 auto', padding: '1rem 1.5rem 0.9rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', marginBottom: '0.8rem' }}>
             {STEPS.map((s, i) => (
               <div key={s.id} style={{ display: 'flex', alignItems: 'center' }}>
-                <div className={`step-dot ${step > s.id ? 'step-dot-done' : step === s.id ? 'step-dot-active' : 'step-dot-pending'}`}>
-                  {step > s.id ? '✓' : s.icon}
+                <div
+                  className={`step-dot ${step > s.id ? 'step-dot-done' : step === s.id ? 'step-dot-active' : 'step-dot-pending'}`}
+                  title={s.label}
+                >
+                  {step > s.id ? <CheckIcon size={15} /> : <s.icon size={15} />}
                 </div>
                 {i < STEPS.length - 1 && (
                   <div style={{
-                    height: 2, width: 40,
-                    background: step > s.id ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.06)',
-                    margin: '0 0.25rem',
-                    borderRadius: 1,
-                    transition: 'background 0.4s ease',
+                    height: 2, width: 36, borderRadius: 1, margin: '0 0.2rem',
+                    background: step > s.id ? 'var(--color-accent)' : 'var(--color-border)',
+                    transition: 'background 300ms ease',
                   }} />
                 )}
               </div>
             ))}
           </div>
-          {/* Progress bar */}
           <div className="progress-bar-track">
             <div className="progress-bar-fill" style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.375rem' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>
-              Step {step} of {STEPS.length}
-            </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-accent)', fontWeight: 600 }}>
-              {STEPS[step - 1]?.label}
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.45rem' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--color-muted)' }}>Step {step} of {STEPS.length}</span>
+            <span style={{ fontSize: '0.78rem', color: 'var(--color-accent)', fontWeight: 700 }}>{STEPS[step - 1]?.label}</span>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main style={{
-        maxWidth: 700, margin: '0 auto',
-        padding: '8rem 1.5rem 4rem',
-        position: 'relative', zIndex: 1,
-      }}>
+      {/* ── Main ───────────────────────────────────────────── */}
+      <main style={{ maxWidth: 700, margin: '0 auto', padding: '2.5rem 1.5rem 4rem', position: 'relative', zIndex: 1 }}>
 
-        {/* ── STEP 1: Profile ───────────────────────────────────────────── */}
         {step === 1 && (
-          <div className="fade-in-up">
-            <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Tell us about yourself 👤</h2>
-            <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
-              This helps us calculate your precise calorie and nutrition needs.
+          <div className="fade-in-up" key="s1">
+            <h2 style={{ fontSize: '1.7rem', marginBottom: '0.4rem' }}>Tell us about yourself</h2>
+            <p style={{ color: 'var(--color-muted)', marginBottom: '1.75rem', fontSize: '0.95rem' }}>
+              Used to calculate your precise calorie and nutrition needs.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
               <div>
-                <label className="input-label">Full Name</label>
-                <input className="input-field" placeholder="Your name" id="profile-name"
-                  value={profile.name || ''}
-                  onChange={e => update('name', e.target.value)} />
+                <label className="input-label" htmlFor="profile-name">Full name</label>
+                <input id="profile-name" className="input-field" placeholder="Your name"
+                  value={profile.name || ''} onChange={(e) => update('name', e.target.value)} />
               </div>
 
               <div>
-                <label className="input-label">Gender</label>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  {(['male', 'female', 'other'] as Gender[]).map(g => (
-                    <button
-                      key={g}
+                <span className="input-label">Gender</span>
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
+                  {(['male', 'female', 'other'] as Gender[]).map((g) => (
+                    <button key={g} type="button"
                       className={`option-card ${profile.gender === g ? 'selected' : ''}`}
                       onClick={() => update('gender', g)}
-                      style={{ flex: 1, justifyContent: 'center', textTransform: 'capitalize', padding: '0.75rem' }}
-                    >
-                      {g === 'male' ? '♂️' : g === 'female' ? '♀️' : '⚧️'} {g}
+                      style={{ flex: 1, justifyContent: 'center', textTransform: 'capitalize', padding: '0.7rem', fontWeight: 600, fontSize: '0.9rem' }}>
+                      {g}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem' }}>
                 <div>
-                  <label className="input-label">Age (years)</label>
-                  <input className="input-field" type="number" min={10} max={100} id="profile-age"
-                    value={profile.age || ''}
-                    onChange={e => update('age', +e.target.value)} />
+                  <label className="input-label" htmlFor="profile-age">Age <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(years)</span></label>
+                  <input id="profile-age" className="input-field" type="number" min={10} max={100}
+                    value={profile.age || ''} onChange={(e) => update('age', +e.target.value)} />
                 </div>
                 <div>
-                  <label className="input-label">Height (cm)</label>
-                  <input className="input-field" type="number" min={100} max={250} id="profile-height"
-                    placeholder="e.g. 170"
-                    value={profile.heightCm || ''}
-                    onChange={e => update('heightCm', +e.target.value)} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label className="input-label">Current Weight (kg)</label>
-                  <input className="input-field" type="number" min={20} max={300} id="profile-weight"
-                    placeholder="e.g. 72"
-                    value={profile.weightKg || ''}
-                    onChange={e => update('weightKg', +e.target.value)} />
+                  <label className="input-label" htmlFor="profile-height">Height <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(cm)</span></label>
+                  <input id="profile-height" className="input-field" type="number" min={100} max={250}
+                    placeholder="170" value={profile.heightCm || ''} onChange={(e) => update('heightCm', +e.target.value)} />
                 </div>
                 <div>
-                  <label className="input-label">Target Weight (kg) <span style={{ color: 'var(--color-muted)', fontWeight: 400 }}>— optional</span></label>
-                  <input className="input-field" type="number" min={20} max={300} id="profile-target-weight"
-                    placeholder="e.g. 65"
-                    value={profile.targetWeightKg || ''}
-                    onChange={e => update('targetWeightKg', +e.target.value || undefined)} />
+                  <label className="input-label" htmlFor="profile-weight">Weight <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(kg)</span></label>
+                  <input id="profile-weight" className="input-field" type="number" min={20} max={300}
+                    placeholder="72" value={profile.weightKg || ''} onChange={(e) => update('weightKg', +e.target.value)} />
+                </div>
+                <div>
+                  <label className="input-label" htmlFor="profile-target-weight">Target weight <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(optional)</span></label>
+                  <input id="profile-target-weight" className="input-field" type="number" min={20} max={300}
+                    placeholder="65" value={profile.targetWeightKg || ''} onChange={(e) => update('targetWeightKg', +e.target.value || undefined)} />
                 </div>
               </div>
 
-              {/* Live BMI preview */}
               {bmi && (
-                <div className="glass-card" style={{ padding: '1.25rem', borderColor: 'rgba(16,185,129,0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="glass-card" style={{ padding: '1.25rem 1.4rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
                     <div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '0.25rem' }}>YOUR BMI</div>
-                      <div style={{ fontSize: '2rem', fontWeight: 800, fontFamily: 'Outfit, sans-serif' }} className="gradient-text">
-                        {bmi}
-                      </div>
+                      <div className="metric-label">Your BMI</div>
+                      <div style={{ fontSize: '1.9rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--color-accent)' }}>{bmi}</div>
                     </div>
-                    <div>
-                      <span className={`badge ${
-                        bmi < 18.5 ? 'badge-indigo' : bmi < 25 ? 'badge-green' : bmi < 30 ? 'badge-amber' : 'badge-amber'
-                      }`} style={{ fontSize: '0.9rem', padding: '0.375rem 0.875rem' }}>
-                        {getBMICategory(bmi)}
-                      </span>
-                    </div>
+                    <span className={`badge ${bmi < 18.5 ? 'badge-indigo' : bmi < 25 ? 'badge-green' : 'badge-amber'}`}>
+                      {getBMICategory(bmi)}
+                    </span>
                   </div>
-                  {/* BMI scale */}
-                  <div style={{ marginTop: '0.875rem' }}>
-                    <div className="progress-bar-track" style={{ height: 8, borderRadius: 4 }}>
-                      <div style={{
-                        height: '100%', borderRadius: 4,
-                        width: `${Math.min(100, (bmi / 40) * 100)}%`,
-                        background: bmi < 18.5 ? '#6366f1' : bmi < 25 ? '#10b981' : bmi < 30 ? '#f59e0b' : '#ef4444',
-                        transition: 'all 0.4s ease',
-                      }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem', fontSize: '0.7rem', color: 'var(--color-muted)' }}>
-                      <span>Under</span><span>Normal</span><span>Over</span><span>Obese</span>
-                    </div>
+                  <div className="progress-bar-track" style={{ height: 8 }}>
+                    <div className="progress-bar-fill" style={{
+                      width: `${Math.min(100, (bmi / 40) * 100)}%`,
+                      background: bmi < 18.5 ? '#4f46e5' : bmi < 25 ? 'var(--color-accent)' : bmi < 30 ? '#d97706' : '#dc2626',
+                    }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.7rem', color: 'var(--color-faint)' }}>
+                    <span>Underweight</span><span>Healthy</span><span>Overweight</span><span>Obese</span>
                   </div>
                 </div>
               )}
@@ -282,128 +239,126 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── STEP 2: Goals ─────────────────────────────────────────────── */}
         {step === 2 && (
-          <div className="fade-in-up">
-            <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>What's your main goal? 🎯</h2>
-            <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
-              Your plan will be fully tailored around this objective.
+          <div className="fade-in-up" key="s2">
+            <h2 style={{ fontSize: '1.7rem', marginBottom: '0.4rem' }}>What's your main goal?</h2>
+            <p style={{ color: 'var(--color-muted)', marginBottom: '1.75rem', fontSize: '0.95rem' }}>
+              Your entire plan is built around this objective.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '2rem' }}>
-              {GOALS.map(g => (
-                <button
-                  key={g.value}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', marginBottom: '1.75rem' }}>
+              {GOALS.map((g) => (
+                <button key={g.value} type="button"
                   className={`option-card ${profile.goal === g.value ? 'selected' : ''}`}
-                  onClick={() => update('goal', g.value)}
-                >
-                  <span style={{ fontSize: '1.5rem', minWidth: 36 }}>{g.emoji}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, marginBottom: '0.2rem' }}>{g.label}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>{g.desc}</div>
-                  </div>
+                  onClick={() => update('goal', g.value)}>
+                  <span style={{
+                    width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+                    background: profile.goal === g.value ? 'var(--color-accent)' : 'var(--color-surface2)',
+                    color: profile.goal === g.value ? '#fff' : 'var(--color-muted)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 140ms ease',
+                  }}>
+                    <g.icon size={19} />
+                  </span>
+                  <span>
+                    <span style={{ display: 'block', fontWeight: 650, marginBottom: '0.15rem', fontSize: '0.95rem' }}>{g.label}</span>
+                    <span style={{ display: 'block', fontSize: '0.84rem', color: 'var(--color-muted)' }}>{g.desc}</span>
+                  </span>
                   {profile.goal === g.value && (
-                    <span style={{ marginLeft: 'auto', color: 'var(--color-accent)', fontSize: '1.1rem' }}>✓</span>
+                    <span style={{ marginLeft: 'auto', color: 'var(--color-accent)' }}><CheckIcon size={18} /></span>
                   )}
                 </button>
               ))}
             </div>
 
             <div>
-              <label className="input-label">Timeline (weeks) — optional</label>
+              <label className="input-label" htmlFor="goal-timeline">Timeline <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(optional)</span></label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <input
-                  type="range" min={4} max={52} step={4}
+                <input id="goal-timeline" type="range" min={4} max={52} step={4}
                   value={profile.timeline || 12}
-                  onChange={e => update('timeline', +e.target.value)}
-                  style={{ flex: 1 }}
-                  id="goal-timeline"
-                />
-                <span style={{ minWidth: '4rem', textAlign: 'right', fontFamily: 'Outfit, sans-serif', fontWeight: 700, color: 'var(--color-accent)' }}>
-                  {profile.timeline || 12} weeks
+                  onChange={(e) => update('timeline', +e.target.value)} style={{ flex: 1 }} />
+                <span style={{ minWidth: '4.5rem', textAlign: 'right', fontWeight: 700, color: 'var(--color-accent)', fontVariantNumeric: 'tabular-nums' }}>
+                  {profile.timeline || 12} wks
                 </span>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 3: Lifestyle ──────────────────────────────────────────── */}
         {step === 3 && (
-          <div className="fade-in-up">
-            <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Your lifestyle 🏃</h2>
-            <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
-              The more accurate you are, the better your plan will be.
+          <div className="fade-in-up" key="s3">
+            <h2 style={{ fontSize: '1.7rem', marginBottom: '0.4rem' }}>Your lifestyle</h2>
+            <p style={{ color: 'var(--color-muted)', marginBottom: '1.75rem', fontSize: '0.95rem' }}>
+              The more accurate you are, the better your plan.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
               <div>
-                <label className="input-label" style={{ marginBottom: '0.75rem', display: 'block' }}>Activity Level</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                  {ACTIVITY_LEVELS.map(a => (
-                    <button key={a.value} className={`option-card ${profile.activityLevel === a.value ? 'selected' : ''}`}
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>Activity level</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                  {ACTIVITY_LEVELS.map((a) => (
+                    <button key={a.value} type="button"
+                      className={`option-card ${profile.activityLevel === a.value ? 'selected' : ''}`}
                       onClick={() => update('activityLevel', a.value)}>
-                      <div>
-                        <div style={{ fontWeight: 600, marginBottom: '0.15rem', fontSize: '0.95rem' }}>{a.label}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{a.desc}</div>
-                      </div>
+                      <span>
+                        <span style={{ display: 'block', fontWeight: 650, fontSize: '0.93rem', marginBottom: '0.1rem' }}>{a.label}</span>
+                        <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-muted)' }}>{a.desc}</span>
+                      </span>
                       {profile.activityLevel === a.value && (
-                        <span style={{ marginLeft: 'auto', color: 'var(--color-accent)' }}>✓</span>
+                        <span style={{ marginLeft: 'auto', color: 'var(--color-accent)' }}><CheckIcon size={18} /></span>
                       )}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem' }}>
                 <div>
-                  <label className="input-label">Exercise days/week</label>
-                  <input className="input-field" type="number" min={0} max={7} id="lifestyle-exercise-freq"
+                  <label className="input-label" htmlFor="lifestyle-exercise-freq">Exercise days / week</label>
+                  <input id="lifestyle-exercise-freq" className="input-field" type="number" min={0} max={7}
                     value={profile.exerciseFrequency ?? 3}
-                    onChange={e => update('exerciseFrequency', +e.target.value)} />
+                    onChange={(e) => update('exerciseFrequency', +e.target.value)} />
                 </div>
                 <div>
-                  <label className="input-label">Session duration (min)</label>
-                  <input className="input-field" type="number" min={0} max={180} id="lifestyle-exercise-dur"
+                  <label className="input-label" htmlFor="lifestyle-exercise-dur">Session length <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(min)</span></label>
+                  <input id="lifestyle-exercise-dur" className="input-field" type="number" min={0} max={180}
                     value={profile.exerciseDuration ?? 45}
-                    onChange={e => update('exerciseDuration', +e.target.value)} />
+                    onChange={(e) => update('exerciseDuration', +e.target.value)} />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem' }}>
                 <div>
-                  <label className="input-label">Sleep (hours/night)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <input type="range" min={4} max={12} step={0.5}
+                  <label className="input-label" htmlFor="lifestyle-sleep">Sleep <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(hrs/night)</span></label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                    <input id="lifestyle-sleep" type="range" min={4} max={12} step={0.5}
                       value={profile.sleepHours ?? 7}
-                      onChange={e => update('sleepHours', +e.target.value)}
-                      style={{ flex: 1 }} id="lifestyle-sleep" />
-                    <span style={{ color: 'var(--color-accent)', fontWeight: 700, minWidth: '2rem' }}>{profile.sleepHours ?? 7}h</span>
+                      onChange={(e) => update('sleepHours', +e.target.value)} style={{ flex: 1 }} />
+                    <span style={{ color: 'var(--color-accent)', fontWeight: 700, minWidth: '2.2rem', fontVariantNumeric: 'tabular-nums' }}>{profile.sleepHours ?? 7}h</span>
                   </div>
                 </div>
                 <div>
-                  <label className="input-label">Stress level (1–5)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <input type="range" min={1} max={5} step={1}
+                  <label className="input-label" htmlFor="lifestyle-stress">Stress level</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
+                    <input id="lifestyle-stress" type="range" min={1} max={5} step={1}
                       value={profile.stressLevel ?? 3}
-                      onChange={e => update('stressLevel', +e.target.value)}
-                      style={{ flex: 1 }} id="lifestyle-stress" />
-                    <span style={{ color: 'var(--color-accent)', fontWeight: 700, minWidth: '1.5rem' }}>
-                      {['😌','😐','😟','😰','🤯'][( profile.stressLevel ?? 3) - 1]}
+                      onChange={(e) => update('stressLevel', +e.target.value)} style={{ flex: 1 }} />
+                    <span style={{ color: 'var(--color-accent)', fontWeight: 650, minWidth: '4.5rem', fontSize: '0.82rem' }}>
+                      {MOODS[(profile.stressLevel ?? 3) - 1]}
                     </span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="input-label">Work type</label>
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <span className="input-label">Work type</span>
+                <div style={{ display: 'flex', gap: '0.6rem' }}>
                   {[
-                    { v: 'desk', l: '💻 Desk job' },
-                    { v: 'physical', l: '🔨 Physical job' },
-                    { v: 'mixed', l: '🔄 Mixed' },
-                  ].map(w => (
-                    <button key={w.v}
+                    { v: 'desk', l: 'Desk job' },
+                    { v: 'physical', l: 'Physical job' },
+                    { v: 'mixed', l: 'Mixed' },
+                  ].map((w) => (
+                    <button key={w.v} type="button"
                       className={`option-card ${profile.workType === w.v ? 'selected' : ''}`}
-                      style={{ flex: 1, justifyContent: 'center', padding: '0.75rem 0.5rem', fontSize: '0.85rem' }}
+                      style={{ flex: 1, justifyContent: 'center', padding: '0.7rem 0.5rem', fontSize: '0.86rem', fontWeight: 600 }}
                       onClick={() => update('workType', w.v)}>
                       {w.l}
                     </button>
@@ -414,36 +369,34 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ── STEP 4: Preferences ───────────────────────────────────────── */}
         {step === 4 && (
-          <div className="fade-in-up">
-            <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Preferences & Location 🌍</h2>
-            <p style={{ color: 'var(--color-muted)', marginBottom: '2rem' }}>
+          <div className="fade-in-up" key="s4">
+            <h2 style={{ fontSize: '1.7rem', marginBottom: '0.4rem' }}>Preferences & location</h2>
+            <p style={{ color: 'var(--color-muted)', marginBottom: '1.75rem', fontSize: '0.95rem' }}>
               We'll suggest culturally relevant, locally available meals.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
               <div>
-                <label className="input-label">Country / City / Region</label>
-                <input className="input-field" placeholder="e.g. Mumbai, India" id="pref-location"
-                  value={profile.location || ''}
-                  onChange={e => update('location', e.target.value)} />
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginTop: '0.4rem' }}>
+                <label className="input-label" htmlFor="pref-location">Country / city / region</label>
+                <input id="pref-location" className="input-field" placeholder="e.g. Mumbai, India"
+                  value={profile.location || ''} onChange={(e) => update('location', e.target.value)} />
+                <p style={{ fontSize: '0.78rem', color: 'var(--color-faint)', marginTop: '0.4rem' }}>
                   Used only to personalize meal suggestions — never shared.
                 </p>
               </div>
 
               <div>
-                <label className="input-label" style={{ marginBottom: '0.75rem', display: 'block' }}>
-                  Dietary Restrictions <span style={{ color: 'var(--color-muted)', fontWeight: 400 }}>— select all that apply</span>
-                </label>
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
+                  Dietary restrictions <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— select all that apply</span>
+                </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {DIETARY_OPTIONS.map(d => {
-                    const isChecked = (profile.dietaryRestrictions || []).map(v => v.toLowerCase()).includes(d.toLowerCase());
+                  {DIETARY_OPTIONS.map((d) => {
+                    const isChecked = (profile.dietaryRestrictions || []).map((v) => v.toLowerCase()).includes(d.toLowerCase());
                     return (
-                      <button key={d} className={`checkbox-item ${isChecked ? 'checked' : ''}`}
+                      <button key={d} type="button" className={`checkbox-item ${isChecked ? 'checked' : ''}`}
                         onClick={() => toggleArray('dietaryRestrictions', d)}>
-                        {isChecked ? '✓' : '○'} {d}
+                        {isChecked && <CheckIcon size={13} />} {d}
                       </button>
                     );
                   })}
@@ -451,16 +404,16 @@ export default function OnboardingPage() {
               </div>
 
               <div>
-                <label className="input-label" style={{ marginBottom: '0.75rem', display: 'block' }}>
-                  Food Allergies <span style={{ color: 'var(--color-muted)', fontWeight: 400 }}>— select all that apply</span>
-                </label>
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
+                  Food allergies <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— select all that apply</span>
+                </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {ALLERGY_OPTIONS.map(a => {
-                    const isChecked = (profile.allergies || []).map(v => v.toLowerCase()).includes(a.toLowerCase());
+                  {ALLERGY_OPTIONS.map((a) => {
+                    const isChecked = (profile.allergies || []).map((v) => v.toLowerCase()).includes(a.toLowerCase());
                     return (
-                      <button key={a} className={`checkbox-item ${isChecked ? 'checked' : ''}`}
+                      <button key={a} type="button" className={`checkbox-item ${isChecked ? 'checked' : ''}`}
                         onClick={() => toggleArray('allergies', a)}>
-                        {isChecked ? '✓' : '○'} {a}
+                        {isChecked && <CheckIcon size={13} />} {a}
                       </button>
                     );
                   })}
@@ -468,81 +421,78 @@ export default function OnboardingPage() {
               </div>
 
               <div>
-                <label className="input-label">Exercise type (optional)</label>
-                <input className="input-field" placeholder="e.g. Running, Gym, Yoga, Swimming" id="pref-exercise-type"
-                  value={profile.exerciseType || ''}
-                  onChange={e => update('exerciseType', e.target.value)} />
+                <label className="input-label" htmlFor="pref-exercise-type">Exercise type <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(optional)</span></label>
+                <input id="pref-exercise-type" className="input-field" placeholder="e.g. Running, gym, yoga, swimming"
+                  value={profile.exerciseType || ''} onChange={(e) => update('exerciseType', e.target.value)} />
               </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 5: Generating ─────────────────────────────────────────── */}
         {step === 5 && (
-          <div className="fade-in-up" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+          <div className="fade-in-up" key="s5" style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
             <div style={{
-              width: 100, height: 100, borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(99,102,241,0.2))',
-              border: '2px solid rgba(16,185,129,0.3)',
+              width: 84, height: 84, borderRadius: '50%',
+              background: 'var(--color-accent-soft)', color: 'var(--color-accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '2.5rem', margin: '0 auto 2rem',
-              animation: 'spin 3s linear infinite',
+              margin: '0 auto 1.75rem',
             }}>
-              🧠
+              <BrainIcon size={36} />
             </div>
-            <h2 style={{ fontSize: '1.75rem', marginBottom: '1rem' }}>
-              Building your <span className="gradient-text">personalized plan</span>…
+            <h2 style={{ fontSize: '1.6rem', marginBottom: '0.6rem' }}>
+              Building your personalized plan
             </h2>
-            <p style={{ color: 'var(--color-muted)', marginBottom: '2.5rem', fontSize: '1.05rem' }}>
-              Our AI is analyzing your profile and crafting the perfect diet plan for you.
+            <p style={{ color: 'var(--color-muted)', marginBottom: '2.25rem', fontSize: '0.98rem' }}>
+              Analyzing your profile and crafting your 7-day meal plan.
             </p>
 
-            {/* Phases */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', maxWidth: 360, margin: '0 auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxWidth: 380, margin: '0 auto', textAlign: 'left' }}>
               {GEN_MESSAGES.map((msg, i) => (
                 <div key={msg} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.875rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.75rem',
-                  background: i <= genPhase ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${i <= genPhase ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.05)'}`,
-                  transition: 'all 0.4s ease',
-                  opacity: i <= genPhase ? 1 : 0.4,
-                  textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: '0.8rem',
+                  padding: '0.7rem 1rem', borderRadius: '0.75rem',
+                  background: i <= genPhase ? 'var(--color-accent-soft)' : 'var(--color-surface)',
+                  border: `1px solid ${i <= genPhase ? '#cfe7d6' : 'var(--color-border)'}`,
+                  transition: 'all 300ms ease',
+                  opacity: i <= genPhase ? 1 : 0.45,
                 }}>
-                  <span style={{ fontSize: '1rem' }}>
-                    {i < genPhase ? '✅' : i === genPhase ? '⏳' : '○'}
+                  <span style={{
+                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: i < genPhase ? 'var(--color-accent)' : i === genPhase ? 'var(--color-surface)' : 'transparent',
+                    border: i === genPhase ? '2px solid var(--color-border-strong)' : 'none',
+                    borderTopColor: i === genPhase ? 'var(--color-accent)' : undefined,
+                    color: '#fff',
+                    animation: i === genPhase ? 'spin 0.9s linear infinite' : 'none',
+                  }}>
+                    {i < genPhase && <CheckIcon size={13} />}
                   </span>
-                  <span style={{ fontSize: '0.875rem', color: i <= genPhase ? 'var(--color-text)' : 'var(--color-muted)' }}>
-                    {msg}
+                  <span style={{ fontSize: '0.87rem', fontWeight: i <= genPhase ? 600 : 500, color: i <= genPhase ? 'var(--color-text)' : 'var(--color-muted)' }}>
+                    {msg}{i === genPhase ? '…' : ''}
                   </span>
                 </div>
               ))}
             </div>
+            {generating && <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--color-faint)' }}>This usually takes a few seconds</div>}
           </div>
         )}
 
-        {/* Navigation */}
+        {/* ── Nav ──────────────────────────────────────────── */}
         {step < 5 && (
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginTop: '2.5rem', paddingTop: '1.5rem',
+            marginTop: '2.25rem', paddingTop: '1.4rem',
             borderTop: '1px solid var(--color-border)',
           }}>
-            <button
-              className="btn-secondary"
-              onClick={() => step > 1 ? setStep(s => s - 1) : router.push('/')}
-              id="onboarding-back"
-            >
-              ← {step === 1 ? 'Home' : 'Back'}
+            <button type="button" className="btn-secondary" id="onboarding-back"
+              onClick={() => (step > 1 ? setStep((s) => s - 1) : router.push('/'))}
+              style={{ padding: '0.7rem 1.4rem' }}>
+              <ArrowLeftIcon size={16} /> {step === 1 ? 'Home' : 'Back'}
             </button>
-            <button
-              className="btn-primary"
-              onClick={() => setStep(s => s + 1)}
-              disabled={!canProceed()}
-              id="onboarding-next"
-            >
-              {step === 4 ? '✨ Generate My Plan' : 'Continue →'}
+            <button type="button" className="btn-primary" id="onboarding-next"
+              onClick={() => setStep((s) => s + 1)} disabled={!canProceed()}
+              style={{ padding: '0.7rem 1.6rem' }}>
+              {step === 4 ? <><SparklesIcon size={16} /> Generate my plan</> : <>Continue <ArrowRightIcon size={16} /></>}
             </button>
           </div>
         )}
