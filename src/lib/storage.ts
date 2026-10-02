@@ -43,6 +43,21 @@ function simpleHash(str: string): string {
   return hash.toString(36);
 }
 
+/** UUID v4. crypto.randomUUID() only exists in secure contexts
+ *  (https / localhost) — fall back to Math.random when the site is
+ *  opened via a LAN IP like http://192.168.x.x, otherwise signup
+ *  and plan-saving throw and the UI hangs with no error. */
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // ── User management ──────────────────────────────────────────────────────────
 export function getUsers(): StoredUser[] {
   if (typeof window === 'undefined') return [];
@@ -58,7 +73,7 @@ export function saveUser(user: StoredUser): void {
 export function signUp(email: string, password: string, name: string): { success: boolean; error?: string; user?: StoredUser } {
   const users = getUsers();
   if (users.find(u => u.email === email)) return { success: false, error: 'Email already registered' };
-  const user: StoredUser = { id: crypto.randomUUID(), email, passwordHash: simpleHash(password), name, createdAt: new Date().toISOString() };
+  const user: StoredUser = { id: generateId(), email, passwordHash: simpleHash(password), name, createdAt: new Date().toISOString() };
   saveUser(user);
   startSession(user);
   return { success: true, user };
@@ -108,7 +123,7 @@ export function resetAllData(): void {
 
 // ── Plan storage ──────────────────────────────────────────────────────────────
 export function savePlan(userId: string, profile: UserProfile, plan: DietPlan): SavedPlan {
-  const saved: SavedPlan = { id: crypto.randomUUID(), userId, profile, plan, createdAt: new Date().toISOString() };
+  const saved: SavedPlan = { id: generateId(), userId, profile, plan, createdAt: new Date().toISOString() };
   const plans = getPlans(userId);
   plans.unshift(saved);
   localStorage.setItem(`dpa_plans_${userId}`, JSON.stringify(plans.slice(0, 10)));

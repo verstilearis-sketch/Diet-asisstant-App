@@ -116,10 +116,11 @@ function AuthForm() {
       }
       setLoading(false);
     } else {
-      if (!form.email.includes('@')) return setError('Please enter a valid email.');
+      const email = form.email.trim().toLowerCase();
+      if (!email.includes('@')) return setError('Please enter a valid email.');
       setLoading(true);
       await new Promise((r) => setTimeout(r, 600));
-      const result = signIn(form.email, form.password);
+      const result = signIn(email, form.password);
       if (result.success) {
         router.push('/dashboard');
       } else {
