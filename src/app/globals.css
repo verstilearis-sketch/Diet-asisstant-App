@@ -569,6 +569,10 @@ input[type="range"]::-moz-range-thumb {
 .faq-item summary::-webkit-details-marker { display: none; }
 .faq-item summary:hover { background: var(--color-surface2); }
 .faq-item .faq-body { padding: 0 1.35rem 1.25rem; color: var(--color-muted); font-size: 0.9rem; line-height: 1.7; }
+.faq-chevron { transition: transform 200ms var(--ease-out); flex-shrink: 0; }
+details[open] .faq-chevron { transform: rotate(180deg); }
+
+.formula-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 0.25rem; scrollbar-width: thin; }
 
 .cuisine-chip {
   display: inline-flex; align-items: center;

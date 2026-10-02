@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
+import { GoogleGenAI } from '@google/genai';
+
+// ── AI provider for the health coach ──────────────────────────
+// "gemini" (default) — Google Gemini, generous free tier, very reliable.
+// "groq"             — Groq's OpenAI-compatible API (fallback).
+// Switch with the AI_PROVIDER env var; no code change needed.
+type Provider = 'gemini' | 'groq';
+const PROVIDER: Provider =
+  process.env.AI_PROVIDER?.toLowerCase() === 'groq' ? 'groq' : 'gemini';
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3-32b';
 
 interface IncomingMessage {
   role: string;
   content: string;
 }
-
-// Current Qwen reasoning model on Groq. The old id 'qwen/qwen3.8-27b'
-// does not exist — it made every request fail and silently fall back
-// to canned replies. Alternatives: 'openai/gpt-oss-120b' (production),
-// 'openai/gpt-oss-20b' (faster/cheaper).
-const MODEL = 'qwen/qwen3.6-27b';
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -29,7 +35,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'messages must be a non-empty array' }, { status: 400 });
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
   const goal = (userProfile?.goal ?? 'general_health').replace(/_/g, ' ');
   const kcal = planContext?.calorieGoal ?? 2000;
   const kg = userProfile?.weightKg ?? 70;
@@ -50,15 +55,73 @@ PLAN:
 - Cuisine focus: ${planContext?.region ?? 'global'}
 If a question is completely off-topic (coding, politics, etc.), briefly redirect to health topics.`;
 
+  if (PROVIDER === 'gemini') {
+    return handleGemini(messages as IncomingMessage[], systemPrompt, userProfile, planContext);
+  }
+  return handleGroq(messages as IncomingMessage[], systemPrompt, userProfile, planContext);
+}
+
+// ── Gemini (primary) ──────────────────────────────────────────
+
+async function handleGemini(
+  messages: IncomingMessage[],
+  systemPrompt: string,
+  userProfile: Record<string, any> | undefined,
+  planContext: Record<string, any> | undefined
+) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn('GEMINI_API_KEY not set — using offline fallback replies');
+    return getFallback(messages, userProfile, planContext);
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const contents = messages.map((m) => ({
+      // Gemini uses "model" where OpenAI-style APIs use "assistant"
+      role: m.role === 'agent' ? 'model' : 'user',
+      parts: [{ text: String(m.content ?? '') }],
+    }));
+
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents,
+      config: {
+        systemInstruction: systemPrompt,
+        temperature: 0.7,
+        maxOutputTokens: 600,
+      },
+    });
+
+    const reply = response.text?.trim() || "I couldn't generate a response — please try again.";
+    return NextResponse.json({ reply });
+  } catch (err) {
+    console.error('Gemini API error:', err);
+    return NextResponse.json(
+      { error: 'AI service error. Please try again.' },
+      { status: 502 }
+    );
+  }
+}
+
+// ── Groq (fallback provider) ──────────────────────────────────
+
+async function handleGroq(
+  messages: IncomingMessage[],
+  systemPrompt: string,
+  userProfile: Record<string, any> | undefined,
+  planContext: Record<string, any> | undefined
+) {
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     console.warn('GROQ_API_KEY not set — using offline fallback replies');
-    return getFallback(messages as IncomingMessage[], userProfile, planContext);
+    return getFallback(messages, userProfile, planContext);
   }
 
   try {
     const chatMessages = [
       { role: 'system', content: systemPrompt },
-      ...(messages as IncomingMessage[]).map((m) => ({
+      ...messages.map((m) => ({
         role: m.role === 'agent' ? 'assistant' : 'user',
         content: String(m.content ?? ''),
       })),
@@ -71,7 +134,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: GROQ_MODEL,
         messages: chatMessages,
         temperature: 0.7,
         max_tokens: 600,

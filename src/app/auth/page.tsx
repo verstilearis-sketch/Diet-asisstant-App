@@ -9,6 +9,13 @@ import { SaladIcon, MailIcon, LockIcon, UserIcon, AlertIcon, ArrowLeftIcon, Arro
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // ── Email verification toggle ─────────────────────────────
+  // "For now" the 6-digit code step is skipped: signup creates the
+  // account directly and goes straight to the questionnaire.
+  // Set to true to require email verification again — the
+  // /api/verify-email route is untouched and still works.
+  const EMAIL_VERIFICATION_ENABLED = false;
   const [mode, setMode] = useState<'signin' | 'signup'>(
     (searchParams.get('mode') as 'signin' | 'signup') || 'signin'
   );
@@ -91,12 +98,23 @@ function AuthForm() {
 
     if (mode === 'signup') {
       if (!form.name.trim()) return setError('Please enter your name.');
-      if (!form.email.toLowerCase().endsWith('@gmail.com')) {
-        return setError('Please use a Gmail address (@gmail.com).');
-      }
+      const email = form.email.trim().toLowerCase();
+      if (!email.includes('@')) return setError('Please enter a valid email.');
       if (form.password.length < 6) return setError('Password must be at least 6 characters.');
       if (form.password !== form.confirmPassword) return setError('Passwords do not match.');
-      await sendVerificationCode();
+      if (EMAIL_VERIFICATION_ENABLED) {
+        await sendVerificationCode();
+        return;
+      }
+      setLoading(true);
+      await new Promise((r) => setTimeout(r, 600));
+      const result = signUp(email, form.password, form.name.trim());
+      if (result.success) {
+        router.push('/onboarding');
+      } else {
+        setError(result.error || 'Sign up failed.');
+      }
+      setLoading(false);
     } else {
       if (!form.email.includes('@')) return setError('Please enter a valid email.');
       setLoading(true);
@@ -124,8 +142,8 @@ function AuthForm() {
     setCountdown(0);
   };
 
-  /* ── Verification step ─────────────────────────────────── */
-  if (mode === 'signup' && verificationStep === 'verify') {
+  /* ── Verification step (only when EMAIL_VERIFICATION_ENABLED) ── */
+  if (EMAIL_VERIFICATION_ENABLED && mode === 'signup' && verificationStep === 'verify') {
     return (
       <div className="auth-wrap">
         <div className="bg-orb bg-orb-1" />
@@ -236,19 +254,14 @@ function AuthForm() {
 
           <div>
             <label className="input-label" htmlFor="auth-email">
-              {mode === 'signup' ? 'Gmail address' : 'Email address'}
+              Email address
             </label>
             <div style={{ position: 'relative' }}>
               <MailIcon size={17} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-faint)', pointerEvents: 'none' }} />
               <input id="auth-email" className="input-field" style={{ paddingLeft: '2.7rem' }} type="email"
-                placeholder={mode === 'signup' ? 'you@gmail.com' : 'you@example.com'}
+                placeholder="you@example.com"
                 value={form.email} onChange={(e) => update('email', e.target.value)} required />
             </div>
-            {mode === 'signup' && (
-              <p style={{ fontSize: '0.76rem', color: 'var(--color-muted)', marginTop: '0.4rem' }}>
-                Only Gmail addresses are accepted for verification.
-              </p>
-            )}
           </div>
 
           <div>
@@ -277,7 +290,7 @@ function AuthForm() {
 
           <button className="btn-primary" type="submit" disabled={loading} id="auth-submit" style={{ width: '100%', marginTop: '0.25rem' }}>
             {loading ? (
-              <><span className="spinner" style={{ width: 17, height: 17, borderWidth: 2 }} /> {mode === 'signin' ? 'Signing in…' : 'Sending code…'}</>
+              <><span className="spinner" style={{ width: 17, height: 17, borderWidth: 2 }} /> {mode === 'signin' ? 'Signing in…' : 'Creating account…'}</>
             ) : mode === 'signin' ? (
               'Sign in'
             ) : (

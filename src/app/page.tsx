@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSession } from '@/lib/storage';
 import Link from 'next/link';
 import {
-  SaladIcon, CalculatorIcon, MapPinIcon, BotIcon, CartIcon,
+  SaladIcon, CalculatorIcon, MapPinIcon, BotIcon, ScaleIcon,
   DropletsIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
   WheatIcon, UtensilsIcon,
 } from '@/components/icons';
@@ -29,9 +29,9 @@ const INSIDE = [
     desc: 'Tell us your city and meals are matched to your region’s cuisine and the markets near you — 40+ regional profiles, five continents.',
   },
   {
-    icon: CartIcon,
-    title: 'A weekly shopping list',
-    desc: 'Every ingredient for the week in one list, so a single grocery trip covers the whole plan.',
+    icon: ScaleIcon,
+    title: 'Calories you can picture',
+    desc: 'Your target ships with real-world equivalences — so “500 kcal” means something concrete the next time you read a menu.',
   },
   {
     icon: DropletsIcon,
@@ -61,10 +61,10 @@ const CUISINES = [
 ];
 
 const STEPS = [
-  { n: '01', title: 'Create your account', desc: 'Sign up and verify your email. About a minute.' },
+  { n: '01', title: 'Create your account', desc: 'Sign up with your name and email. About a minute.' },
   { n: '02', title: 'Answer the questions', desc: 'Four short steps: your body, your goal, your lifestyle, your food preferences.' },
   { n: '03', title: 'Get your numbers', desc: 'BMI, BMR, TDEE, calorie target and macro split — shown with the working.' },
-  { n: '04', title: 'Follow your plan', desc: 'Seven days of meals, a shopping list, hydration — and the AI coach when you have questions.' },
+  { n: '04', title: 'Follow your plan', desc: 'Seven days of meals, hydration and milestones — plus the AI coach when you have questions.' },
 ];
 
 const FAQS = [
@@ -74,7 +74,7 @@ const FAQS = [
   },
   {
     q: 'Do I need to create an account?',
-    a: 'Yes. Click Get started, sign up with your email, and verify the code we send you. Your answers and your plan are saved to your account so you can come back to them — and so the AI coach remembers your numbers.',
+    a: 'Yes. Click Get started and sign up with your name and email — no verification codes, no waiting. Your answers and your plan are saved to your account so you can come back to them — and so the AI coach remembers your numbers.',
   },
   {
     q: 'How do you handle allergies and dietary restrictions?',
@@ -90,17 +90,9 @@ const FAQS = [
   },
 ];
 
-// ── Sample day, consistent with the engine’s math ──
-// Sample profile: male, 28, 178 cm, 82 kg, moderately active, lose weight
-// BMR = 10·82 + 6.25·178 − 5·28 + 5 = 1,798 · TDEE = 1,798 × 1.55 = 2,786 · target = 2,286
-
-const SAMPLE_MEALS = [
-  { name: 'Vegetable poha with peanuts', kcal: 500, p: 16, c: 72, f: 14 },
-  { name: 'Buttermilk + roasted makhana', kcal: 200, p: 8, c: 30, f: 5 },
-  { name: 'Brown rice, sambar, poriyal, curd', kcal: 700, p: 32, c: 104, f: 14 },
-  { name: 'Sprouted moong chaat', kcal: 240, p: 14, c: 34, f: 6 },
-  { name: '2 besan cheelas, paneer stuffing', kcal: 620, p: 30, c: 52, f: 24 },
-];
+// ── Dashboard preview numbers (consistent with the engine's math) ──
+// Sample day at 2,286 kcal target; lose_weight macro split is
+// 35% protein / 35% carbs / 30% fat → 200p / 200c / 76f
 
 export default function LandingPage() {
   const router = useRouter();
@@ -146,7 +138,7 @@ export default function LandingPage() {
             <p style={{ fontSize: '1.06rem', color: 'var(--color-muted)', lineHeight: 1.75, maxWidth: 520, marginBottom: '2rem' }}>
               Answer a short set of questions about your body, goals and lifestyle. DietAI
               computes your calorie target with the Mifflin–St Jeor equation, matches meals
-              to your local cuisine, and builds a 7-day plan — macros, shopping list,
+              to your local cuisine, and builds a 7-day plan — macros, milestones,
               hydration and all.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.1rem' }}>
@@ -162,44 +154,58 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Sample output — the “show the working” card */}
+          {/* Dashboard preview — what the user lands on after the questionnaire */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.35rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.15rem' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
-                Example output
+                Your dashboard
               </span>
-              <span className="badge badge-green">South Indian · lose weight</span>
+              <span className="badge badge-green">Preview</span>
             </div>
-            <p className="mono" style={{ fontSize: '0.78rem', color: 'var(--color-faint)', marginBottom: '1.1rem' }}>
-              male · 28 · 178 cm · 82 kg · moderately active
-            </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem', marginBottom: '1.2rem' }}>
+            <div style={{ display: 'flex', gap: '1.4rem', alignItems: 'center', marginBottom: '1.3rem' }}>
+              <svg width="112" height="112" viewBox="0 0 112 112" style={{ flexShrink: 0 }} role="img" aria-label="1540 of 2286 kilocalories eaten">
+                <circle cx="56" cy="56" r="47" fill="none" stroke="var(--color-surface2)" strokeWidth="11" />
+                <circle cx="56" cy="56" r="47" fill="none" stroke="var(--color-accent)" strokeWidth="11" strokeLinecap="round"
+                  strokeDasharray="295.3" strokeDashoffset="96.4" transform="rotate(-90 56 56)" />
+                <text x="56" y="54" textAnchor="middle" fill="var(--color-text)" fontSize="19" fontWeight="700" style={{ fontFamily: 'var(--font-sans)' }}>1,540</text>
+                <text x="56" y="72" textAnchor="middle" fill="var(--color-muted)" fontSize="10.5" style={{ fontFamily: 'var(--font-sans)' }}>of 2,286 kcal</text>
+              </svg>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                {[
+                  { label: 'Protein', eaten: 118, target: 200, color: 'var(--chart-protein)' },
+                  { label: 'Carbs', eaten: 165, target: 200, color: 'var(--chart-carbs)' },
+                  { label: 'Fat', eaten: 48, target: 76, color: 'var(--chart-fat)' },
+                ].map((m) => (
+                  <div key={m.label}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', marginBottom: '0.25rem' }}>
+                      <span style={{ fontWeight: 600 }}>{m.label}</span>
+                      <span className="mono" style={{ color: 'var(--color-muted)' }}>{m.eaten}/{m.target}g</span>
+                    </div>
+                    <div className="progress-bar-track" style={{ height: 6 }}>
+                      <div className="progress-bar-fill" style={{ width: `${Math.round((m.eaten / m.target) * 100)}%`, background: m.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.6rem' }}>Today</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '0.9rem' }}>
               {[
-                { v: '1,798', l: 'BMR kcal' },
-                { v: '2,786', l: 'TDEE kcal' },
-                { v: '2,286', l: 'Daily target' },
+                { name: 'Vegetable poha with peanuts', kcal: 500 },
+                { name: 'Brown rice, sambar, poriyal', kcal: 700 },
+                { name: 'Buttermilk + roasted makhana', kcal: 200 },
+                { name: 'Sprouted moong chaat', kcal: 140 },
               ].map((m) => (
-                <div key={m.l} style={{ background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', padding: '0.7rem 0.5rem', textAlign: 'center' }}>
-                  <div className="mono" style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '-0.02em' }}>{m.v}</div>
-                  <div style={{ fontSize: '0.68rem', color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '0.15rem' }}>{m.l}</div>
+                <div key={m.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.6rem' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 550 }}>{m.name}</span>
+                  <span className="mono" style={{ fontSize: '0.76rem', color: 'var(--color-muted)' }}>{m.kcal} kcal</span>
                 </div>
               ))}
             </div>
-
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.6rem' }}>Monday — ≈2,260 kcal · 100 g protein</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-              {SAMPLE_MEALS.map((m) => (
-                <div key={m.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.55rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.6rem' }}>
-                  <span style={{ fontSize: '0.83rem', fontWeight: 550 }}>{m.name}</span>
-                  <span className="mono" style={{ fontSize: '0.76rem', color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
-                    {m.kcal} kcal · {m.p}p / {m.c}c / {m.f}f
-                  </span>
-                </div>
-              ))}
-            </div>
-            <p style={{ fontSize: '0.74rem', color: 'var(--color-faint)', marginTop: '0.9rem' }}>
-              Your numbers replace these the moment you finish the questionnaire.
+            <p style={{ fontSize: '0.76rem', color: 'var(--color-muted)' }}>
+              <strong style={{ color: 'var(--color-accent)' }}>746 kcal</strong> remaining today · dinner still to log
             </p>
           </div>
         </div>
@@ -251,7 +257,7 @@ export default function LandingPage() {
                 }}>
                   <span className="mono" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-accent)' }}>{f.name}</span>
                   <div>
-                    <div className="mono" style={{ fontSize: '0.9rem', marginBottom: '0.15rem' }}>{f.formula}</div>
+                    <div className="mono formula-scroll" style={{ fontSize: '0.9rem', marginBottom: '0.15rem' }}>{f.formula}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{f.note}</div>
                   </div>
                 </div>
@@ -316,7 +322,7 @@ export default function LandingPage() {
             <details key={f.q} className="faq-item">
               <summary>
                 {f.q}
-                <ChevronDownIcon size={17} />
+                <ChevronDownIcon size={17} className="faq-chevron" />
               </summary>
               <div className="faq-body">{f.a}</div>
             </details>
@@ -342,6 +348,19 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* ── Builder credit ──────────────────────────────── */}
+      <section className="container" style={{ paddingBottom: '4rem', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+          <span style={{ width: 44, height: 1, background: 'var(--color-border-strong)' }} />
+          <span className="brand-mark" style={{ width: 30, height: 30 }}><SaladIcon size={16} /></span>
+          <span style={{ width: 44, height: 1, background: 'var(--color-border-strong)' }} />
+        </div>
+        <p style={{ color: 'var(--color-muted)', fontSize: '0.92rem', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
+          Designed &amp; engineered by <strong style={{ color: 'var(--color-text)' }}>Salik Lone</strong>
+          <br />real math, real food, and an unreasonable attention to detail.
+        </p>
       </section>
 
       {/* ── Footer ──────────────────────────────────────── */}
