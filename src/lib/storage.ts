@@ -94,6 +94,18 @@ export function signOut(): void {
   localStorage.removeItem('dpa_session');
 }
 
+/** Permanently removes all DietAI data stored in this browser
+ *  (accounts, sessions, plans, daily logs, chat debug data). */
+export function resetAllData(): void {
+  if (typeof window === 'undefined') return;
+  const doomed: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith('dpa_') || key.startsWith('chat'))) doomed.push(key);
+  }
+  doomed.forEach((key) => localStorage.removeItem(key));
+}
+
 // ── Plan storage ──────────────────────────────────────────────────────────────
 export function savePlan(userId: string, profile: UserProfile, plan: DietPlan): SavedPlan {
   const saved: SavedPlan = { id: crypto.randomUUID(), userId, profile, plan, createdAt: new Date().toISOString() };

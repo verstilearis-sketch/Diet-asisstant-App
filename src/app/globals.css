@@ -157,6 +157,27 @@ a:hover { text-decoration: underline; }
 }
 .btn-ghost:hover { color: var(--color-text); background: var(--color-surface2); }
 
+.btn-danger {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  background: var(--color-danger); color: #fff;
+  border: none; border-radius: 0.75rem;
+  padding: 0.8rem 1.75rem;
+  font-family: var(--font-sans); font-weight: 600; font-size: 0.95rem;
+  cursor: pointer; white-space: nowrap;
+  transition: background 120ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.btn-danger:hover { background: #912018; transform: translateY(-1px); }
+.btn-danger:active { transform: translateY(0); }
+
+/* ── Modal ──────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(24, 24, 22, 0.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.25rem;
+  animation: fadeInUp 160ms var(--ease-out) both;
+}
+
 /* ── Inputs ─────────────────────────────────────────────────── */
 .input-field {
   width: 100%;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, DailyLog } from '@/lib/storage';
+import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, DailyLog, resetAllData } from '@/lib/storage';
 import { computeAll } from '@/lib/calculations';
 import type { SavedPlan } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
@@ -14,7 +14,7 @@ import {
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  MapPinIcon, FlameIcon,
+  MapPinIcon, FlameIcon, TrashIcon,
 } from '@/components/icons';
 
 const GOAL_LABELS: Record<string, string> = {
@@ -59,6 +59,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [todayStr] = useState(getTodayString());
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     const session = getSession();
@@ -86,6 +87,20 @@ export default function DashboardPage() {
   };
 
   const handleSignOut = () => { signOut(); router.replace('/'); };
+
+  const handleResetAll = () => {
+    resetAllData();
+    router.replace('/');
+  };
+
+  useEffect(() => {
+    if (!showResetConfirm) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowResetConfirm(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showResetConfirm]);
 
   if (loading || !savedPlan || !dailyLog) {
     return (
@@ -129,6 +144,9 @@ export default function DashboardPage() {
             </span>
             <button className="btn-ghost" onClick={() => router.push('/onboarding')} style={{ fontSize: '0.85rem' }}>
               <RefreshIcon size={15} /> New plan
+            </button>
+            <button className="btn-ghost" onClick={() => setShowResetConfirm(true)} style={{ fontSize: '0.85rem' }} title="Delete all accounts, plans and logs stored in this browser">
+              <TrashIcon size={15} /> Reset data
             </button>
             <button className="btn-ghost" onClick={handleSignOut} style={{ fontSize: '0.85rem', color: 'var(--color-danger)' }}>
               <LogoutIcon size={15} /> Sign out
@@ -392,6 +410,36 @@ export default function DashboardPage() {
       <ChatErrorBoundary>
         <HealthAgentChat plan={savedPlan} />
       </ChatErrorBoundary>
+
+      {showResetConfirm && (
+        <div className="modal-overlay" onClick={() => setShowResetConfirm(false)} role="dialog" aria-modal="true" aria-label="Confirm data reset">
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, padding: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <span style={{
+                width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+                background: '#fdecea', color: 'var(--color-danger)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <TrashIcon size={18} />
+              </span>
+              <div>
+                <h3 style={{ fontSize: '1.02rem', marginBottom: '0.35rem' }}>Reset all data?</h3>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
+                  This permanently deletes every account, diet plan, and daily log stored in this browser. This cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setShowResetConfirm(false)} style={{ padding: '0.65rem 1.3rem' }}>
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={handleResetAll} style={{ padding: '0.65rem 1.3rem' }}>
+                Delete everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
