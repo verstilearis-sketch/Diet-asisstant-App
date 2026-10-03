@@ -1,21 +1,30 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
-// ── AI provider for the health coach ──────────────────────────
-// "gemini" (default) — Google Gemini, generous free tier, very reliable.
-// "groq"             — Groq's OpenAI-compatible API (fallback).
-// Switch with the AI_PROVIDER env var; no code change needed.
-type Provider = 'gemini' | 'groq';
-const PROVIDER: Provider =
-  process.env.AI_PROVIDER?.toLowerCase() === 'groq' ? 'groq' : 'gemini';
+// ── Health-coach AI providers ─────────────────────────────────
+// The coach tries each provider in order until one answers:
+//   1. Primary   — Groq by default; set AI_PROVIDER=gemini to prefer Gemini.
+//   2. Secondary — the other provider, tried automatically if primary fails.
+//   3. Offline   — keyword-based replies, so the coach never goes silent.
+//
+// Put keys in .env.local (project root, next to package.json):
+//   GROQ_API_KEY=...    (fresh key from console.groq.com)
+//   GEMINI_API_KEY=...  (optional backup, from Google AI Studio)
+//   GROQ_MODEL=...      (optional; default llama-3.3-70b-versatile)
+//   GEMINI_MODEL=...    (optional; default gemini-3.8-flash)
 
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3-32b';
+
+const PRIMARY: 'groq' | 'gemini' =
+  process.env.AI_PROVIDER?.toLowerCase() === 'gemini' ? 'gemini' : 'groq';
 
 interface IncomingMessage {
   role: string;
   content: string;
 }
+
+type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -35,6 +44,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'messages must be a non-empty array' }, { status: 400 });
   }
 
+  const typedMessages = messages as IncomingMessage[];
   const goal = (userProfile?.goal ?? 'general_health').replace(/_/g, ' ');
   const kcal = planContext?.calorieGoal ?? 2000;
   const kg = userProfile?.weightKg ?? 70;
@@ -55,67 +65,34 @@ PLAN:
 - Cuisine focus: ${planContext?.region ?? 'global'}
 If a question is completely off-topic (coding, politics, etc.), briefly redirect to health topics.`;
 
-  if (PROVIDER === 'gemini') {
-    return handleGemini(messages as IncomingMessage[], systemPrompt, userProfile, planContext);
+  const order: ('groq' | 'gemini')[] =
+    PRIMARY === 'groq' ? ['groq', 'gemini'] : ['gemini', 'groq'];
+
+  const failures: string[] = [];
+  for (const provider of order) {
+    const attempt =
+      provider === 'groq'
+        ? await tryGroq(typedMessages, systemPrompt)
+        : await tryGemini(typedMessages, systemPrompt);
+    if (attempt.ok) {
+      return NextResponse.json({ reply: attempt.reply });
+    }
+    failures.push(`${provider} (${attempt.reason})`);
   }
-  return handleGroq(messages as IncomingMessage[], systemPrompt, userProfile, planContext);
+
+  console.error('Health coach: all AI providers failed —', failures.join('; '));
+  return getFallback(typedMessages, userProfile, planContext);
 }
 
-// ── Gemini (primary) ──────────────────────────────────────────
+// ── Groq ──────────────────────────────────────────────────────
 
-async function handleGemini(
+async function tryGroq(
   messages: IncomingMessage[],
-  systemPrompt: string,
-  userProfile: Record<string, any> | undefined,
-  planContext: Record<string, any> | undefined
-) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.warn('GEMINI_API_KEY not set — using offline fallback replies');
-    return getFallback(messages, userProfile, planContext);
-  }
-
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const contents = messages.map((m) => ({
-      // Gemini uses "model" where OpenAI-style APIs use "assistant"
-      role: m.role === 'agent' ? 'model' : 'user',
-      parts: [{ text: String(m.content ?? '') }],
-    }));
-
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.7,
-        maxOutputTokens: 600,
-      },
-    });
-
-    const reply = response.text?.trim() || "I couldn't generate a response — please try again.";
-    return NextResponse.json({ reply });
-  } catch (err) {
-    console.error('Gemini API error:', err);
-    return NextResponse.json(
-      { error: 'AI service error. Please try again.' },
-      { status: 502 }
-    );
-  }
-}
-
-// ── Groq (fallback provider) ──────────────────────────────────
-
-async function handleGroq(
-  messages: IncomingMessage[],
-  systemPrompt: string,
-  userProfile: Record<string, any> | undefined,
-  planContext: Record<string, any> | undefined
-) {
+  systemPrompt: string
+): Promise<Attempt> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.warn('GROQ_API_KEY not set — using offline fallback replies');
-    return getFallback(messages, userProfile, planContext);
+    return { ok: false, reason: 'GROQ_API_KEY not set' };
   }
 
   try {
@@ -143,29 +120,61 @@ async function handleGroq(
     });
 
     if (!res.ok) {
-      const errText = await res.text();
-      console.error('Groq API error:', res.status, errText);
-      // Surface model/config errors instead of silently degrading:
-      return NextResponse.json(
-        { error: `AI service error (${res.status}). Please try again.` },
-        { status: 502 }
-      );
+      const errText = (await res.text()).slice(0, 200);
+      return { ok: false, reason: `HTTP ${res.status} — ${errText}` };
     }
 
     const data = await res.json();
-    const reply =
-      data?.choices?.[0]?.message?.content || "I couldn't generate a response — please try again.";
-    return NextResponse.json({ reply });
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) {
+      return { ok: false, reason: 'empty response body' };
+    }
+    return { ok: true, reply };
   } catch (err) {
-    console.error('Groq fetch error:', err);
-    return NextResponse.json(
-      { error: 'Could not reach the AI service. Please try again.' },
-      { status: 502 }
-    );
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }
 }
 
-/** Keyword-based offline replies for when no API key is configured. */
+// ── Gemini ────────────────────────────────────────────────────
+
+async function tryGemini(
+  messages: IncomingMessage[],
+  systemPrompt: string
+): Promise<Attempt> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return { ok: false, reason: 'GEMINI_API_KEY not set' };
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const contents = messages.map((m) => ({
+      // Gemini uses "model" where OpenAI-style APIs use "assistant"
+      role: m.role === 'agent' ? 'model' : 'user',
+      parts: [{ text: String(m.content ?? '') }],
+    }));
+
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents,
+      config: {
+        systemInstruction: systemPrompt,
+        temperature: 0.7,
+        maxOutputTokens: 600,
+      },
+    });
+
+    const reply = response.text?.trim();
+    if (!reply) {
+      return { ok: false, reason: 'empty response body' };
+    }
+    return { ok: true, reply };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
+}
+
+/** Keyword-based offline replies for when no provider answers. */
 async function getFallback(
   messages: IncomingMessage[],
   userProfile: Record<string, any> | undefined,
