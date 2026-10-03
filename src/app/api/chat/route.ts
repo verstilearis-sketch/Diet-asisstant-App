@@ -7,13 +7,24 @@ import { GoogleGenAI } from '@google/genai';
 //   2. Secondary — the other provider, tried automatically if primary fails.
 //   3. Offline   — keyword-based replies, so the coach never goes silent.
 //
+// Groq retires model IDs regularly, so the route asks Groq which models
+// currently exist (/v1/models) and picks the first from the preference list
+// below. Set GROQ_MODEL to pin a specific model — it is preferred when
+// available, otherwise the route falls through to the next working one.
+//
 // Put keys in .env.local (project root, next to package.json):
 //   GROQ_API_KEY=...    (fresh key from console.groq.com)
 //   GEMINI_API_KEY=...  (optional backup, from Google AI Studio)
-//   GROQ_MODEL=...      (optional; default llama-3.3-70b-versatile)
+//   GROQ_MODEL=...      (optional; default auto-selected)
 //   GEMINI_MODEL=...    (optional; default gemini-3.8-flash)
 
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_MODEL_PREFERENCE = [
+  process.env.GROQ_MODEL,
+  'llama-3.1-8b-instant',
+  'qwen/qwen3-32b',
+  'moonshotai/kimi-k2-instruct',
+  'openai/gpt-oss-20b',
+].filter((m): m is string => !!m);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 
 const PRIMARY: 'groq' | 'gemini' =
@@ -86,6 +97,32 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 
 // ── Groq ──────────────────────────────────────────────────────
 
+// The model Groq actually serves right now, picked from the preference list.
+// Discovered once via /v1/models and cached in memory; the cache is dropped
+// if a completion 404s so the next request re-discovers.
+let cachedGroqModel: string | null = null;
+
+async function pickGroqModel(apiKey: string): Promise<string> {
+  if (cachedGroqModel) return cachedGroqModel;
+  let available: Set<string> | null = null;
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      available = new Set(((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[]);
+    }
+  } catch {
+    // Discovery failed — fall back to the preference order blind.
+  }
+  const pick =
+    (available && GROQ_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
+    GROQ_MODEL_PREFERENCE[0];
+  cachedGroqModel = pick;
+  return pick;
+}
+
 async function tryGroq(
   messages: IncomingMessage[],
   systemPrompt: string
@@ -104,32 +141,45 @@ async function tryGroq(
       })),
     ];
 
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: chatMessages,
-        temperature: 0.7,
-        max_tokens: 600,
-        stream: false,
-      }),
-    });
+    const attempted = new Set<string>();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const model = await pickGroqModel(apiKey);
+      if (attempted.has(model)) break;
+      attempted.add(model);
 
-    if (!res.ok) {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: chatMessages,
+          temperature: 0.7,
+          max_tokens: 600,
+          stream: false,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (!reply) {
+          return { ok: false, reason: 'empty response body' };
+        }
+        return { ok: true, reply };
+      }
+
       const errText = (await res.text()).slice(0, 200);
+      if (res.status === 404 && errText.includes('model_not_found')) {
+        // Model vanished between discovery and use — rediscover and retry once.
+        cachedGroqModel = null;
+        continue;
+      }
       return { ok: false, reason: `HTTP ${res.status} — ${errText}` };
     }
-
-    const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    if (!reply) {
-      return { ok: false, reason: 'empty response body' };
-    }
-    return { ok: true, reply };
+    return { ok: false, reason: 'no working Groq model found' };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }
