@@ -68,12 +68,17 @@ export default function OnboardingPage() {
   const [generating, setGenerating] = useState(false);
   const [genPhase, setGenPhase] = useState(0);
   const [userId, setUserId] = useState('');
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
-    const session = getSession();
-    if (!session) { router.replace('/auth'); return; }
-    setUserId(session.userId);
-    setProfile((p) => ({ ...p, name: session.name }));
+    let cancelled = false;
+    getSession().then((session) => {
+      if (cancelled) return;
+      if (!session) { router.replace('/auth'); return; }
+      setUserId(session.userId);
+      setProfile((p) => ({ ...p, name: session.name }));
+    });
+    return () => { cancelled = true; };
   }, [router]);
 
   const update = (key: keyof UserProfile, value: unknown) =>
@@ -94,16 +99,22 @@ export default function OnboardingPage() {
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
+    setSaveError('');
     setGenPhase(0);
     for (let i = 0; i < GEN_MESSAGES.length - 1; i++) {
       await new Promise((r) => setTimeout(r, 700));
       setGenPhase(i + 1);
     }
-    const fullProfile = profile as UserProfile;
-    const calculations = computeAll(fullProfile);
-    const plan = await generateDietPlan(fullProfile, calculations);
-    savePlan(userId, fullProfile, plan);
-    router.push('/dashboard');
+    try {
+      const fullProfile = profile as UserProfile;
+      const calculations = computeAll(fullProfile);
+      const plan = await generateDietPlan(fullProfile, calculations);
+      await savePlan(userId, fullProfile, plan);
+      router.push('/dashboard');
+    } catch (err) {
+      setGenerating(false);
+      setSaveError(err instanceof Error ? err.message : 'Could not save your plan. Please try again.');
+    }
   }, [profile, userId, router]);
 
   useEffect(() => {
@@ -474,6 +485,16 @@ export default function OnboardingPage() {
               ))}
             </div>
             {generating && <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--color-faint)' }}>This usually takes a few seconds</div>}
+            {saveError && (
+              <div className="error-box" style={{ maxWidth: 380, margin: '1.5rem auto 0', textAlign: 'left' }}>
+                {saveError}
+                <div style={{ marginTop: '0.75rem' }}>
+                  <button className="btn-secondary" onClick={handleGenerate} style={{ padding: '0.6rem 1.2rem' }}>
+                    Try again
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

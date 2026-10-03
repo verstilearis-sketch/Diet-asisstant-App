@@ -98,8 +98,11 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const session = getSession();
-    if (session) router.replace('/dashboard');
+    let cancelled = false;
+    getSession().then((session) => {
+      if (session && !cancelled) router.replace('/dashboard');
+    });
+    return () => { cancelled = true; };
   }, [router]);
 
   return (

@@ -62,21 +62,29 @@ export default function DashboardPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
-    const session = getSession();
-    if (!session) { router.replace('/auth'); return; }
-    setUserName(session.name);
-    const plan = getLatestPlan(session.userId);
-    if (!plan) { router.replace('/onboarding'); return; }
-    setSavedPlan(plan);
-    setDailyLog(getDailyLog(session.userId, todayStr));
-    setLoading(false);
+    let cancelled = false;
+    (async () => {
+      const session = await getSession();
+      if (!session) { router.replace('/auth'); return; }
+      if (cancelled) return;
+      setUserName(session.name);
+      const plan = await getLatestPlan(session.userId);
+      if (!plan) { router.replace('/onboarding'); return; }
+      if (cancelled) return;
+      setSavedPlan(plan);
+      setDailyLog(await getDailyLog(session.userId, todayStr));
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
   }, [router, todayStr]);
 
   const updateLog = (updates: Partial<DailyLog>) => {
     if (!dailyLog || !savedPlan) return;
     const newLog = { ...dailyLog, ...updates };
     setDailyLog(newLog);
-    saveDailyLog(savedPlan.userId, newLog);
+    saveDailyLog(savedPlan.userId, newLog).catch((e) =>
+      console.error('Failed to save daily log:', e)
+    );
   };
 
   const toggleMeal = (index: number) => {
@@ -86,10 +94,10 @@ export default function DashboardPage() {
     updateLog({ mealsCompleted: meals });
   };
 
-  const handleSignOut = () => { signOut(); router.replace('/'); };
+  const handleSignOut = async () => { await signOut(); router.replace('/'); };
 
-  const handleResetAll = () => {
-    resetAllData();
+  const handleResetAll = async () => {
+    await resetAllData();
     router.replace('/');
   };
 
@@ -145,7 +153,7 @@ export default function DashboardPage() {
             <button className="btn-ghost" onClick={() => router.push('/onboarding')} style={{ fontSize: '0.85rem' }}>
               <RefreshIcon size={15} /> New plan
             </button>
-            <button className="btn-ghost" onClick={() => setShowResetConfirm(true)} style={{ fontSize: '0.85rem' }} title="Delete all accounts, plans and logs stored in this browser">
+            <button className="btn-ghost" onClick={() => setShowResetConfirm(true)} style={{ fontSize: '0.85rem' }} title="Delete your profile, plans and logs from the cloud">
               <TrashIcon size={15} /> Reset data
             </button>
             <button className="btn-ghost" onClick={handleSignOut} style={{ fontSize: '0.85rem', color: 'var(--color-danger)' }}>
@@ -425,7 +433,7 @@ export default function DashboardPage() {
               <div>
                 <h3 style={{ fontSize: '1.02rem', marginBottom: '0.35rem' }}>Reset all data?</h3>
                 <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
-                  This permanently deletes every account, diet plan, and daily log stored in this browser. This cannot be undone.
+                  This permanently deletes your profile, diet plans, and daily logs from the cloud. This cannot be undone.
                 </p>
               </div>
             </div>

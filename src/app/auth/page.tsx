@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSession, signIn, signUp } from '@/lib/storage';
-import { SaladIcon, MailIcon, LockIcon, UserIcon, AlertIcon, ArrowLeftIcon, ArrowRightIcon } from '@/components/icons';
+import { SaladIcon, MailIcon, LockIcon, UserIcon, AlertIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon } from '@/components/icons';
 
 function AuthForm() {
   const router = useRouter();
@@ -22,6 +22,7 @@ function AuthForm() {
 
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [verificationStep, setVerificationStep] = useState<'form' | 'verify'>('form');
@@ -30,8 +31,11 @@ function AuthForm() {
   const [devCode, setDevCode] = useState('');
 
   useEffect(() => {
-    const session = getSession();
-    if (session) router.replace('/dashboard');
+    let cancelled = false;
+    getSession().then((session) => {
+      if (session && !cancelled) router.replace('/dashboard');
+    });
+    return () => { cancelled = true; };
   }, [router]);
 
   useEffect(() => {
@@ -80,7 +84,7 @@ function AuthForm() {
         setLoading(false);
         return;
       }
-      const result = signUp(form.email, form.password, form.name);
+      const result = await signUp(form.email, form.password, form.name);
       if (result.success) {
         router.push('/onboarding');
       } else {
@@ -95,6 +99,7 @@ function AuthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInfo('');
 
     if (mode === 'signup') {
       if (!form.name.trim()) return setError('Please enter your name.');
@@ -107,10 +112,13 @@ function AuthForm() {
         return;
       }
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 600));
-      const result = signUp(email, form.password, form.name.trim());
+      const result = await signUp(email, form.password, form.name.trim());
       if (result.success) {
-        router.push('/onboarding');
+        if (result.pendingConfirmation) {
+          setInfo('Account created! Check your email for the confirmation link, then sign in.');
+        } else {
+          router.push('/onboarding');
+        }
       } else {
         setError(result.error || 'Sign up failed.');
       }
@@ -119,8 +127,7 @@ function AuthForm() {
       const email = form.email.trim().toLowerCase();
       if (!email.includes('@')) return setError('Please enter a valid email.');
       setLoading(true);
-      await new Promise((r) => setTimeout(r, 600));
-      const result = signIn(email, form.password);
+      const result = await signIn(email, form.password);
       if (result.success) {
         router.push('/dashboard');
       } else {
@@ -133,11 +140,13 @@ function AuthForm() {
   const update = (key: string, value: string) => {
     setForm((p) => ({ ...p, [key]: value }));
     setError('');
+    setInfo('');
   };
 
   const toggleMode = () => {
     setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
     setError('');
+    setInfo('');
     setVerificationStep('form');
     setVerificationCode('');
     setCountdown(0);
@@ -288,6 +297,7 @@ function AuthForm() {
           )}
 
           {error && <div className="error-box"><AlertIcon size={16} /> {error}</div>}
+          {info && <div className="info-box"><CheckIcon size={16} /> {info}</div>}
 
           <button className="btn-primary" type="submit" disabled={loading} id="auth-submit" style={{ width: '100%', marginTop: '0.25rem' }}>
             {loading ? (

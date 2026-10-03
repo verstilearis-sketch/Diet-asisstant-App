@@ -1,20 +1,25 @@
-// ── Storage Layer (localStorage → Supabase-ready) ───────────────────────────
+// ── Storage Layer (Supabase) ──────────────────────────────────────────────────
+// Auth via Supabase Auth (proper password hashing, sessions handled by the
+// Supabase client). Profiles, plans and daily logs live in Postgres.
+// Row Level Security guarantees users only ever touch their own rows.
+//
+// NOTE: accounts created with the old localStorage version do not transfer —
+// everyone signs up fresh once. The legacy browser keys are cleared by
+// resetAllData() below.
+import { getSupabase } from './supabase';
 import type { UserProfile } from './calculations';
 import type { DietPlan } from './ai-engine';
 
-export interface StoredUser {
+export interface AuthUser {
   id: string;
   email: string;
-  passwordHash: string; // Demo only
   name: string;
-  createdAt: string;
 }
 
 export interface StoredSession {
   userId: string;
   email: string;
   name: string;
-  expiresAt: string;
 }
 
 export interface SavedPlan {
@@ -34,125 +39,216 @@ export interface DailyLog {
   mood?: 'great' | 'good' | 'okay' | 'bad';
 }
 
-function simpleHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
+export type AuthResult = {
+  success: boolean;
+  error?: string;
+  user?: AuthUser;
+  /** True when the account was created but email confirmation is still pending. */
+  pendingConfirmation?: boolean;
+};
+
+const defaultLog = (date: string): DailyLog => ({
+  date,
+  waterLiters: 0,
+  mealsCompleted: [false, false, false, false, false],
+  exerciseDone: false,
+});
+
+function configError(err: unknown): string {
+  return err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+}
+
+/** Turn Supabase auth errors into plain-language messages. */
+function friendlyAuthError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes('user already registered') || m.includes('already exists')) {
+    return 'Email already registered. Try signing in instead.';
   }
-  return hash.toString(36);
-}
-
-/** UUID v4. crypto.randomUUID() only exists in secure contexts
- *  (https / localhost) — fall back to Math.random when the site is
- *  opened via a LAN IP like http://192.168.x.x, otherwise signup
- *  and plan-saving throw and the UI hangs with no error. */
-function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
+  if (m.includes('invalid login credentials')) {
+    return 'Incorrect email or password.';
   }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  if (m.includes('email not confirmed')) {
+    return 'Please confirm your email first — check your inbox for the link.';
+  }
+  return message;
 }
 
-// ── User management ──────────────────────────────────────────────────────────
-export function getUsers(): StoredUser[] {
-  if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem('dpa_users') || '[]'); } catch { return []; }
-}
-
-export function saveUser(user: StoredUser): void {
-  const users = getUsers();
-  users.push(user);
-  localStorage.setItem('dpa_users', JSON.stringify(users));
-}
-
-export function signUp(email: string, password: string, name: string): { success: boolean; error?: string; user?: StoredUser } {
-  const users = getUsers();
-  if (users.find(u => u.email === email)) return { success: false, error: 'Email already registered' };
-  const user: StoredUser = { id: generateId(), email, passwordHash: simpleHash(password), name, createdAt: new Date().toISOString() };
-  saveUser(user);
-  startSession(user);
-  return { success: true, user };
-}
-
-export function signIn(email: string, password: string): { success: boolean; error?: string; user?: StoredUser } {
-  const users = getUsers();
-  const user = users.find(u => u.email === email);
-  if (!user) return { success: false, error: 'No account found with this email' };
-  if (user.passwordHash !== simpleHash(password)) return { success: false, error: 'Incorrect password' };
-  startSession(user);
-  return { success: true, user };
-}
-
-// ── Session management ────────────────────────────────────────────────────────
-export function startSession(user: StoredUser): void {
-  const session: StoredSession = { userId: user.id, email: user.email, name: user.name, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() };
-  localStorage.setItem('dpa_session', JSON.stringify(session));
-}
-
-export function getSession(): StoredSession | null {
-  if (typeof window === 'undefined') return null;
+async function fetchProfileName(userId: string): Promise<string> {
   try {
-    const raw = localStorage.getItem('dpa_session');
-    if (!raw) return null;
-    const session: StoredSession = JSON.parse(raw);
-    if (new Date(session.expiresAt) < new Date()) { localStorage.removeItem('dpa_session'); return null; }
-    return session;
-  } catch { return null; }
-}
-
-export function signOut(): void {
-  localStorage.removeItem('dpa_session');
-}
-
-/** Permanently removes all DietAI data stored in this browser
- *  (accounts, sessions, plans, daily logs, chat debug data). */
-export function resetAllData(): void {
-  if (typeof window === 'undefined') return;
-  const doomed: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && (key.startsWith('dpa_') || key.startsWith('chat'))) doomed.push(key);
+    const { data } = await getSupabase()
+      .from('profiles')
+      .select('name')
+      .eq('id', userId)
+      .maybeSingle();
+    const name = (data as { name?: string } | null)?.name;
+    return name || '';
+  } catch {
+    return '';
   }
-  doomed.forEach((key) => localStorage.removeItem(key));
 }
 
-// ── Plan storage ──────────────────────────────────────────────────────────────
-export function savePlan(userId: string, profile: UserProfile, plan: DietPlan): SavedPlan {
-  const saved: SavedPlan = { id: generateId(), userId, profile, plan, createdAt: new Date().toISOString() };
-  const plans = getPlans(userId);
-  plans.unshift(saved);
-  localStorage.setItem(`dpa_plans_${userId}`, JSON.stringify(plans.slice(0, 10)));
-  return saved;
+// ── Auth ─────────────────────────────────────────────────────────────
+
+export async function signUp(email: string, password: string, name: string): Promise<AuthResult> {
+  try {
+    const sb = getSupabase();
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    });
+    if (error) return { success: false, error: friendlyAuthError(error.message) };
+    const user = data.user;
+    if (!user) return { success: false, error: 'Sign up failed. Please try again.' };
+    if (!data.session) {
+      // The project requires email confirmation: the account exists, but the
+      // user must click the email link before they can sign in.
+      return {
+        success: true,
+        pendingConfirmation: true,
+        user: { id: user.id, email: user.email ?? email, name },
+      };
+    }
+    const displayName = (await fetchProfileName(user.id)) || name;
+    return { success: true, user: { id: user.id, email: user.email ?? email, name: displayName } };
+  } catch (err) {
+    return { success: false, error: configError(err) };
+  }
 }
 
-export function getPlans(userId: string): SavedPlan[] {
-  if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem(`dpa_plans_${userId}`) || '[]'); } catch { return []; }
+export async function signIn(email: string, password: string): Promise<AuthResult> {
+  try {
+    const sb = getSupabase();
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return { success: false, error: friendlyAuthError(error.message) };
+    const user = data.user;
+    const metaName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name : '';
+    const displayName = (await fetchProfileName(user.id)) || metaName;
+    return { success: true, user: { id: user.id, email: user.email ?? email, name: displayName } };
+  } catch (err) {
+    return { success: false, error: configError(err) };
+  }
 }
 
-export function getLatestPlan(userId: string): SavedPlan | null {
-  const plans = getPlans(userId);
-  return plans[0] || null;
+export async function getSession(): Promise<StoredSession | null> {
+  try {
+    const sb = getSupabase();
+    const { data: { session } } = await sb.auth.getSession();
+    const user = session?.user;
+    if (!user) return null;
+    const metaName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name : '';
+    const name = (await fetchProfileName(user.id)) || metaName;
+    return { userId: user.id, email: user.email ?? '', name };
+  } catch {
+    return null;
+  }
 }
 
-// ── Tracking Logs ─────────────────────────────────────────────────────────────
-export function getDailyLogs(userId: string): Record<string, DailyLog> {
-  if (typeof window === 'undefined') return {};
-  try { return JSON.parse(localStorage.getItem(`dpa_logs_${userId}`) || '{}'); } catch { return {}; }
+export async function signOut(): Promise<void> {
+  try {
+    await getSupabase().auth.signOut();
+  } catch {
+    // Already signed out or misconfigured — nothing to do.
+  }
 }
 
-export function getDailyLog(userId: string, date: string): DailyLog {
-  const logs = getDailyLogs(userId);
-  return logs[date] || { date, waterLiters: 0, mealsCompleted: [false, false, false, false, false], exerciseDone: false };
+/** Permanently deletes the signed-in user's profile, plans and daily logs
+ *  from Supabase, signs them out, and clears any legacy browser keys. */
+export async function resetAllData(): Promise<void> {
+  const sb = getSupabase();
+  const { data: { user } } = await sb.auth.getUser();
+  if (user) {
+    await sb.from('daily_logs').delete().eq('user_id', user.id);
+    await sb.from('plans').delete().eq('user_id', user.id);
+    await sb.from('profiles').delete().eq('id', user.id);
+  }
+  await sb.auth.signOut();
+  if (typeof window !== 'undefined') {
+    const doomed: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('dpa_') || key.startsWith('chat'))) doomed.push(key);
+    }
+    doomed.forEach((key) => localStorage.removeItem(key));
+  }
 }
 
-export function saveDailyLog(userId: string, log: DailyLog): void {
-  const logs = getDailyLogs(userId);
-  logs[log.date] = log;
-  localStorage.setItem(`dpa_logs_${userId}`, JSON.stringify(logs));
+// ── Plans ────────────────────────────────────────────────────────────
+
+export async function savePlan(userId: string, profile: UserProfile, plan: DietPlan): Promise<SavedPlan> {
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from('plans')
+    .insert({ user_id: userId, profile, plan })
+    .select('id, created_at')
+    .single();
+  if (error || !data) {
+    throw new Error('Could not save your plan: ' + (error?.message ?? 'unknown error'));
+  }
+  // Keep the history tidy — retain only the 10 most recent plans.
+  const { data: extras } = await sb
+    .from('plans')
+    .select('id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .range(10, 100);
+  const extraIds = (extras as { id: string }[] | null)?.map((r) => r.id) ?? [];
+  if (extraIds.length > 0) {
+    await sb.from('plans').delete().in('id', extraIds);
+  }
+  const row = data as { id: string; created_at: string };
+  return { id: row.id, userId, profile, plan, createdAt: row.created_at };
+}
+
+export async function getLatestPlan(userId: string): Promise<SavedPlan | null> {
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from('plans')
+    .select('id, user_id, profile, plan, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  const row = data as {
+    id: string; user_id: string; profile: UserProfile; plan: DietPlan; created_at: string;
+  };
+  return {
+    id: row.id,
+    userId: row.user_id,
+    profile: row.profile,
+    plan: row.plan,
+    createdAt: row.created_at,
+  };
+}
+
+// ── Daily logs ───────────────────────────────────────────────────────
+
+export async function getDailyLog(userId: string, date: string): Promise<DailyLog> {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('daily_logs')
+    .select('log')
+    .eq('user_id', userId)
+    .eq('date', date)
+    .maybeSingle();
+  const stored = (data as { log?: Partial<DailyLog> } | null)?.log;
+  if (stored) return { ...defaultLog(date), ...stored, date };
+  return defaultLog(date);
+}
+
+export async function saveDailyLog(userId: string, log: DailyLog): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.from('daily_logs').upsert(
+    {
+      user_id: userId,
+      date: log.date,
+      log,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id,date' }
+  );
+  if (error) {
+    throw new Error('Could not save daily log: ' + error.message);
+  }
 }
