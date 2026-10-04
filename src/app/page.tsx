@@ -229,11 +229,11 @@ export default function LandingPage() {
               <WheatIcon size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.1rem' }}>Built around the food you actually eat</h3>
+              <h3 style={{ fontSize: '1.1rem' }}>Eat your food. Hit your numbers.</h3>
               <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
-                Nutrition research is consistent on one point: people stick to plans built on
-                familiar foods. Tell us your city and your plan is generated from 50+ regional
-                food profiles — the dishes and ingredients of your food culture, portioned to your macros.
+                Your plan isn’t adapted from some generic template — it’s generated from the
+                dishes and ingredients of your food culture, with portions tuned to your calorie
+                and macro targets. Progress that tastes like dinner, not discipline.
               </p>
             </div>
           </div>
@@ -241,7 +241,6 @@ export default function LandingPage() {
             {CUISINES.map((c) => (
               <span key={c} className="cuisine-chip">{c}</span>
             ))}
-            <span className="cuisine-chip" style={{ borderStyle: 'dashed', color: 'var(--color-muted)' }}>+ 30 more</span>
           </div>
         </div>
       </section>
