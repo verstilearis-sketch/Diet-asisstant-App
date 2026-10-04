@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
 // ── Health-coach AI providers ─────────────────────────────────
-// The coach tries each provider in order until one answers:
-//   1. Primary   — Groq by default; set AI_PROVIDER=gemini to prefer Gemini.
-//   2. Secondary — the other provider, tried automatically if primary fails.
-//   3. Tertiary  — OpenRouter (free models, separate quota pool).
-//   4. Offline   — keyword-based replies, so the coach never goes silent.
+// The coach rotates across Groq, Gemini and OpenRouter: each request starts
+// at a random provider (spreading quota evenly) and fails over through the
+// rest. A provider that just rate-limited sits out for a minute. If all
+// three are down, keyword-based offline replies keep the coach talking.
+// Set AI_PROVIDER=gemini to bias the rotation toward Gemini first.
 //
 // Groq retires model IDs regularly, so the route asks Groq which models
 // currently exist (/v1/models) and picks the first from the preference list
@@ -47,6 +47,32 @@ interface IncomingMessage {
 }
 
 type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
+type ProviderName = 'groq' | 'gemini' | 'openrouter';
+
+// ── Rotation + cooldown ─────────────────────────────────────────
+// Same as the shared chain: random start per request spreads quota evenly,
+// and a provider that just rate-limited sits out for a minute.
+
+const COOLDOWN_MS = 60000;
+const cooldownUntil = new Map<ProviderName, number>();
+
+function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
+  cooldownUntil.set(provider, Date.now() + ms);
+}
+
+function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
+  const now = Date.now();
+  const base: ProviderName[] = primary === 'groq'
+    ? ['groq', 'gemini', 'openrouter']
+    : ['gemini', 'groq', 'openrouter'];
+  const ready: ProviderName[] = [];
+  const cooling: ProviderName[] = [];
+  for (const p of base) {
+    ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
+  }
+  const start = ready.length ? Math.floor(Math.random() * ready.length) : 0;
+  return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
+}
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -87,8 +113,7 @@ PLAN:
 - Cuisine focus: ${planContext?.region ?? 'global'}
 If a question is completely off-topic (coding, politics, etc.), briefly redirect to health topics.`;
 
-  const order: ('groq' | 'gemini' | 'openrouter')[] =
-    PRIMARY === 'groq' ? ['groq', 'gemini', 'openrouter'] : ['gemini', 'groq', 'openrouter'];
+  const order = rotatedOrder(PRIMARY);
 
   const failures: string[] = [];
   for (const provider of order) {
@@ -102,6 +127,9 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
       return NextResponse.json({ reply: attempt.reply });
     }
     failures.push(`${provider} (${attempt.reason})`);
+    if (/429|rate.?limit|quota|resource.?exhausted/i.test(attempt.reason)) {
+      markCooldown(provider);
+    }
   }
 
   console.error('Health coach: all AI providers failed —', failures.join('; '));

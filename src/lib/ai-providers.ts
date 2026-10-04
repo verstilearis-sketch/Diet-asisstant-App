@@ -153,14 +153,18 @@ export async function tryGemini(
   }
 }
 
-/** Run the Groq → Gemini → OpenRouter chain, returning the first successful reply. */
+/** Run the provider chain with a rotated start, returning the first successful reply.
+ *  Each request starts at a random provider (spreading quota evenly instead of
+ *  always hammering Groq first) and fails over through the rest. A provider
+ *  that just rate-limited sits out for a minute rather than being retried
+ *  into the ground. */
 export async function runAiChain(
   systemPrompt: string,
   userPrompt: string,
   opts: { maxTokens?: number; temperature?: number } = {},
 ): Promise<{ ok: true; reply: string; provider: ProviderName } | { ok: false; failures: string[] }> {
   const failures: string[] = [];
-  for (const provider of ['groq', 'gemini', 'openrouter'] as const) {
+  for (const provider of rotatedOrder()) {
     const attempt =
       provider === 'groq'
         ? await tryGroq(systemPrompt, userPrompt, opts)
@@ -169,8 +173,32 @@ export async function runAiChain(
           : await tryOpenRouter(systemPrompt, userPrompt, opts);
     if (attempt.ok) return { ok: true, reply: attempt.reply, provider };
     failures.push(`${provider} (${attempt.reason})`);
+    if (/429|rate.?limit|quota|resource.?exhausted/i.test(attempt.reason)) {
+      markCooldown(provider);
+    }
   }
   return { ok: false, failures };
+}
+
+// ── Rotation + cooldown ─────────────────────────────────────────
+
+const COOLDOWN_MS = 60000;
+const cooldownUntil = new Map<ProviderName, number>();
+
+function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
+  cooldownUntil.set(provider, Date.now() + ms);
+}
+
+/** Providers in rotation order: random start, cooling-down providers last. */
+function rotatedOrder(): ProviderName[] {
+  const now = Date.now();
+  const ready: ProviderName[] = [];
+  const cooling: ProviderName[] = [];
+  for (const p of ['groq', 'gemini', 'openrouter'] as ProviderName[]) {
+    ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
+  }
+  const start = ready.length ? Math.floor(Math.random() * ready.length) : 0;
+  return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
 }
 
 // ── OpenRouter (third link — separate free-model quota pool) ────
