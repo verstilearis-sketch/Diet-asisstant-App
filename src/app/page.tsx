@@ -66,7 +66,7 @@ const FAQS = [
   },
   {
     q: 'Will the food match what I actually eat?',
-    a: 'That’s the point of the location question. Tell us your city or region and the plan draws on 40+ regional cuisine profiles — North Indian, Japanese, Mexican, Mediterranean and more — using foods from the markets near you.',
+    a: 'That’s the point of the location question. Tell us your city or region and the plan draws on 50+ regional cuisine profiles — North Indian, Japanese, Mexican, Mediterranean and more — using foods from the markets near you.',
   },
   {
     q: 'Where is my data stored?',
@@ -232,7 +232,7 @@ export default function LandingPage() {
               <h3 style={{ fontSize: '1.1rem' }}>Built around the food you actually eat</h3>
               <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
                 Nutrition research is consistent on one point: people stick to plans built on
-                familiar foods. Tell us your city and your plan is generated from 40+ regional
+                familiar foods. Tell us your city and your plan is generated from 50+ regional
                 food profiles — the dishes and ingredients of your food culture, portioned to your macros.
               </p>
             </div>

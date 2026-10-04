@@ -41,60 +41,82 @@ export interface DietPlan {
 export function detectRegion(location?: string): string {
   const loc = (location || '').toLowerCase();
 
-  // India sub-regions
-  if (/delhi|punjab|haryana|uttar pradesh|rajasthan|himachal|jammu|chandigarh|up\b|lucknow|jaipur|amritsar|agra|varanasi/.test(loc)) return 'north-india';
+  // ── South Asia ──
+  if (/delhi|punjab|haryana|uttar pradesh|rajasthan|himachal|jammu|ladakh|chandigarh|\bup\b|lucknow|jaipur|amritsar|agra|varanasi|madhya pradesh|chhattisgarh|bhopal|indore/.test(loc)) return 'north-india';
   if (/mumbai|maharashtra|goa|gujarat|pune|nagpur|surat|ahmedabad|nashik/.test(loc)) return 'west-india';
-  if (/chennai|tamil|kerala|bangalore|karnataka|andhra|telangana|hyderabad|kochi|coimbatore|mysore/.test(loc)) return 'south-india';
-  if (/kolkata|bengal|odisha|bihar|jharkhand|assam|northeast|guwahati|bhubaneswar/.test(loc)) return 'east-india';
+  if (/chennai|tamil|kerala|bangalore|bengaluru|karnataka|andhra|telangana|hyderabad|kochi|coimbatore|mysore|mysuru|pondicherry|puducherry/.test(loc)) return 'south-india';
+  if (/kolkata|bengal|odisha|bihar|jharkhand|assam|northeast|guwahati|bhubaneswar|meghalaya|manipur|mizoram|nagaland|tripura|sikkim|patna|ranchi/.test(loc)) return 'east-india';
   if (/india|indian/.test(loc)) return 'north-india'; // default Indian
+  if (/pakistan|karachi|lahore|islamabad|rawalpindi|faisalabad|peshawar|quetta|multan/.test(loc)) return 'pakistan';
+  if (/bangladesh|dhaka|chittagong|chattogram|khulna|sylhet/.test(loc)) return 'bangladesh';
+  if (/nepal|kathmandu|pokhara|bhutan|thimphu|tibet|lhasa/.test(loc)) return 'nepal';
+  if (/sri lanka|colombo|kandy|galle|maldives/.test(loc)) return 'sri-lanka';
+  if (/afghanistan|kabul|kandahar|herat/.test(loc)) return 'afghanistan';
 
-  // Neighbouring South Asia
-  if (/pakistan|karachi|lahore|islamabad|peshawar/.test(loc)) return 'pakistan';
-  if (/bangladesh|dhaka|chittagong/.test(loc)) return 'bangladesh';
-  if (/sri lanka|colombo/.test(loc)) return 'south-india';
-  if (/nepal|kathmandu/.test(loc)) return 'nepal';
+  // ── Central Asia ──
+  if (/kazakhstan|astana|almaty|uzbekistan|tashkent|samarkand|kyrgyzstan|bishkek|tajikistan|dushanbe|turkmenistan|ashgabat|mongolia|ulaanbaatar/.test(loc)) return 'central-asia';
 
-  // Middle East
-  if (/saudi|riyadh|jeddah|mecca|medina/.test(loc)) return 'saudi';
-  if (/uae|dubai|abu dhabi|sharjah/.test(loc)) return 'uae';
-  if (/iran|tehran/.test(loc)) return 'iran';
-  if (/turkey|istanbul|ankara/.test(loc)) return 'turkey';
-  if (/egypt|cairo|alexandria/.test(loc)) return 'egypt';
-  if (/lebanon|beirut/.test(loc)) return 'levant';
-  if (/middle east|arab|gulf|kuwait|qatar|bahrain|oman/.test(loc)) return 'gulf';
+  // ── Middle East ──
+  if (/saudi|riyadh|jeddah|mecca|medina|dammam|yemen|sanaa|aden/.test(loc)) return 'gulf';
+  if (/uae|emirates|dubai|abu dhabi|sharjah|qatar|doha|kuwait|kuwait city|oman|muscat|bahrain|manama/.test(loc)) return 'gulf';
+  if (/\bgulf\b|middle east/.test(loc)) return 'gulf';
+  if (/iran|tehran|isfahan|shiraz|persia/.test(loc)) return 'iran';
+  if (/turkey|turkiye|istanbul|ankara|izmir|antalya/.test(loc)) return 'turkey';
+  if (/egypt|cairo|alexandria|giza|luxor/.test(loc)) return 'egypt';
+  if (/lebanon|beirut|jordan|amman|syria|damascus|palestine|gaza|iraq|baghdad|basra|mosul|israel|tel aviv|jerusalem|haifa|levant/.test(loc)) return 'levant';
+  if (/morocco|marrakech|casablanca|rabat|fes|algeria|algiers|oran|tunisia|tunis|libya|tripoli|benghazi|mauritania|nouakchott/.test(loc)) return 'maghreb';
 
-  // East Asia
-  if (/japan|tokyo|osaka|kyoto|yokohama/.test(loc)) return 'japan';
-  if (/china|beijing|shanghai|guangzhou|shenzhen|chengdu/.test(loc)) return 'china';
-  if (/korea|seoul|busan|south korea/.test(loc)) return 'korea';
+  // ── East Asia ──
+  if (/japan|tokyo|osaka|kyoto|yokohama|nagoya|sapporo|kobe/.test(loc)) return 'japan';
+  if (/korea|seoul|busan|incheon|pyongyang/.test(loc)) return 'korea';
+  if (/china|beijing|shanghai|guangzhou|shenzhen|chengdu|hangzhou|hong kong|macau|wuhan|nanjing/.test(loc)) return 'china';
+  if (/taiwan|taipei|kaohsiung/.test(loc)) return 'taiwan';
 
-  // Southeast Asia
-  if (/thailand|bangkok|chiang mai/.test(loc)) return 'thailand';
-  if (/vietnam|hanoi|ho chi minh/.test(loc)) return 'vietnam';
-  if (/indonesia|jakarta|bali/.test(loc)) return 'indonesia';
-  if (/malaysia|kuala lumpur/.test(loc)) return 'malaysia';
-  if (/philippines|manila/.test(loc)) return 'philippines';
+  // ── Southeast Asia ──
+  if (/thailand|bangkok|chiang mai|phuket|pattaya/.test(loc)) return 'thailand';
+  if (/vietnam|hanoi|ho chi minh|saigon|da nang|hue/.test(loc)) return 'vietnam';
+  if (/myanmar|burma|yangon|laos|vientiane|cambodia|phnom penh|siem reap/.test(loc)) return 'mekong';
+  if (/indonesia|jakarta|bali|surabaya|timor/.test(loc)) return 'indonesia';
+  if (/malaysia|kuala lumpur|penang|singapore|brunei/.test(loc)) return 'malaysia-singapore';
+  if (/philippines|manila|cebu|davao/.test(loc)) return 'philippines';
 
-  // Europe & Mediterranean
-  if (/italy|rome|milan|naples/.test(loc)) return 'italy';
-  if (/greece|athens|thessaloniki/.test(loc)) return 'greece';
-  if (/spain|madrid|barcelona|seville/.test(loc)) return 'spain';
-  if (/france|paris|lyon/.test(loc)) return 'france';
-  if (/uk|england|london|britain|scotland|wales/.test(loc)) return 'uk';
-  if (/germany|berlin|munich/.test(loc)) return 'germany';
-  if (/europe|european/.test(loc)) return 'europe';
+  // ── Europe ──
+  if (/italy|italian|rome|milan|naples|florence|venice|turin|vatican|san marino/.test(loc)) return 'italy';
+  if (/spain|madrid|barcelona|seville|valencia|andorra/.test(loc)) return 'spain';
+  if (/portugal|lisbon|porto/.test(loc)) return 'portugal';
+  if (/greece|athens|thessaloniki|cyprus|nicosia|malta|crete/.test(loc)) return 'greece';
+  if (/france|paris|lyon|marseille|nice|monaco/.test(loc)) return 'france';
+  if (/germany|berlin|munich|hamburg|cologne|liechtenstein/.test(loc)) return 'germany';
+  if (/switzerland|zurich|geneva|austria|vienna|salzburg|innsbruck/.test(loc)) return 'alpine';
+  if (/netherlands|amsterdam|rotterdam|belgium|brussels|antwerp|luxembourg|dutch/.test(loc)) return 'benelux';
+  if (/\buk\b|england|london|britain|scotland|wales|ireland|dublin|manchester|birmingham|edinburgh/.test(loc)) return 'uk-ireland';
+  if (/sweden|norway|denmark|finland|iceland|stockholm|oslo|copenhagen|helsinki|reykjavik|scandinavia|nordic/.test(loc)) return 'nordics';
+  if (/poland|warsaw|krakow|hungary|budapest|czech|prague|slovakia|romania|bucharest|bulgaria|sofia|ukraine|kyiv|kyiv|estonia|tallinn|latvia|riga|lithuania|vilnius|moldova/.test(loc)) return 'poland-eastern-europe';
+  if (/russia|moscow|saint petersburg|belarus|minsk/.test(loc)) return 'russia';
+  if (/serbia|belgrade|croatia|zagreb|bosnia|sarajevo|albania|tirana|macedonia|skopje|montenegro|slovenia|kosovo/.test(loc)) return 'balkans';
+  // Georgia the country vs Georgia the US state
+  if (/georgia/.test(loc)) return /usa|united states|atlanta/.test(loc) ? 'usa' : 'caucasus';
+  if (/armenia|yerevan|azerbaijan|baku|caucasus/.test(loc)) return 'caucasus';
 
-  // Americas
-  if (/mexico|guadalajara|monterrey|oaxaca/.test(loc)) return 'mexico';
-  if (/brazil|sao paulo|rio|brasilia/.test(loc)) return 'brazil';
-  if (/colombia|bogota|medellin/.test(loc)) return 'colombia';
-  if (/usa|united states|new york|los angeles|chicago|texas|california/.test(loc)) return 'usa';
-  if (/canada|toronto|vancouver|montreal/.test(loc)) return 'canada';
+  // ── Africa ──
+  if (/nigeria|lagos|abuja|\bniger\b|ghana|accra|senegal|dakar|ivory coast|abidjan|mali|bamako|cameroon|togo|benin|burkina|guinea|sierra leone/.test(loc)) return 'nigeria-west-africa';
+  if (/\bcongo\b|kinshasa|gabon|libreville|chad|central african/.test(loc)) return 'central-africa';
+  if (/kenya|nairobi|tanzania|dar es salaam|uganda|kampala|rwanda|kigali|madagascar|mauritius|seychelles/.test(loc)) return 'swahili-coast';
+  if (/ethiopia|addis ababa|somalia|mogadishu|eritrea|sudan|khartoum|djibouti/.test(loc)) return 'ethiopia-east-africa';
+  if (/south africa|cape town|johannesburg|durban|zimbabwe|harare|zambia|lusaka|botswana|namibia|mozambique|angola|malawi/.test(loc)) return 'south-africa';
 
-  // Africa
-  if (/nigeria|lagos|abuja/.test(loc)) return 'west-africa';
-  if (/ethiopia|addis ababa/.test(loc)) return 'east-africa';
-  if (/south africa|cape town|johannesburg/.test(loc)) return 'south-africa';
+  // ── Americas ──
+  if (/mexico|mexico city|guadalajara|monterrey|oaxaca|cancun/.test(loc)) return 'mexico';
+  if (/guatemala|honduras|el salvador|nicaragua|costa rica|panama|belize/.test(loc)) return 'central-america';
+  if (/cuba|havana|jamaica|kingston|haiti|dominican|santo domingo|puerto rico|trinidad|barbados|bahamas|caribbean/.test(loc)) return 'caribbean';
+  if (/peru|lima|cusco|colombia|bogota|medellin|ecuador|quito|bolivia|la paz|venezuela|caracas/.test(loc)) return 'andean';
+  if (/brazil|sao paulo|rio|brasilia|salvador|fortaleza/.test(loc)) return 'brazil';
+  if (/argentina|buenos aires|chile|santiago|uruguay|montevideo|paraguay|asuncion/.test(loc)) return 'argentina';
+  if (/usa|united states|america|new york|los angeles|chicago|texas|california|florida|canada|toronto|vancouver|montreal/.test(loc)) return 'usa';
+
+  // ── Oceania ──
+  if (/australia|sydney|melbourne|brisbane|perth|new zealand|auckland|wellington/.test(loc)) return 'australia-nz';
+  if (/fiji|suva|papua new guinea|samoa|tonga|vanuatu|solomon|tahiti|guam|pacific/.test(loc)) return 'pacific-islands';
 
   return 'global';
 }
@@ -436,6 +458,1098 @@ const REGIONAL_DB: RegionalFoodDB = {
   },
 
   // ── GLOBAL FALLBACK ──────────────────────────────────────────────────────────
+  'bangladesh': {
+    breakfast: [
+      { name: 'Chotpoti', emoji: '🥣', cal: 350, protein: 14, carbs: 55, fat: 9, prepTime: '20 min', description: 'Yellow peas tossed with potato, tamarind, onion and boiled egg bits', tags: ['vegetarian'] },
+      { name: 'Patishapta Pitha (light)', emoji: '🥞', cal: 300, protein: 8, carbs: 52, fat: 8, prepTime: '25 min', description: 'Rice-flour crepe filled with lightly sweetened coconut and jaggery', tags: ['vegetarian'] },
+      { name: 'Ruti + Alu Bhorta', emoji: '🥔', cal: 380, protein: 12, carbs: 62, fat: 10, prepTime: '20 min', description: 'Two whole wheat flatbreads with mustard-oil mashed potato and green chili', tags: ['vegetarian', 'vegan'] },
+      { name: 'Dal + Paratha (light)', emoji: '🫓', cal: 420, protein: 16, carbs: 58, fat: 14, prepTime: '25 min', description: 'Masoor dal with one lightly-oiled paratha and cucumber slices', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Ilish Bhapa', emoji: '🐟', cal: 550, protein: 34, carbs: 40, fat: 28, prepTime: '30 min', description: 'Steamed hilsa fish in mustard paste, served with steamed rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Bhorta Platter + Rice', emoji: '🥗', cal: 480, protein: 14, carbs: 78, fat: 14, prepTime: '25 min', description: 'Assorted mashed vegetables with mustard oil and steamed rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chicken Roast (Bengali)', emoji: '🍗', cal: 620, protein: 42, carbs: 45, fat: 30, prepTime: '30 min', description: 'Chicken leg marinated in yogurt and spices, roasted, with pulao rice', tags: ['high-protein'] },
+      { name: 'Rui Fish Curry + Rice', emoji: '🐠', cal: 520, protein: 36, carbs: 52, fat: 18, prepTime: '30 min', description: 'Rohu fish in a light turmeric-tomato curry with steamed rice', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Shorshe Ilish (light)', emoji: '🐟', cal: 500, protein: 32, carbs: 45, fat: 22, prepTime: '25 min', description: 'Hilsa in mustard gravy, restrained oil, with brown rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Lau Chingri', emoji: '🍤', cal: 470, protein: 28, carbs: 50, fat: 18, prepTime: '25 min', description: 'Prawns simmered with bottle gourd in light spices, served with rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Vegetable Khichuri', emoji: '🍲', cal: 520, protein: 18, carbs: 82, fat: 14, prepTime: '30 min', description: 'One-pot rice and moong dal with seasonal vegetables, light ghee tempering', tags: ['vegetarian'] },
+      { name: 'Beef Bhuna (light)', emoji: '🥩', cal: 580, protein: 40, carbs: 30, fat: 32, prepTime: '30 min', description: 'Slow-braised beef in caramelized onion gravy, easy on oil, with two ruti', tags: ['high-protein'] },
+    ],
+    snack: [
+      { name: 'Fuchka (6 pc, light)', emoji: '🫓', cal: 220, protein: 6, carbs: 42, fat: 4, prepTime: '15 min', description: 'Crisp semolina shells filled with spiced potato-chickpea mix and tamarind water', tags: ['vegetarian', 'vegan'] },
+      { name: 'Jhal Muri', emoji: '🍿', cal: 160, protein: 5, carbs: 30, fat: 4, prepTime: '10 min', description: 'Puffed rice tossed with mustard oil, peanuts, onion and green chili', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Egg + Chana Chaat', emoji: '🥚', cal: 200, protein: 12, carbs: 20, fat: 8, prepTime: '15 min', description: 'Two boiled eggs with spiced chickpea chaat and lemon', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+    ],
+  },
+
+  'nepal': {
+    breakfast: [
+      { name: 'Sel Roti + Aloo (2 pc)', emoji: '🍩', cal: 380, protein: 8, carbs: 66, fat: 10, prepTime: '25 min', description: 'Two ring-shaped rice-flour doughnuts with spiced potato curry', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Dhindo + Gundruk Soup', emoji: '🍲', cal: 320, protein: 10, carbs: 58, fat: 6, prepTime: '20 min', description: 'Buckwheat porridge with fermented leafy-green soup, a mountain staple', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chicken Momo (6 pc)', emoji: '🥟', cal: 400, protein: 26, carbs: 42, fat: 15, prepTime: '30 min', description: 'Six steamed dumplings stuffed with minced chicken and cabbage, sesame chutney', tags: ['high-protein'] },
+      { name: 'Masala Oats Jhol', emoji: '🥣', cal: 300, protein: 12, carbs: 45, fat: 9, prepTime: '15 min', description: 'Savory oats porridge with turmeric, cumin and mixed vegetables', tags: ['vegetarian', 'vegan'] },
+    ],
+    lunch: [
+      { name: 'Dal Bhat Tarkari', emoji: '🍛', cal: 650, protein: 24, carbs: 98, fat: 18, prepTime: '30 min', description: 'The national plate: lentil soup, rice, seasonal vegetable curry and achar', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chicken Thukpa', emoji: '🍜', cal: 580, protein: 34, carbs: 62, fat: 22, prepTime: '30 min', description: 'Hand-pulled noodle soup with chicken, bok choy and Himalayan spices', tags: ['high-protein'] },
+      { name: 'Veg Momo + Soup (8 pc)', emoji: '🥟', cal: 450, protein: 16, carbs: 68, fat: 14, prepTime: '30 min', description: 'Eight steamed cabbage-carrot dumplings with clear vegetable broth', tags: ['vegetarian', 'vegan'] },
+      { name: 'Sukuti Sadheko (light)', emoji: '🥩', cal: 560, protein: 38, carbs: 35, fat: 28, prepTime: '20 min', description: 'Air-dried buffalo meat tossed with onion, tomato and mustard oil, with beaten rice', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Dal Bhat (chicken)', emoji: '🍗', cal: 620, protein: 38, carbs: 80, fat: 16, prepTime: '30 min', description: 'Lentils, rice and chicken curry with saag and tomato achar', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Gundruk Dhindo Set', emoji: '🥬', cal: 450, protein: 14, carbs: 78, fat: 10, prepTime: '25 min', description: 'Buckwheat dhindo with fermented greens and bean soup', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chicken Choila + Bhuja', emoji: '🍖', cal: 540, protein: 36, carbs: 42, fat: 24, prepTime: '25 min', description: 'Flame-grilled spiced chicken with beaten rice and soybeans', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Aloo Tama Bodi', emoji: '🥔', cal: 480, protein: 16, carbs: 72, fat: 14, prepTime: '25 min', description: 'Bamboo shoot, potato and black-eyed pea curry with steamed rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Wai Wai Sadheko (dry)', emoji: '🍜', cal: 250, protein: 7, carbs: 40, fat: 8, prepTime: '10 min', description: 'Crushed dry noodles tossed with onion, tomato, peas and masala', tags: ['vegetarian', 'vegan'] },
+      { name: 'Roasted Soybean (Bhatmas)', emoji: '🫘', cal: 180, protein: 12, carbs: 12, fat: 10, prepTime: '10 min', description: 'Crunchy roasted soybeans with chili salt and lemon', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Buff Momo (4 pc)', emoji: '🥟', cal: 280, protein: 18, carbs: 28, fat: 11, prepTime: '20 min', description: 'Four steamed buffalo-meat dumplings with tomato-sesame chutney', tags: ['high-protein'] },
+    ],
+  },
+
+  'sri-lanka': {
+    breakfast: [
+      { name: 'Hoppers + Lunu Miris (2 pc)', emoji: '🥞', cal: 350, protein: 8, carbs: 60, fat: 9, prepTime: '25 min', description: 'Two bowl-shaped fermented rice pancakes with spicy onion-chili sambol', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'String Hoppers + Dhal (6 pc)', emoji: '🍝', cal: 380, protein: 14, carbs: 68, fat: 7, prepTime: '25 min', description: 'Six steamed rice-flour noodle nests with red lentil curry', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Egg Hopper (2 pc)', emoji: '🍳', cal: 400, protein: 16, carbs: 52, fat: 14, prepTime: '20 min', description: 'Two crisp appa each with a soft egg center, coconut sambol on the side', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kiribath (light)', emoji: '🍚', cal: 420, protein: 10, carbs: 72, fat: 11, prepTime: '25 min', description: 'Milk rice cooked light on coconut milk, served with lunu miris', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Fish Curry + Red Rice', emoji: '🐟', cal: 580, protein: 36, carbs: 70, fat: 18, prepTime: '30 min', description: 'Tuna simmered in roasted curry-powder gravy with red rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Kottu Roti (chicken, light)', emoji: '🫓', cal: 640, protein: 36, carbs: 60, fat: 28, prepTime: '25 min', description: 'Chopped godhamba roti stir-fried with chicken, egg and vegetables', tags: ['high-protein'] },
+      { name: 'Dhal + Pol Sambol + Rice', emoji: '🥥', cal: 520, protein: 18, carbs: 84, fat: 14, prepTime: '25 min', description: 'Red lentil curry, coconut sambol and steamed rice, the island trinity', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chicken Curry (Jaffna)', emoji: '🍗', cal: 600, protein: 40, carbs: 55, fat: 24, prepTime: '30 min', description: 'Fiery roasted-spice chicken curry with string hoppers', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Hopper Dinner Set', emoji: '🥞', cal: 480, protein: 20, carbs: 70, fat: 14, prepTime: '25 min', description: 'Three plain hoppers with seeni sambol and a boiled egg', tags: ['vegetarian'] },
+      { name: 'Crab Curry (light)', emoji: '🦀', cal: 520, protein: 38, carbs: 45, fat: 20, prepTime: '30 min', description: 'Mud crab in a thin lagoon-spice broth with red rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Vegetable Kottu', emoji: '🥕', cal: 500, protein: 16, carbs: 72, fat: 16, prepTime: '20 min', description: 'Chopped roti tossed with mixed vegetables and egg ribbons', tags: ['vegetarian'] },
+      { name: 'Ambulthiyal', emoji: '🐠', cal: 540, protein: 38, carbs: 50, fat: 20, prepTime: '30 min', description: 'Tuna in a tangy tamarind-black pepper curry with steamed rice', tags: ['high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Pol Roti + Seeni Sambol', emoji: '🫓', cal: 280, protein: 7, carbs: 48, fat: 8, prepTime: '15 min', description: 'Coconut flatbread with sweet caramelized onion relish', tags: ['vegetarian', 'vegan'] },
+      { name: 'Isso Wade (2 pc)', emoji: '🍤', cal: 220, protein: 12, carbs: 26, fat: 8, prepTime: '20 min', description: 'Two crispy lentil fritters topped with tiny shrimp and onion', tags: ['high-protein'] },
+      { name: 'Kurakkan Roti + Katta Sambol', emoji: '🌾', cal: 200, protein: 6, carbs: 36, fat: 5, prepTime: '15 min', description: 'Finger-millet flatbread with fiery chili-onion sambol', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'afghanistan': {
+    breakfast: [
+      { name: 'Bolani Aloo (2 pc)', emoji: '🫓', cal: 380, protein: 10, carbs: 62, fat: 11, prepTime: '25 min', description: 'Two griddled flatbreads stuffed with spiced potato and scallion', tags: ['vegetarian', 'vegan'] },
+      { name: 'Shir Berenj (light)', emoji: '🍚', cal: 320, protein: 9, carbs: 55, fat: 8, prepTime: '25 min', description: 'Rice pudding made with low-fat milk, cardamom and a few pistachios', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Qaymaq + Naan (light)', emoji: '🫓', cal: 420, protein: 12, carbs: 58, fat: 16, prepTime: '10 min', description: 'Clotted cream with honey on warm tandoor naan', tags: ['vegetarian'] },
+      { name: 'Tukhum Banjan', emoji: '🍳', cal: 350, protein: 14, carbs: 28, fat: 20, prepTime: '20 min', description: 'Eggplant and egg skillet with tomato and turmeric', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Kabuli Pulao (chicken, light)', emoji: '🍚', cal: 640, protein: 34, carbs: 78, fat: 22, prepTime: '30 min', description: 'The national dish: saffron rice with chicken, julienned carrot and raisins', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Mantu (8 pc)', emoji: '🥟', cal: 520, protein: 28, carbs: 62, fat: 18, prepTime: '30 min', description: 'Eight beef-and-onion dumplings with yogurt and split-pea topping', tags: ['high-protein'] },
+      { name: 'Borani Banjan', emoji: '🍆', cal: 480, protein: 14, carbs: 60, fat: 20, prepTime: '25 min', description: 'Eggplant layered with garlic yogurt and tomato sauce, served with naan', tags: ['vegetarian'] },
+      { name: 'Aush (Noodle Soup)', emoji: '🍜', cal: 540, protein: 22, carbs: 72, fat: 18, prepTime: '30 min', description: 'Hearty noodle soup with chickpeas, kidney beans and herbed yogurt', tags: ['vegetarian'] },
+    ],
+    dinner: [
+      { name: 'Chicken Kebab + Naan', emoji: '🍢', cal: 580, protein: 42, carbs: 52, fat: 22, prepTime: '30 min', description: 'Char-grilled marinated chicken skewers with naan and grilled tomato', tags: ['high-protein'] },
+      { name: 'Qorma-e-Sabzi (light)', emoji: '🥬', cal: 500, protein: 24, carbs: 55, fat: 20, prepTime: '30 min', description: 'Beef and spinach stew, restrained oil, with brown rice', tags: ['high-protein'] },
+      { name: 'Ashak (veg)', emoji: '🥟', cal: 460, protein: 16, carbs: 70, fat: 14, prepTime: '30 min', description: 'Scallion dumplings with garlic yogurt and meatless lentil sauce', tags: ['vegetarian'] },
+      { name: 'Maash Pulao', emoji: '🍚', cal: 520, protein: 20, carbs: 80, fat: 14, prepTime: '30 min', description: 'Mung bean and rice pilaf with caramelized onion', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Gosh Feel (1 pc, light)', emoji: '🥐', cal: 220, protein: 5, carbs: 36, fat: 7, prepTime: '15 min', description: 'One flaky elephant-ear pastry, lightly sugared', tags: ['vegetarian'] },
+      { name: 'Roasted Chickpeas (Nakhod)', emoji: '🫘', cal: 170, protein: 9, carbs: 26, fat: 4, prepTime: '10 min', description: 'Crunchy salted chickpeas roasted with cumin', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Shor Nakhod', emoji: '🥣', cal: 240, protein: 11, carbs: 38, fat: 6, prepTime: '15 min', description: 'Warm chickpeas with potato, tamarind and green chili', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+    ],
+  },
+
+  'central-asia': {
+    breakfast: [
+      { name: 'Kattama (light)', emoji: '🫓', cal: 380, protein: 10, carbs: 58, fat: 12, prepTime: '20 min', description: 'Flaky layered flatbread, griddled with minimal oil', tags: ['vegetarian'] },
+      { name: 'Syrniki (3 pc, light)', emoji: '🥞', cal: 320, protein: 18, carbs: 36, fat: 12, prepTime: '20 min', description: 'Three pan-fried cottage-cheese cakes with a spoon of sour cream', tags: ['vegetarian'] },
+      { name: 'Shurpa Breakfast Bowl', emoji: '🍲', cal: 420, protein: 28, carbs: 38, fat: 18, prepTime: '30 min', description: 'Light lamb-and-vegetable broth soup with a chunk of bread', tags: ['high-protein'] },
+      { name: 'Talkan Porridge', emoji: '🥣', cal: 300, protein: 10, carbs: 52, fat: 7, prepTime: '15 min', description: 'Roasted barley porridge with milk and honey', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Plov (chicken, light)', emoji: '🍚', cal: 620, protein: 34, carbs: 75, fat: 20, prepTime: '30 min', description: 'The Silk Road classic: rice pilaf with chicken, carrot and cumin, easy on oil', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Lagman (beef)', emoji: '🍜', cal: 640, protein: 32, carbs: 70, fat: 26, prepTime: '30 min', description: 'Hand-pulled noodles in a rich beef-pepper broth with stir-fried vegetables', tags: ['high-protein'] },
+      { name: 'Manti (6 pc)', emoji: '🥟', cal: 560, protein: 28, carbs: 60, fat: 22, prepTime: '30 min', description: 'Six steamed dumplings filled with spiced lamb and onion', tags: ['high-protein'] },
+      { name: 'Dimlama (veg)', emoji: '🥘', cal: 480, protein: 14, carbs: 72, fat: 16, prepTime: '30 min', description: 'Slow-steamed medley of potato, cabbage, carrot and tomato', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Shashlik (chicken, 3 skewers)', emoji: '🍢', cal: 540, protein: 44, carbs: 30, fat: 26, prepTime: '25 min', description: 'Three flame-grilled chicken skewers with onion and flatbread', tags: ['high-protein'] },
+      { name: 'Beshbarmak (light)', emoji: '🍖', cal: 600, protein: 40, carbs: 55, fat: 24, prepTime: '30 min', description: 'Boiled lamb over wide noodles with onion broth, trimmed of excess fat', tags: ['high-protein'] },
+      { name: 'Samsa (2 pc, baked)', emoji: '🥐', cal: 520, protein: 22, carbs: 58, fat: 22, prepTime: '30 min', description: 'Two baked pastries stuffed with lamb, onion and pumpkin', tags: ['high-protein'] },
+      { name: 'Kuurdak (veg)', emoji: '🥔', cal: 460, protein: 12, carbs: 68, fat: 16, prepTime: '25 min', description: 'Pan-fried potato, pepper and onion hash with herbs', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Kaimak + Baursak (2 pc)', emoji: '🍩', cal: 260, protein: 7, carbs: 38, fat: 10, prepTime: '15 min', description: 'Two puffy fried dough bites with clotted cream and honey', tags: ['vegetarian'] },
+      { name: 'Kurt (4 pc)', emoji: '🧀', cal: 160, protein: 12, carbs: 8, fat: 9, prepTime: '10 min', description: 'Four tangy dried yogurt-cheese balls, a nomad staple', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Samsa Veg (1 pc)', emoji: '🥐', cal: 240, protein: 8, carbs: 34, fat: 9, prepTime: '20 min', description: 'One baked pumpkin-and-onion pastry', tags: ['vegetarian'] },
+    ],
+  },
+
+  'iran': {
+    breakfast: [
+      { name: 'Adasi', emoji: '🍲', cal: 320, protein: 16, carbs: 48, fat: 8, prepTime: '20 min', description: 'Warming red lentil soup with turmeric and a squeeze of lime', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Nan + Paneer + Sabzi', emoji: '🫓', cal: 380, protein: 16, carbs: 52, fat: 13, prepTime: '10 min', description: 'Flatbread with fresh cheese, walnuts and a bundle of herbs', tags: ['vegetarian'] },
+      { name: 'Halim (light)', emoji: '🥣', cal: 420, protein: 24, carbs: 52, fat: 13, prepTime: '30 min', description: 'Slow-cooked wheat and shredded chicken porridge with cinnamon', tags: ['high-protein'] },
+      { name: 'Kuku Sabzi (2 slices)', emoji: '🥬', cal: 300, protein: 12, carbs: 22, fat: 18, prepTime: '20 min', description: 'Herb frittata packed with parsley, cilantro and walnuts', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Chelo Kebab (chicken, light)', emoji: '🍢', cal: 640, protein: 42, carbs: 62, fat: 24, prepTime: '30 min', description: 'Char-grilled chicken koobideh with saffron basmati rice and tomato', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ghormeh Sabzi (light)', emoji: '🥬', cal: 560, protein: 30, carbs: 55, fat: 24, prepTime: '30 min', description: 'The beloved herb stew with kidney beans and beef, restrained oil, over rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Zereshk Polo (chicken)', emoji: '🍚', cal: 600, protein: 34, carbs: 75, fat: 18, prepTime: '30 min', description: 'Barberry jeweled rice with saffron chicken', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ash Reshteh', emoji: '🍜', cal: 520, protein: 20, carbs: 78, fat: 14, prepTime: '30 min', description: 'Thick noodle soup with herbs, beans and lentils, crowned with kashk', tags: ['vegetarian'] },
+    ],
+    dinner: [
+      { name: 'Fesenjan (chicken, light)', emoji: '🍗', cal: 580, protein: 34, carbs: 40, fat: 32, prepTime: '30 min', description: 'Pomegranate-walnut stew with chicken, served with a modest scoop of rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Tahdig + Khoresh Bademjan', emoji: '🍆', cal: 540, protein: 22, carbs: 70, fat: 20, prepTime: '30 min', description: 'Crisp saffron rice crust with eggplant-tomato beef stew', tags: ['high-protein'] },
+      { name: 'Baghali Polo (veg)', emoji: '🍚', cal: 500, protein: 16, carbs: 80, fat: 14, prepTime: '30 min', description: 'Dill and fava-bean rice with a fried egg on top', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Joojeh Kebab + Salad', emoji: '🥗', cal: 560, protein: 40, carbs: 35, fat: 28, prepTime: '25 min', description: 'Saffron-lemon grilled chicken pieces with Shirazi salad', tags: ['high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Kashk Bademjan + Bread', emoji: '🫓', cal: 240, protein: 10, carbs: 30, fat: 10, prepTime: '15 min', description: 'Smoky eggplant and whey dip with toasted sangak', tags: ['vegetarian'] },
+      { name: 'Roasted Pistachios (30g)', emoji: '🫘', cal: 170, protein: 6, carbs: 8, fat: 14, prepTime: '10 min', description: 'A handful of lightly salted Persian pistachios', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kotlet (2 pc, baked)', emoji: '🥩', cal: 260, protein: 18, carbs: 20, fat: 12, prepTime: '20 min', description: 'Two baked potato-beef patties with herbs', tags: ['high-protein', 'gluten-free'] },
+    ],
+  },
+
+  'turkey': {
+    breakfast: [
+      { name: 'Menemen (light)', emoji: '🍳', cal: 340, protein: 16, carbs: 26, fat: 20, prepTime: '15 min', description: 'Two eggs scrambled with tomato, green pepper and a little olive oil', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Mercimek Corbasi', emoji: '🍲', cal: 300, protein: 14, carbs: 44, fat: 8, prepTime: '20 min', description: 'Silky red lentil soup with cumin and lemon', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Simit + Peynir (light)', emoji: '🥯', cal: 400, protein: 14, carbs: 58, fat: 13, prepTime: '10 min', description: 'One sesame bagel with white cheese, tomato and cucumber', tags: ['vegetarian'] },
+      { name: 'Yumurtali Ispanak', emoji: '🥬', cal: 320, protein: 18, carbs: 18, fat: 20, prepTime: '15 min', description: 'Spinach wilted with onion, topped with two poached eggs', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Adana Kebab (light)', emoji: '🍢', cal: 600, protein: 38, carbs: 45, fat: 28, prepTime: '30 min', description: 'Hand-minced spicy lamb skewer with bulgur pilaf and grilled tomato', tags: ['high-protein'] },
+      { name: 'Pide Kasarli (light)', emoji: '🫓', cal: 640, protein: 28, carbs: 72, fat: 26, prepTime: '30 min', description: 'Boat-shaped flatbread with melted cheese and a side salad', tags: ['vegetarian'] },
+      { name: 'Grilled Sea Bass + Salad', emoji: '🐟', cal: 520, protein: 40, carbs: 30, fat: 26, prepTime: '25 min', description: 'Whole grilled levrek with olive oil, lemon and shepherd salad', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Kuru Fasulye + Pilav', emoji: '🫘', cal: 560, protein: 22, carbs: 88, fat: 14, prepTime: '30 min', description: 'White bean stew in tomato sauce over buttered rice with pickles', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Tavuk Sis + Bulgur', emoji: '🍗', cal: 580, protein: 42, carbs: 52, fat: 22, prepTime: '30 min', description: 'Marinated chicken skewers with bulgur pilaf and ezme', tags: ['high-protein'] },
+      { name: 'Borek Ispanakli (2 pc, baked)', emoji: '🥐', cal: 500, protein: 18, carbs: 58, fat: 22, prepTime: '25 min', description: 'Two baked spinach-feta pastries with yogurt', tags: ['vegetarian'] },
+      { name: 'Hamsi Tava (light)', emoji: '🐟', cal: 540, protein: 36, carbs: 48, fat: 22, prepTime: '20 min', description: 'Lightly fried Black Sea anchovies with cornmeal crust and salad', tags: ['high-protein'] },
+      { name: 'Imam Bayildi', emoji: '🍆', cal: 470, protein: 12, carbs: 52, fat: 24, prepTime: '30 min', description: 'Eggplant braised in olive oil with tomato and onion, served at room temperature', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Midye Dolma (4 pc)', emoji: '🦪', cal: 220, protein: 12, carbs: 32, fat: 5, prepTime: '15 min', description: 'Four mussels stuffed with spiced rice, served with lemon', tags: ['high-protein'] },
+      { name: 'Kisir', emoji: '🥗', cal: 200, protein: 6, carbs: 34, fat: 6, prepTime: '15 min', description: 'Fine bulgur salad with pomegranate molasses, mint and tomato', tags: ['vegetarian', 'vegan'] },
+      { name: 'Ayran + Galeta', emoji: '🥛', cal: 150, protein: 8, carbs: 22, fat: 4, prepTime: '10 min', description: 'Salted yogurt drink with two sesame breadsticks', tags: ['vegetarian'] },
+    ],
+  },
+
+  'levant': {
+    breakfast: [
+      { name: 'Labneh + Zaatar + Pita', emoji: '🫓', cal: 350, protein: 14, carbs: 42, fat: 15, prepTime: '10 min', description: 'Creamy strained yogurt with zaatar and olive oil, warm pita', tags: ['vegetarian'] },
+      { name: 'Falafel Wrap (3 pc, baked)', emoji: '🥙', cal: 420, protein: 16, carbs: 58, fat: 14, prepTime: '20 min', description: 'Three baked chickpea patties in pita with tahini and pickles', tags: ['vegetarian', 'vegan'] },
+      { name: 'Shakshuka (light)', emoji: '🍳', cal: 320, protein: 16, carbs: 28, fat: 16, prepTime: '20 min', description: 'Two eggs poached in cumin-spiced tomato sauce with pita', tags: ['vegetarian'] },
+      { name: 'Foul + Hummus Bowl', emoji: '🫘', cal: 380, protein: 16, carbs: 50, fat: 14, prepTime: '15 min', description: 'Fava beans and hummus swirled with olive oil, lemon and parsley', tags: ['vegetarian', 'vegan'] },
+    ],
+    lunch: [
+      { name: 'Kafta Grill + Tabbouleh', emoji: '🍢', cal: 580, protein: 36, carbs: 42, fat: 28, prepTime: '25 min', description: 'Grilled spiced beef skewers with parsley-bulgur tabbouleh', tags: ['high-protein'] },
+      { name: 'Mujadara', emoji: '🍚', cal: 520, protein: 18, carbs: 82, fat: 14, prepTime: '30 min', description: 'Lentils and rice crowned with caramelized onions and yogurt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chicken Shawarma Plate (light)', emoji: '🍗', cal: 600, protein: 40, carbs: 48, fat: 26, prepTime: '25 min', description: 'Shaved marinated chicken with garlic sauce, pickles and half pita', tags: ['high-protein'] },
+      { name: 'Falafel Plate (6 pc, baked)', emoji: '🧆', cal: 540, protein: 20, carbs: 72, fat: 20, prepTime: '25 min', description: 'Six baked falafel with hummus, fattoush and tahini', tags: ['vegetarian', 'vegan', 'high-protein'] },
+    ],
+    dinner: [
+      { name: 'Grilled Kafta + Fattoush', emoji: '🥗', cal: 560, protein: 34, carbs: 45, fat: 26, prepTime: '25 min', description: 'Two beef kafta skewers over sumac-dressed bread salad', tags: ['high-protein'] },
+      { name: 'Sayadieh', emoji: '🐟', cal: 580, protein: 38, carbs: 62, fat: 20, prepTime: '30 min', description: 'Spiced rice with fried fish and onion-tahini sauce', tags: ['high-protein'] },
+      { name: 'Musakhan (light)', emoji: '🍗', cal: 600, protein: 36, carbs: 60, fat: 24, prepTime: '30 min', description: 'Sumac chicken over taboon bread with caramelized onions and pine nuts', tags: ['high-protein'] },
+      { name: 'Loubieh bi Zeit', emoji: '🫛', cal: 450, protein: 14, carbs: 60, fat: 18, prepTime: '25 min', description: 'Green beans braised in olive oil and tomato, served with rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Hummus + Pita Chips (baked)', emoji: '🫓', cal: 220, protein: 8, carbs: 32, fat: 8, prepTime: '10 min', description: 'Classic chickpea-tahini dip with baked pita triangles', tags: ['vegetarian', 'vegan'] },
+      { name: 'Manoushe Zaatar (small)', emoji: '🍕', cal: 260, protein: 8, carbs: 40, fat: 9, prepTime: '15 min', description: 'Small thyme-and-sesame flatbread with olive oil', tags: ['vegetarian', 'vegan'] },
+      { name: 'Kibbeh (2 pc, baked)', emoji: '🥩', cal: 280, protein: 20, carbs: 22, fat: 13, prepTime: '25 min', description: 'Two baked bulgur shells stuffed with spiced minced beef', tags: ['high-protein'] },
+    ],
+  },
+
+  'egypt': {
+    breakfast: [
+      { name: 'Ful Medames', emoji: '🫘', cal: 380, protein: 16, carbs: 50, fat: 14, prepTime: '20 min', description: 'The national breakfast of Egypt: slow-cooked fava beans with olive oil, lemon and cumin', tags: ['vegetarian', 'vegan'] },
+      { name: 'Taameya (3 pc, baked)', emoji: '🧆', cal: 360, protein: 14, carbs: 48, fat: 13, prepTime: '20 min', description: 'Three baked fava-bean falafel with tahini and baladi bread', tags: ['vegetarian', 'vegan'] },
+      { name: 'Shakshuka (Egyptian)', emoji: '🍳', cal: 340, protein: 17, carbs: 28, fat: 18, prepTime: '20 min', description: 'Two eggs in a smoky tomato-pepper sauce with whole wheat baladi', tags: ['vegetarian'] },
+      { name: 'Fateer Cheese (light)', emoji: '🥞', cal: 420, protein: 14, carbs: 60, fat: 14, prepTime: '25 min', description: 'Layered flaky pastry with light white cheese and honey drizzle', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Koshari', emoji: '🍚', cal: 620, protein: 22, carbs: 102, fat: 14, prepTime: '30 min', description: 'The iconic mix: rice, lentils, macaroni and chickpeas with spicy tomato sauce', tags: ['vegetarian', 'vegan'] },
+      { name: 'Grilled Kofta + Rice', emoji: '🍢', cal: 600, protein: 36, carbs: 62, fat: 22, prepTime: '25 min', description: 'Char-grilled spiced beef fingers with vermicelli rice and salad', tags: ['high-protein'] },
+      { name: 'Molokhia + Chicken', emoji: '🥬', cal: 560, protein: 38, carbs: 55, fat: 20, prepTime: '30 min', description: 'Jute-leaf stew with garlic over rice and poached chicken', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Hawawshi (light, baked)', emoji: '🫓', cal: 640, protein: 32, carbs: 58, fat: 30, prepTime: '25 min', description: 'Baladi bread stuffed with spiced minced beef, baked not fried', tags: ['high-protein'] },
+    ],
+    dinner: [
+      { name: 'Fateh (chicken, light)', emoji: '🍗', cal: 580, protein: 36, carbs: 62, fat: 20, prepTime: '30 min', description: 'Layered rice, crisp bread and chicken with garlic-vinegar yogurt', tags: ['high-protein'] },
+      { name: 'Samak Mashwi', emoji: '🐟', cal: 540, protein: 40, carbs: 45, fat: 22, prepTime: '25 min', description: 'Whole grilled sea bass with cumin, lemon and tahini salad', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Mahshi (veg)', emoji: '🫑', cal: 500, protein: 14, carbs: 82, fat: 14, prepTime: '30 min', description: 'Zucchini and peppers stuffed with herbed rice in tomato broth', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Torly', emoji: '🥘', cal: 560, protein: 30, carbs: 60, fat: 22, prepTime: '30 min', description: 'Slow-baked beef with potato, carrot and peas in tomato sauce', tags: ['high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Tirmis', emoji: '🫘', cal: 150, protein: 12, carbs: 16, fat: 5, prepTime: '10 min', description: 'Brined lupini beans with cumin and lemon, Alexandria street style', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Dukkah + Bread + Olive Oil', emoji: '🫓', cal: 240, protein: 7, carbs: 30, fat: 12, prepTime: '10 min', description: 'Nut-seed-spice dip with baladi bread and olive oil', tags: ['vegetarian', 'vegan'] },
+      { name: 'Grilled Halloumi (60g)', emoji: '🧀', cal: 200, protein: 12, carbs: 4, fat: 16, prepTime: '10 min', description: 'Seared salty cheese with mint and tomato', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+    ],
+  },
+
+  'maghreb': {
+    breakfast: [
+      { name: 'Msemen (1 pc, light)', emoji: '🫓', cal: 350, protein: 8, carbs: 58, fat: 11, prepTime: '20 min', description: 'Square griddled flatbread with honey and a smear of butter', tags: ['vegetarian'] },
+      { name: 'Harira (small bowl)', emoji: '🍲', cal: 300, protein: 14, carbs: 46, fat: 8, prepTime: '25 min', description: 'Tomato-lentil-chickpea soup with cilantro, a Ramadan favorite', tags: ['vegetarian', 'vegan'] },
+      { name: 'Shakshuka Maghrebi', emoji: '🍳', cal: 340, protein: 16, carbs: 28, fat: 18, prepTime: '20 min', description: 'Two eggs in harissa-spiced tomato sauce with khobz bread', tags: ['vegetarian'] },
+      { name: 'Bissara', emoji: '🫘', cal: 320, protein: 14, carbs: 44, fat: 10, prepTime: '20 min', description: 'Silky split-pea and fava dip with olive oil, cumin and paprika', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Couscous Tfaya (chicken)', emoji: '🍗', cal: 620, protein: 36, carbs: 80, fat: 18, prepTime: '30 min', description: 'Steamed semolina with chicken, caramelized onion and raisins', tags: ['high-protein'] },
+      { name: 'Chicken Tagine (lemon & olive)', emoji: '🫒', cal: 580, protein: 38, carbs: 48, fat: 26, prepTime: '30 min', description: 'Preserved-lemon chicken slow-cooked with olives, served with bread', tags: ['high-protein'] },
+      { name: 'Loubia', emoji: '🫘', cal: 520, protein: 20, carbs: 76, fat: 14, prepTime: '30 min', description: 'White bean stew in tomato-cumin sauce with khobz', tags: ['vegetarian', 'vegan'] },
+      { name: 'Grilled Fish (Chermoula)', emoji: '🐟', cal: 560, protein: 40, carbs: 42, fat: 24, prepTime: '25 min', description: 'Chermoula-marinated sea bream, grilled, with couscous', tags: ['high-protein'] },
+    ],
+    dinner: [
+      { name: 'Tagine Kefta', emoji: '🥗', cal: 560, protein: 34, carbs: 45, fat: 26, prepTime: '30 min', description: 'Spiced beef meatballs poached in tomato sauce with a baked egg', tags: ['high-protein'] },
+      { name: 'Couscous Seven Vegetables', emoji: '🥕', cal: 540, protein: 16, carbs: 88, fat: 14, prepTime: '30 min', description: 'Friday couscous piled with carrot, zucchini, pumpkin and chickpeas', tags: ['vegetarian', 'vegan'] },
+      { name: 'Rfissa (chicken, light)', emoji: '🍗', cal: 600, protein: 34, carbs: 68, fat: 22, prepTime: '30 min', description: 'Shredded msemen with chicken, lentils and fenugreek broth', tags: ['high-protein'] },
+      { name: 'Tanjia (light)', emoji: '🥩', cal: 580, protein: 38, carbs: 40, fat: 28, prepTime: '30 min', description: 'Slow-cooked beef with preserved lemon and garlic, easy on the fat', tags: ['high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Chebakia (2 pc, light)', emoji: '🍯', cal: 220, protein: 5, carbs: 36, fat: 7, prepTime: '15 min', description: 'Two sesame-honey cookies, lightly soaked', tags: ['vegetarian'] },
+      { name: 'Roasted Almonds (25g)', emoji: '🌰', cal: 150, protein: 6, carbs: 6, fat: 13, prepTime: '10 min', description: 'A small handful of dry-roasted almonds', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Sardine Kefta (3 pc)', emoji: '🐟', cal: 240, protein: 22, carbs: 14, fat: 11, prepTime: '20 min', description: 'Three pan-fried sardine patties with chermoula', tags: ['high-protein'] },
+    ],
+  },
+
+  'china': {
+    breakfast: [
+      { name: 'Century Egg & Pork Congee', emoji: '🥣', cal: 320, protein: 18, carbs: 45, fat: 6, prepTime: '25 min', description: 'Silky rice porridge with century egg, shredded pork and ginger', tags: ['gluten-free'] },
+      { name: 'Vegetable Steamed Dumplings', emoji: '🥟', cal: 300, protein: 10, carbs: 52, fat: 6, prepTime: '20 min', description: 'Delicate wheat wrappers filled with bok choy, mushroom and bamboo shoot', tags: ['vegetarian'] },
+      { name: 'Fresh Soy Milk & Youtiao (Light)', emoji: '🥛', cal: 350, protein: 12, carbs: 48, fat: 12, prepTime: '10 min', description: 'Warm fresh soy milk with a small crisp fried dough stick for dipping', tags: ['vegetarian'] },
+      { name: 'Scallion Pancake & Fried Egg', emoji: '🫓', cal: 380, protein: 12, carbs: 50, fat: 14, prepTime: '15 min', description: 'Flaky scallion pancake with a fried egg and black vinegar dip', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Mapo Tofu (Light, Veggie)', emoji: '🌶️', cal: 480, protein: 24, carbs: 40, fat: 22, prepTime: '20 min', description: 'Silken tofu in numbing-spicy bean sauce with mushrooms instead of pork, over rice', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Kung Pao Chicken (Light)', emoji: '🍗', cal: 520, protein: 36, carbs: 40, fat: 18, prepTime: '25 min', description: 'Diced chicken wok-tossed with peanuts, dried chilies and scallions over rice', tags: ['high-protein'] },
+      { name: 'Pork & Shrimp Wonton Soup', emoji: '🍲', cal: 450, protein: 26, carbs: 48, fat: 14, prepTime: '25 min', description: 'Hand-wrapped pork and shrimp wontons in clear ginger-scallion broth', tags: ['high-protein'] },
+      { name: 'Buddha’s Delight with Rice', emoji: '🥗', cal: 460, protein: 18, carbs: 62, fat: 14, prepTime: '20 min', description: 'Braised mixed vegetables, tofu and black mushrooms in light mushroom sauce, with rice', tags: ['vegetarian', 'vegan'] },
+    ],
+    dinner: [
+      { name: 'Steamed Sea Bass, Ginger & Scallion', emoji: '🐟', cal: 480, protein: 38, carbs: 35, fat: 18, prepTime: '25 min', description: 'Whole sea bass steamed with ginger, scallions and light soy, with rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Twice-Cooked Pork (Light)', emoji: '🥩', cal: 580, protein: 32, carbs: 42, fat: 26, prepTime: '30 min', description: 'Lean pork belly twice-cooked with leeks, peppers and black bean sauce, with rice', tags: ['high-protein'] },
+      { name: 'Tomato Egg Stir-Fry', emoji: '🍅', cal: 460, protein: 18, carbs: 62, fat: 12, prepTime: '15 min', description: 'Classic sweet-tart tomato and fluffy egg stir-fry over steamed rice', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Lion’s Head Meatballs (Light)', emoji: '🍖', cal: 520, protein: 30, carbs: 45, fat: 22, prepTime: '30 min', description: 'Giant braised pork meatballs with napa cabbage in savory broth, with rice', tags: ['high-protein'] },
+    ],
+    snack: [
+      { name: 'Tea Egg', emoji: '🥚', cal: 120, protein: 10, carbs: 4, fat: 7, prepTime: '10 min', description: 'Marbled egg simmered in spiced black tea and star anise', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Red Bean Steamed Bun', emoji: '🍡', cal: 200, protein: 5, carbs: 42, fat: 2, prepTime: '15 min', description: 'Fluffy steamed bun with sweet red bean paste', tags: ['vegetarian', 'vegan'] },
+      { name: 'Smashed Cucumber Salad', emoji: '🥒', cal: 130, protein: 4, carbs: 14, fat: 7, prepTime: '10 min', description: 'Smashed cucumbers in garlic black-vinegar dressing with sesame', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'taiwan': {
+    breakfast: [
+      { name: 'Dan Bing', emoji: '🫓', cal: 300, protein: 12, carbs: 40, fat: 10, prepTime: '15 min', description: 'Soft wheat-egg crepe with scallions, rolled with sweet soy paste', tags: ['vegetarian'] },
+      { name: 'Vegetarian Fan Tuan', emoji: '🍙', cal: 340, protein: 12, carbs: 58, fat: 6, prepTime: '15 min', description: 'Sticky rice roll with pickled mustard greens, egg and crispy dough bits', tags: ['vegetarian'] },
+      { name: 'Oyster Omelette (Mini, Light)', emoji: '🦪', cal: 350, protein: 20, carbs: 30, fat: 16, prepTime: '15 min', description: 'Crispy-edged egg omelette with plump oysters and sweet chili sauce', tags: ['high-protein'] },
+      { name: 'Sweet Potato Congee', emoji: '🍠', cal: 280, protein: 8, carbs: 55, fat: 4, prepTime: '25 min', description: 'Gentle rice porridge with chunks of golden sweet potato', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Beef Noodle Soup (Light)', emoji: '🍜', cal: 580, protein: 38, carbs: 60, fat: 18, prepTime: '30 min', description: 'Slow-braised beef shank in aromatic broth with wheat noodles and bok choy', tags: ['high-protein'] },
+      { name: 'Braised Pork Rice (Small)', emoji: '🍚', cal: 520, protein: 22, carbs: 62, fat: 18, prepTime: '25 min', description: 'Small bowl of rice topped with melt-in-mouth braised minced pork', tags: ['high-protein'] },
+      { name: 'Three-Cup Chicken (Light)', emoji: '🍗', cal: 540, protein: 36, carbs: 30, fat: 28, prepTime: '25 min', description: 'Basil, ginger and garlic chicken in sesame oil with rice', tags: ['high-protein'] },
+      { name: 'Braised Bamboo & Mushroom Rice', emoji: '🍄', cal: 460, protein: 14, carbs: 72, fat: 12, prepTime: '20 min', description: 'Braised bamboo shoots and shiitake over rice in savory vegetarian sauce', tags: ['vegetarian', 'vegan'] },
+    ],
+    dinner: [
+      { name: 'Danzai Noodles (Light)', emoji: '🍜', cal: 480, protein: 22, carbs: 60, fat: 16, prepTime: '20 min', description: 'Tainan-style noodles with minced pork, shrimp and bean sprouts in rich shrimp broth', tags: ['high-protein'] },
+      { name: 'Steamed Fish with Black Beans', emoji: '🐟', cal: 500, protein: 36, carbs: 30, fat: 22, prepTime: '25 min', description: 'Delicate white fish steamed with fermented black beans, ginger and scallion, with rice', tags: ['high-protein'] },
+      { name: 'Hakka Stir-Fry (Light)', emoji: '🥬', cal: 520, protein: 28, carbs: 40, fat: 26, prepTime: '25 min', description: 'Pork, squid and tofu stir-fried with celery in savory sauce, with rice', tags: ['high-protein'] },
+      { name: 'Taiwanese Buddha’s Delight', emoji: '🥗', cal: 450, protein: 16, carbs: 65, fat: 12, prepTime: '25 min', description: 'Braised gluten, tofu and seasonal greens in light soy broth with rice', tags: ['vegetarian', 'vegan'] },
+    ],
+    snack: [
+      { name: 'Douhua (Light)', emoji: '🍮', cal: 150, protein: 8, carbs: 24, fat: 2, prepTime: '10 min', description: 'Silky tofu pudding with ginger syrup and soft peanuts', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Mini Pineapple Cake', emoji: '🍍', cal: 220, protein: 3, carbs: 40, fat: 6, prepTime: '10 min', description: 'Buttery shortcrust with tangy pineapple jam filling', tags: ['vegetarian'] },
+      { name: 'Scallion Pancake Bites', emoji: '🥞', cal: 200, protein: 5, carbs: 30, fat: 7, prepTime: '10 min', description: 'Crispy pan-fried scallion pancake cut into shareable bites', tags: ['vegetarian'] },
+    ],
+  },
+
+  'thailand': {
+    breakfast: [
+      { name: 'Jok Moo (Pork Porridge)', emoji: '🥣', cal: 320, protein: 20, carbs: 42, fat: 6, prepTime: '25 min', description: 'Thick Thai rice porridge with minced pork, ginger and soft egg', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Khao Tom (Veggie)', emoji: '🍚', cal: 280, protein: 10, carbs: 52, fat: 4, prepTime: '20 min', description: 'Light boiled-rice soup with mushrooms, greens and fried garlic', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Khai Jiao with Rice', emoji: '🍳', cal: 380, protein: 16, carbs: 45, fat: 14, prepTime: '15 min', description: 'Puffy crisp-edged Thai omelette over jasmine rice with lime-chili on the side', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Nam Tao Hu & Pa Thong Ko', emoji: '🥛', cal: 330, protein: 12, carbs: 52, fat: 8, prepTime: '10 min', description: 'Warm sweetened soy milk with two crisp Thai-Chinese crullers', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Pad Thai Goong (Light)', emoji: '🍜', cal: 560, protein: 28, carbs: 68, fat: 16, prepTime: '25 min', description: 'Tamarind rice noodles with shrimp, egg, bean sprouts and crushed peanut', tags: ['high-protein'] },
+      { name: 'Green Curry Gai (Light Coconut)', emoji: '🍛', cal: 520, protein: 34, carbs: 42, fat: 22, prepTime: '25 min', description: 'Fragrant green curry with chicken, Thai eggplant and basil over jasmine rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Som Tum Jay with Tofu & Sticky Rice', emoji: '🥗', cal: 460, protein: 14, carbs: 72, fat: 12, prepTime: '20 min', description: 'Fiery meat-free green papaya salad with lime and peanut, grilled tofu and sticky rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Khao Man Gai (Light)', emoji: '🍗', cal: 540, protein: 36, carbs: 55, fat: 16, prepTime: '30 min', description: 'Poached chicken with fragrant oily rice (light), cucumber and ginger-chili sauce', tags: ['high-protein'] },
+    ],
+    dinner: [
+      { name: 'Tom Yum Goong with Rice', emoji: '🍤', cal: 480, protein: 32, carbs: 48, fat: 14, prepTime: '25 min', description: 'Hot-sour lemongrass broth loaded with prawns and mushrooms, with jasmine rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Massaman Nuea (Light)', emoji: '🥘', cal: 600, protein: 32, carbs: 48, fat: 28, prepTime: '30 min', description: 'Mild aromatic curry with tender beef, potatoes and roasted peanuts, with rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pad Kra Pao Gai (Light)', emoji: '🌶️', cal: 520, protein: 36, carbs: 50, fat: 16, prepTime: '20 min', description: 'Wok-fired minced chicken with holy basil, chilies and fried egg over rice', tags: ['high-protein'] },
+      { name: 'Pad Pak Ruam with Tofu', emoji: '🥬', cal: 450, protein: 16, carbs: 62, fat: 14, prepTime: '20 min', description: 'Crisp garden vegetables and tofu wok-tossed in light garlic-soy with jasmine rice', tags: ['vegetarian', 'vegan'] },
+    ],
+    snack: [
+      { name: 'Chicken Satay (3 sticks)', emoji: '🍢', cal: 220, protein: 20, carbs: 8, fat: 12, prepTime: '15 min', description: 'Char-grilled turmeric chicken skewers with light peanut sauce', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Mango Sticky Rice (Small)', emoji: '🥭', cal: 260, protein: 4, carbs: 55, fat: 5, prepTime: '10 min', description: 'Sweet mango with a small scoop of coconut sticky rice', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Tod Mun Pla (2 pc, Light)', emoji: '🐠', cal: 180, protein: 14, carbs: 12, fat: 8, prepTime: '15 min', description: 'Bouncy Thai fish cakes with red curry paste and cucumber relish', tags: ['high-protein'] },
+    ],
+  },
+
+  'vietnam': {
+    breakfast: [
+      { name: 'Pho Bo (Light)', emoji: '🍜', cal: 420, protein: 30, carbs: 48, fat: 10, prepTime: '30 min', description: 'Aromatic beef broth with flat rice noodles, rare beef and fresh herbs', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Banh Mi Op La', emoji: '🥖', cal: 360, protein: 14, carbs: 50, fat: 10, prepTime: '15 min', description: 'Crispy baguette with fried eggs, pickled daikon-carrot and cilantro', tags: ['vegetarian'] },
+      { name: 'Xoi (Veggie)', emoji: '🍚', cal: 320, protein: 8, carbs: 62, fat: 5, prepTime: '20 min', description: 'Coconut sticky rice with mung bean, sesame salt and scallion oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chao Ga', emoji: '🥣', cal: 300, protein: 18, carbs: 44, fat: 5, prepTime: '25 min', description: 'Silky chicken rice porridge with ginger, scallion and fried shallot', tags: ['gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Bun Cha', emoji: '🥩', cal: 560, protein: 30, carbs: 62, fat: 18, prepTime: '30 min', description: 'Char-grilled pork patties with rice vermicelli, herbs and tangy dipping broth', tags: ['high-protein'] },
+      { name: 'Banh Mi Ga (Whole Grain)', emoji: '🥪', cal: 480, protein: 28, carbs: 55, fat: 14, prepTime: '15 min', description: 'Whole-grain baguette with lemongrass chicken, pickles and light chili mayo', tags: ['high-protein'] },
+      { name: 'Goi Cuon Tom Thit (4 pc)', emoji: '🦐', cal: 450, protein: 22, carbs: 55, fat: 12, prepTime: '20 min', description: 'Four translucent rolls of shrimp, pork, vermicelli and herbs with hoisin-peanut dip', tags: ['high-protein'] },
+      { name: 'Pho Chay', emoji: '🍲', cal: 450, protein: 16, carbs: 70, fat: 10, prepTime: '25 min', description: 'Fragrant mushroom-star anise broth with rice noodles, tofu and Thai basil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Com Tam Suon', emoji: '🍖', cal: 620, protein: 34, carbs: 70, fat: 20, prepTime: '30 min', description: 'Broken rice with lemongrass pork chop, shredded pork skin and steamed egg', tags: ['high-protein'] },
+      { name: 'Ca Kho To (Light)', emoji: '🐟', cal: 520, protein: 34, carbs: 45, fat: 20, prepTime: '30 min', description: 'Caramel-braised catfish in clay pot with steamed rice and greens', tags: ['high-protein'] },
+      { name: 'Bo Luc Lac (Light)', emoji: '🥘', cal: 560, protein: 36, carbs: 35, fat: 28, prepTime: '25 min', description: 'Wok-seared cubed beef with watercress, tomato and lime-pepper dip, with rice', tags: ['high-protein'] },
+      { name: 'Dau Hu Sot Ca Chua', emoji: '🍅', cal: 460, protein: 20, carbs: 58, fat: 14, prepTime: '20 min', description: 'Golden fried tofu braised in tangy tomato sauce with steamed rice', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+    ],
+    snack: [
+      { name: 'Banh Flan (Light)', emoji: '🍮', cal: 180, protein: 6, carbs: 30, fat: 4, prepTime: '10 min', description: 'Silky Vietnamese caramel custard, lightly sweetened', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Che Bap (Light)', emoji: '🌽', cal: 200, protein: 4, carbs: 44, fat: 3, prepTime: '15 min', description: 'Warm sweet-corn pudding with coconut cream drizzle', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Banh Trang Nuong (Veggie)', emoji: '🫓', cal: 220, protein: 8, carbs: 38, fat: 4, prepTime: '10 min', description: 'Crispy grilled rice paper with egg, scallion and chili sauce', tags: ['vegetarian'] },
+    ],
+  },
+
+  'mekong': {
+    breakfast: [
+      { name: 'Mohinga (Light)', emoji: '🍜', cal: 380, protein: 22, carbs: 55, fat: 8, prepTime: '30 min', description: 'Myanmar’s beloved lemongrass fish chowder with rice noodles, egg and light crispy fritters', tags: ['high-protein'] },
+      { name: 'Laphet Thoke (Small)', emoji: '🥗', cal: 300, protein: 8, carbs: 28, fat: 18, prepTime: '15 min', description: 'Fermented tea leaves tossed with peanuts, sesame, tomato and lime (no dried shrimp)', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Khao Piak Sen Gai', emoji: '🍲', cal: 360, protein: 24, carbs: 48, fat: 8, prepTime: '25 min', description: 'Lao-style chewy rice noodles in clear chicken broth with herbs', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Tofu Nway', emoji: '🥣', cal: 280, protein: 14, carbs: 40, fat: 6, prepTime: '20 min', description: 'Creamy chickpea-tofu porridge with crispy shallots and chili oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Larb Gai (Light)', emoji: '🌶️', cal: 460, protein: 36, carbs: 25, fat: 22, prepTime: '20 min', description: 'Zesty Lao minced-chicken salad with toasted rice powder, mint and lime, with sticky rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Fish Amok', emoji: '🐟', cal: 480, protein: 32, carbs: 30, fat: 24, prepTime: '30 min', description: 'Cambodian steamed fish custard in banana leaf with kroeung curry and coconut, with rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Tofu Hin with Rice', emoji: '🍛', cal: 470, protein: 18, carbs: 60, fat: 16, prepTime: '25 min', description: 'Silky chickpea-tofu simmered in turmeric-onion curry with steamed rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Bai Sach Chrouk', emoji: '🍖', cal: 520, protein: 28, carbs: 62, fat: 16, prepTime: '25 min', description: 'Cambodian coconut-grilled pork over broken rice with pickled vegetables', tags: ['high-protein'] },
+    ],
+    dinner: [
+      { name: 'Burmese Chicken Curry (Light)', emoji: '🥘', cal: 560, protein: 36, carbs: 50, fat: 20, prepTime: '30 min', description: 'Home-style Burmese chicken curry with potatoes and turmeric rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ping Pa', emoji: '🐠', cal: 500, protein: 38, carbs: 30, fat: 24, prepTime: '25 min', description: 'Whole river fish grilled in banana leaf with dill and lime, with sticky rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Samlor Korko with Rice', emoji: '🥬', cal: 450, protein: 14, carbs: 68, fat: 12, prepTime: '25 min', description: 'Cambodian kroeung-spiced vegetable soup with pumpkin and morning glory, with rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Ohn No Khao Swe (Light)', emoji: '🍜', cal: 540, protein: 30, carbs: 58, fat: 20, prepTime: '30 min', description: 'Burmese coconut chicken noodle soup with crispy noodle topping and lime', tags: ['high-protein'] },
+    ],
+    snack: [
+      { name: 'Baked Burmese Samosa (2 pc)', emoji: '🥟', cal: 220, protein: 6, carbs: 36, fat: 6, prepTime: '15 min', description: 'Crisp baked samosas with spiced potato-pea filling and tamarind dip', tags: ['vegetarian', 'vegan'] },
+      { name: 'Num Kom', emoji: '🥥', cal: 200, protein: 4, carbs: 38, fat: 4, prepTime: '15 min', description: 'Steamed palm-sugar coconut rice cake wrapped in banana leaf', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Crispy Tofu with Tamarind', emoji: '🍘', cal: 180, protein: 10, carbs: 14, fat: 10, prepTime: '15 min', description: 'Golden chickpea-tofu cubes with sweet-tart tamarind dip', tags: ['vegetarian', 'vegan', 'high-protein'] },
+    ],
+  },
+
+  'indonesia': {
+    breakfast: [
+      { name: 'Bubur Ayam', emoji: '🥣', cal: 340, protein: 22, carbs: 45, fat: 6, prepTime: '25 min', description: 'Savory chicken rice porridge with shredded chicken, cakwe bits and scallion', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Nasi Uduk (Small, Veggie)', emoji: '🍚', cal: 360, protein: 10, carbs: 58, fat: 10, prepTime: '20 min', description: 'Fragrant coconut rice with tempeh orek, cucumber and light sambal', tags: ['vegetarian'] },
+      { name: 'Pisang Goreng Panggang (2 pc)', emoji: '🍌', cal: 250, protein: 4, carbs: 52, fat: 4, prepTime: '15 min', description: 'Caramelized baked banana fritters with a whisper of palm sugar', tags: ['vegetarian', 'vegan'] },
+      { name: 'Gado-Gado Bowl (Small)', emoji: '🥗', cal: 380, protein: 14, carbs: 48, fat: 14, prepTime: '20 min', description: 'Blanched greens, tofu and lontong with light peanut dressing and small krupuk', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Nasi Goreng Ayam (Light)', emoji: '🥘', cal: 560, protein: 30, carbs: 65, fat: 18, prepTime: '25 min', description: 'Smoky wok-fried rice with chicken, egg ribbons and krupuk (light oil)', tags: ['high-protein'] },
+      { name: 'Soto Ayam (Light)', emoji: '🍲', cal: 450, protein: 32, carbs: 42, fat: 14, prepTime: '30 min', description: 'Golden turmeric chicken soup with rice cakes, egg and bean sprouts', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Gado-Gado', emoji: '🥬', cal: 520, protein: 20, carbs: 55, fat: 22, prepTime: '25 min', description: 'Rainbow blanched vegetables, tempeh and egg under creamy peanut sauce with rice', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Ikan Bakar', emoji: '🐟', cal: 500, protein: 38, carbs: 35, fat: 18, prepTime: '30 min', description: 'Char-grilled fish in banana leaf with sambal dabu-dabu and steamed rice', tags: ['high-protein'] },
+    ],
+    dinner: [
+      { name: 'Ayam Rendang (Light)', emoji: '🍛', cal: 580, protein: 38, carbs: 40, fat: 28, prepTime: '30 min', description: 'Slow-braised chicken in lightened coconut rendang spices with steamed rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Sayur Lodeh with Tempeh', emoji: '🥥', cal: 460, protein: 16, carbs: 58, fat: 16, prepTime: '25 min', description: 'Mixed vegetables simmered in light coconut-turmeric broth with rice and fried tempeh', tags: ['vegetarian', 'vegan'] },
+      { name: 'Ayam Bakar', emoji: '🍗', cal: 540, protein: 40, carbs: 38, fat: 20, prepTime: '30 min', description: 'Sweet-soy marinated grilled chicken with lalapan greens, rice and sambal', tags: ['high-protein'] },
+      { name: 'Pepes Tahu', emoji: '🌿', cal: 450, protein: 20, carbs: 45, fat: 20, prepTime: '25 min', description: 'Spiced tofu steamed in banana leaf with basil and lemongrass, with rice', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Baked Tempeh Chips', emoji: '🫓', cal: 180, protein: 12, carbs: 12, fat: 10, prepTime: '15 min', description: 'Crisp baked tempeh chips dusted with garlic salt', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Dadar Gulung (Light)', emoji: '🥞', cal: 200, protein: 4, carbs: 42, fat: 4, prepTime: '15 min', description: 'Green pandan crepe rolled around palm-sugar coconut', tags: ['vegetarian'] },
+      { name: 'Rujak Buah', emoji: '🍍', cal: 150, protein: 2, carbs: 36, fat: 1, prepTime: '10 min', description: 'Crisp tropical fruits tossed in sweet-spicy palm-sugar dressing', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'malaysia-singapore': {
+    breakfast: [
+      { name: 'Nasi Lemak (Small, No Anchovy)', emoji: '🍚', cal: 420, protein: 14, carbs: 62, fat: 12, prepTime: '20 min', description: 'Coconut rice with veggie sambal, cucumber, peanuts and half a boiled egg', tags: ['vegetarian'] },
+      { name: 'Roti Canai with Dhal (Light)', emoji: '🫓', cal: 380, protein: 10, carbs: 58, fat: 12, prepTime: '15 min', description: 'Flaky whole-wheat flatbread with light lentil dhal for dipping', tags: ['vegetarian'] },
+      { name: 'Kaya Toast (Whole Grain, Light)', emoji: '🍞', cal: 300, protein: 8, carbs: 52, fat: 6, prepTime: '10 min', description: 'Toasted whole-grain bread with light kaya and soft-boiled eggs', tags: ['vegetarian'] },
+      { name: 'Chee Cheong Fun (Veggie)', emoji: '🍥', cal: 280, protein: 8, carbs: 55, fat: 4, prepTime: '15 min', description: 'Silky steamed rice-noodle rolls with sweet soy and sesame', tags: ['vegetarian', 'vegan'] },
+    ],
+    lunch: [
+      { name: 'Hainanese Chicken Rice (Light)', emoji: '🍗', cal: 560, protein: 38, carbs: 60, fat: 16, prepTime: '30 min', description: 'Silky poached chicken with fragrant oily rice (light), cucumber and chili-ginger', tags: ['high-protein'] },
+      { name: 'Laksa (Light)', emoji: '🍜', cal: 520, protein: 28, carbs: 55, fat: 20, prepTime: '25 min', description: 'Lightened coconut-lemongrass broth with prawns, tofu puffs and rice noodles', tags: ['high-protein'] },
+      { name: 'Yong Tau Foo Soup', emoji: '🍲', cal: 450, protein: 26, carbs: 48, fat: 14, prepTime: '25 min', description: 'Tofu and vegetables stuffed with seasoned fish paste in clear broth with noodles', tags: ['high-protein'] },
+      { name: 'Nasi Kerabu (Veggie)', emoji: '🌿', cal: 460, protein: 14, carbs: 70, fat: 12, prepTime: '25 min', description: 'Butterfly-pea blue rice with fresh ulam herbs, coconut and light sambal', tags: ['vegetarian', 'vegan'] },
+    ],
+    dinner: [
+      { name: 'Char Kway Teow (Light)', emoji: '🥘', cal: 580, protein: 26, carbs: 70, fat: 20, prepTime: '25 min', description: 'Wok-breath flat rice noodles with prawns, egg and chives, light on oil', tags: ['high-protein'] },
+      { name: 'Assam Pedas Ikan (Light)', emoji: '🐟', cal: 500, protein: 36, carbs: 40, fat: 20, prepTime: '30 min', description: 'Tamarind-spicy fish stew with okra and eggplant, with steamed rice', tags: ['high-protein'] },
+      { name: 'Bak Kut Teh (Light)', emoji: '🍖', cal: 540, protein: 34, carbs: 42, fat: 24, prepTime: '30 min', description: 'Peppery pork-rib herbal soup with mushrooms and rice, small youtiao on the side', tags: ['high-protein'] },
+      { name: 'Sayur Lemak', emoji: '🥥', cal: 450, protein: 14, carbs: 55, fat: 18, prepTime: '25 min', description: 'Cabbage and long beans simmered in light coconut-turmeric gravy with rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Baked Veggie Curry Puff', emoji: '🥟', cal: 200, protein: 5, carbs: 32, fat: 6, prepTime: '15 min', description: 'Flaky baked puff with curried potato-pea filling', tags: ['vegetarian'] },
+      { name: 'Kuih Lapis (2 pc, Light)', emoji: '🍰', cal: 180, protein: 3, carbs: 40, fat: 2, prepTime: '10 min', description: 'Two slices of rainbow steamed layer cake, gently sweet', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Baked Cucur Udang (2 pc)', emoji: '🍤', cal: 220, protein: 12, carbs: 28, fat: 7, prepTime: '15 min', description: 'Crisp baked prawn fritters with chili-vinegar dip', tags: ['high-protein'] },
+    ],
+  },
+
+  'philippines': {
+    breakfast: [
+      { name: 'Tapsilog (Light)', emoji: '🥩', cal: 420, protein: 30, carbs: 48, fat: 10, prepTime: '20 min', description: 'Lean beef tapa, garlic rice and fried egg with vinegar dip', tags: ['high-protein'] },
+      { name: 'Champorado (Light)', emoji: '🍫', cal: 320, protein: 8, carbs: 62, fat: 5, prepTime: '20 min', description: 'Chocolate rice porridge, lightly sweetened, with a swirl of milk', tags: ['vegetarian'] },
+      { name: 'Tortang Talong', emoji: '🍆', cal: 280, protein: 12, carbs: 28, fat: 14, prepTime: '20 min', description: 'Grilled eggplant omelette with tomato-onion relish', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Arroz Caldo (Light)', emoji: '🥣', cal: 320, protein: 22, carbs: 42, fat: 6, prepTime: '25 min', description: 'Gingery chicken rice porridge with toasted garlic and scallion', tags: ['high-protein', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Chicken Adobo (Light)', emoji: '🍗', cal: 520, protein: 38, carbs: 45, fat: 18, prepTime: '30 min', description: 'Vinegar-soy braised skinless chicken with garlic rice', tags: ['high-protein'] },
+      { name: 'Sinigang na Bangus', emoji: '🐟', cal: 480, protein: 34, carbs: 42, fat: 16, prepTime: '30 min', description: 'Tamarind-sour milkfish soup with kangkong, radish and eggplant, with rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pinakbet (Veggie)', emoji: '🥬', cal: 460, protein: 14, carbs: 68, fat: 12, prepTime: '25 min', description: 'Bitter gourd, squash and okra stewed with tomato (no bagoong), with brown rice', tags: ['vegetarian', 'vegan'] },
+      { name: 'Grilled Bangus', emoji: '🐠', cal: 500, protein: 36, carbs: 40, fat: 18, prepTime: '25 min', description: 'Char-grilled boneless milkfish stuffed with tomato-onion, with garlic rice', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Chicken Inasal (Light)', emoji: '🐔', cal: 540, protein: 40, carbs: 42, fat: 20, prepTime: '30 min', description: 'Annatto-grilled chicken with calamansi dip, garlic rice and atchara', tags: ['high-protein'] },
+      { name: 'Kare-Kare Gulay (Light)', emoji: '🥘', cal: 520, protein: 24, carbs: 55, fat: 22, prepTime: '30 min', description: 'Peanut stew with tofu, banana heart and sitaw in lightened sauce, with rice', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Laing (Light)', emoji: '🌿', cal: 450, protein: 12, carbs: 50, fat: 22, prepTime: '25 min', description: 'Taro leaves simmered in light coconut milk with ginger and chili, with rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Adobong Kangkong with Tofu', emoji: '🥗', cal: 460, protein: 18, carbs: 60, fat: 14, prepTime: '20 min', description: 'Water spinach and crisp tofu in adobo-style vinegar glaze with rice', tags: ['vegetarian', 'vegan'] },
+    ],
+    snack: [
+      { name: 'Baked Turon', emoji: '🍌', cal: 200, protein: 3, carbs: 44, fat: 3, prepTime: '15 min', description: 'Baked banana-jackfruit roll in crisp lumpia wrapper with palm sugar', tags: ['vegetarian', 'vegan'] },
+      { name: 'Puto (2 pc)', emoji: '🧁', cal: 180, protein: 4, carbs: 38, fat: 2, prepTime: '10 min', description: 'Two fluffy steamed rice cakes with a hint of cheese', tags: ['vegetarian'] },
+      { name: 'Kamote Cue (Baked)', emoji: '🍠', cal: 160, protein: 3, carbs: 38, fat: 1, prepTime: '15 min', description: 'Caramelized baked sweet potato skewers with palm sugar glaze', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'nigeria-west-africa': {
+    breakfast: [
+      { name: 'Moi Moi (Steamed Bean Pudding)', emoji: '🫘', cal: 300, protein: 18, carbs: 35, fat: 10, prepTime: '30 min', description: 'Silky steamed black-eyed pea pudding with peppers, onions and a touch of palm oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Akara & Pap', emoji: '🧆', cal: 340, protein: 12, carbs: 55, fat: 8, prepTime: '25 min', description: 'Crispy black-eyed pea fritters served with warm fermented corn pap', tags: ['vegetarian', 'vegan'] },
+      { name: 'Boiled Yam & Egg Sauce', emoji: '🍠', cal: 380, protein: 16, carbs: 52, fat: 12, prepTime: '20 min', description: 'Soft chunks of white yam with a rich tomato-pepper egg sauce', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Dodo & Ewa Riro', emoji: '🍌', cal: 420, protein: 14, carbs: 68, fat: 10, prepTime: '20 min', description: 'Caramelised fried plantain with stewed honey beans in palm oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Jollof Rice + Grilled Chicken', emoji: '🍗', cal: 640, protein: 44, carbs: 70, fat: 18, prepTime: '30 min', description: 'Smoky party-style tomato jollof rice with char-grilled chicken thigh', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Egusi Soup + Pounded Yam', emoji: '🍲', cal: 620, protein: 28, carbs: 58, fat: 30, prepTime: '30 min', description: 'Melon-seed soup with spinach and mushrooms, scooped with smooth pounded yam', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Ofada Rice + Ayamase', emoji: '🍚', cal: 580, protein: 22, carbs: 78, fat: 16, prepTime: '25 min', description: 'Nutty local ofada rice with fiery green bell-pepper ayamase sauce', tags: ['vegetarian', 'vegan'] },
+      { name: 'Ewa Oloyin (Honey Beans Porridge)', emoji: '🥘', cal: 520, protein: 24, carbs: 72, fat: 10, prepTime: '30 min', description: 'Slow-cooked brown honey beans in palm oil with sweet peppers and onions', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+    ],
+    dinner: [
+      { name: 'Suya + Cabbage Salad', emoji: '🥩', cal: 550, protein: 42, carbs: 12, fat: 36, prepTime: '25 min', description: 'Fire-grilled spiced beef suya with extra yaji and crunchy cabbage salad', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Grilled Tilapia + Roasted Plantain', emoji: '🐟', cal: 580, protein: 40, carbs: 50, fat: 18, prepTime: '30 min', description: 'Whole tilapia in pepper marinade with caramelised roasted plantain', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Goat Meat Pepper Soup (Light)', emoji: '🍜', cal: 480, protein: 36, carbs: 16, fat: 24, prepTime: '25 min', description: 'Clear, fiery broth with tender goat meat, scent leaves and native spices', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Efo Riro + Small Eba', emoji: '🥬', cal: 520, protein: 16, carbs: 74, fat: 14, prepTime: '25 min', description: 'Yoruba spinach stew with peppers and locust beans, served with garri eba', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Roasted Corn (Light Butter)', emoji: '🌽', cal: 180, protein: 5, carbs: 36, fat: 4, prepTime: '20 min', description: 'Char-grilled corn on the cob brushed with a whisper of butter and salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Roasted Groundnuts', emoji: '🥜', cal: 200, protein: 8, carbs: 6, fat: 18, prepTime: '10 min', description: 'Handful of dry-roasted peanuts with sea salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Puff Puff (2, Baked)', emoji: '🍩', cal: 220, protein: 5, carbs: 42, fat: 5, prepTime: '30 min', description: 'Two golden baked dough balls, lightly sweet with nutmeg', tags: ['vegetarian', 'vegan'] },
+    ],
+  },
+
+  'central-africa': {
+    breakfast: [
+      { name: 'Mikate (Congolese Doughnuts, 2)', emoji: '🍩', cal: 300, protein: 6, carbs: 52, fat: 8, prepTime: '30 min', description: 'Pillowy fried dough balls dusted with sugar, best with ginger tea', tags: ['vegetarian', 'vegan'] },
+      { name: 'Boiled Plantain + Groundnut Sauce', emoji: '🍌', cal: 350, protein: 9, carbs: 58, fat: 12, prepTime: '20 min', description: 'Soft boiled plantain fingers with a creamy spiced peanut dipping sauce', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Omelette Congolaise', emoji: '🍳', cal: 320, protein: 20, carbs: 8, fat: 22, prepTime: '15 min', description: 'Three-egg omelette with tomatoes, onions and pili-pili heat', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Sweet Potato + Avocado', emoji: '🍠', cal: 280, protein: 5, carbs: 48, fat: 9, prepTime: '20 min', description: 'Roasted sweet potato wedges with ripe avocado and lime', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Pondu + Fufu', emoji: '🥬', cal: 600, protein: 18, carbs: 88, fat: 20, prepTime: '30 min', description: 'Slow-simmered cassava-leaf stew with palm oil, served with smooth cassava fufu', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Grilled Capitaine + Saka-Saka', emoji: '🐟', cal: 620, protein: 44, carbs: 30, fat: 30, prepTime: '30 min', description: 'Char-grilled Nile perch fillet over cassava leaves cooked in groundnuts', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Peanut Stew + Rice', emoji: '🥜', cal: 640, protein: 22, carbs: 72, fat: 28, prepTime: '30 min', description: 'Thick groundnut stew with sweet potato and greens over steamed rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chicken Moambé (Light)', emoji: '🍗', cal: 600, protein: 38, carbs: 42, fat: 26, prepTime: '30 min', description: 'Chicken simmered in a lighter palm-nut sauce with cassava on the side', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Liboke (Fish in Banana Leaf)', emoji: '🐠', cal: 520, protein: 42, carbs: 18, fat: 24, prepTime: '30 min', description: 'Tilapia steamed in banana leaf with tomatoes, onions and pili-pili', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Saka-Saka + Smoked Fish', emoji: '🍲', cal: 540, protein: 30, carbs: 40, fat: 26, prepTime: '25 min', description: 'Pounded cassava leaves with smoked mackerel and a little palm oil', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Fumbwa in Peanut Sauce', emoji: '🥗', cal: 480, protein: 16, carbs: 34, fat: 32, prepTime: '25 min', description: 'Wild forest spinach wilted into a rich, smoky groundnut sauce', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Beef Brochettes + Fried Cassava', emoji: '🍢', cal: 580, protein: 36, carbs: 44, fat: 24, prepTime: '25 min', description: 'Marinated beef skewers grilled over coals with crispy cassava sticks', tags: ['high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Roasted Groundnuts', emoji: '🥜', cal: 190, protein: 8, carbs: 6, fat: 17, prepTime: '10 min', description: 'Warm dry-roasted peanuts sold in paper cones at every market', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Grilled Plantain Chips (Light)', emoji: '🍌', cal: 160, protein: 2, carbs: 34, fat: 3, prepTime: '15 min', description: 'Thin baked plantain crisps with a pinch of salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Avocado + Lime (Half)', emoji: '🥑', cal: 150, protein: 2, carbs: 9, fat: 14, prepTime: '10 min', description: 'Half a buttery avocado squeezed with lime and sea salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'swahili-coast': {
+    breakfast: [
+      { name: 'Mandazi (2, Coconut)', emoji: '🍩', cal: 320, protein: 6, carbs: 50, fat: 10, prepTime: '25 min', description: 'Puffy coconut-infused Swahili doughnuts with a hint of cardamom', tags: ['vegetarian', 'vegan'] },
+      { name: 'Uji (Millet Porridge)', emoji: '🥣', cal: 260, protein: 8, carbs: 50, fat: 4, prepTime: '15 min', description: 'Silky fermented millet porridge with a drizzle of honey', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chapati + Maharagwe', emoji: '🫓', cal: 420, protein: 14, carbs: 68, fat: 10, prepTime: '30 min', description: 'Flaky layered flatbread with coconut-braised red kidney beans', tags: ['vegetarian', 'vegan'] },
+      { name: 'Vitumbua (3, Coconut Rice Cakes)', emoji: '🥞', cal: 300, protein: 6, carbs: 54, fat: 8, prepTime: '25 min', description: 'Golden rice-flour cakes with coconut and cardamom, griddled crisp', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Ugali + Sukuma Wiki + Beef', emoji: '🥩', cal: 620, protein: 38, carbs: 66, fat: 16, prepTime: '30 min', description: 'Stiff maize ugali with garlicky collard greens and sukuma beef', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Chicken Pilau (Light)', emoji: '🍚', cal: 600, protein: 36, carbs: 68, fat: 14, prepTime: '30 min', description: 'Fragrant coastal pilau rice with whole spices and tender chicken', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Samaki wa Kupaka', emoji: '🐟', cal: 580, protein: 42, carbs: 24, fat: 30, prepTime: '30 min', description: 'Grilled fish basted in tamarind-coconut kupaka sauce with lime', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Mchicha + Ugali', emoji: '🥬', cal: 480, protein: 12, carbs: 62, fat: 20, prepTime: '25 min', description: 'Amaranth spinach simmered in coconut milk with a side of ugali', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Nyama Choma (Lean Goat) + Kachumbari', emoji: '🍖', cal: 560, protein: 44, carbs: 12, fat: 34, prepTime: '30 min', description: 'Slow-grilled lean goat with fresh tomato-onion kachumbari salad', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Wali wa Nazi + Grilled Prawns', emoji: '🍤', cal: 620, protein: 36, carbs: 66, fat: 20, prepTime: '25 min', description: 'Coconut rice with smoky grilled prawns and mchicha on the side', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Maharagwe + Brown Rice', emoji: '🫘', cal: 540, protein: 20, carbs: 78, fat: 14, prepTime: '30 min', description: 'Creamy coconut kidney-bean stew over nutty brown rice', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Chicken Mishkaki + Ugali', emoji: '🍢', cal: 560, protein: 40, carbs: 54, fat: 16, prepTime: '25 min', description: 'Charred marinated chicken skewers with ugali and kachumbari', tags: ['high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Kashata (Coconut Brittle, 2 pc)', emoji: '🍬', cal: 180, protein: 3, carbs: 28, fat: 7, prepTime: '20 min', description: 'Crunchy caramelised coconut-and-peanut brittle squares', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Madafu (Fresh Coconut)', emoji: '🥥', cal: 120, protein: 2, carbs: 22, fat: 3, prepTime: '10 min', description: 'Chilled young coconut — drink the water, spoon the soft flesh', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Roasted Cassava Chips', emoji: '🍠', cal: 170, protein: 2, carbs: 36, fat: 4, prepTime: '15 min', description: 'Oven-crisped cassava chips with salt and a squeeze of lime', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'ethiopia-east-africa': {
+    breakfast: [
+      { name: 'Ful + Bread', emoji: '🫘', cal: 380, protein: 18, carbs: 52, fat: 12, prepTime: '20 min', description: 'Mashed fava beans with cumin, olive oil, egg and warm crusty bread', tags: ['vegetarian', 'vegan'] },
+      { name: 'Chechebsa', emoji: '🥞', cal: 350, protein: 8, carbs: 58, fat: 10, prepTime: '15 min', description: 'Shredded honey-butter kita flatbread tossed with berbere spice', tags: ['vegetarian'] },
+      { name: 'Genfo (Barley Porridge)', emoji: '🥣', cal: 320, protein: 10, carbs: 58, fat: 6, prepTime: '15 min', description: 'Thick barley porridge with a well of spiced butter and berbere', tags: ['vegetarian', 'vegan'] },
+      { name: 'Firfir', emoji: '🌯', cal: 300, protein: 10, carbs: 54, fat: 6, prepTime: '10 min', description: 'Torn injera tossed in spicy tomato salsa with onions and jalapeño', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Misir Wot + Injera', emoji: '🍛', cal: 560, protein: 24, carbs: 84, fat: 14, prepTime: '30 min', description: 'Deep-red berbere lentils scooped with tangy teff injera', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Shiro + Injera', emoji: '🥘', cal: 520, protein: 20, carbs: 78, fat: 14, prepTime: '25 min', description: 'Velvety chickpea-flour stew with garlic and ginger on injera', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Tibs (Lean Beef)', emoji: '🥩', cal: 600, protein: 42, carbs: 30, fat: 28, prepTime: '25 min', description: 'Sizzling cubed beef with rosemary, peppers and onions on injera', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Kik Alicha + Injera', emoji: '🍲', cal: 500, protein: 20, carbs: 76, fat: 12, prepTime: '25 min', description: 'Mild turmeric split-pea stew with carrots on soft injera', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+    ],
+    dinner: [
+      { name: 'Doro Wot (Light)', emoji: '🍗', cal: 620, protein: 44, carbs: 48, fat: 24, prepTime: '30 min', description: 'The classic berbere chicken stew with egg, lightened on oil', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Gomen + Lentils + Injera', emoji: '🥬', cal: 480, protein: 18, carbs: 72, fat: 14, prepTime: '25 min', description: 'Garlicky collard greens with yellow lentils on teff injera', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kitfo (Light, Cooked)', emoji: '🍖', cal: 560, protein: 40, carbs: 24, fat: 30, prepTime: '20 min', description: 'Lean minced beef warmed with mitmita spice and a little niter kibbeh', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Atakilt Wot + Injera', emoji: '🥕', cal: 460, protein: 12, carbs: 78, fat: 12, prepTime: '25 min', description: 'Gentle cabbage, carrot and potato stew with turmeric on injera', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Kolo (Roasted Barley)', emoji: '🌾', cal: 160, protein: 6, carbs: 30, fat: 3, prepTime: '20 min', description: 'Crunchy roasted barley nibbles with a pinch of salt', tags: ['vegetarian', 'vegan'] },
+      { name: 'Roasted Chickpeas (Berbere)', emoji: '🫘', cal: 180, protein: 9, carbs: 26, fat: 5, prepTime: '15 min', description: 'Crisp oven-roasted chickpeas dusted in fiery berbere', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Injera Chips + Shiro Dip', emoji: '🫓', cal: 200, protein: 8, carbs: 32, fat: 5, prepTime: '15 min', description: 'Baked teff chips with a warm spiced chickpea dipping sauce', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'south-africa': {
+    breakfast: [
+      { name: 'Mielie Pap + Milk (Light)', emoji: '🥣', cal: 300, protein: 10, carbs: 56, fat: 5, prepTime: '15 min', description: 'Creamy maize porridge with warm low-fat milk and a spoon of honey', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Vetkoek (Baked) + Lean Mince', emoji: '🍞', cal: 420, protein: 24, carbs: 42, fat: 16, prepTime: '30 min', description: 'Oven-baked vetkoek stuffed with spiced lean beef mince and chutney', tags: ['high-protein'] },
+      { name: 'Smoked Snoek Pâté + Toast', emoji: '🐟', cal: 340, protein: 22, carbs: 30, fat: 12, prepTime: '15 min', description: 'Cape smoked snoek blended with yoghurt and lemon on sourdough toast', tags: ['high-protein'] },
+      { name: 'Yoghurt + Granola + Honey', emoji: '🥛', cal: 320, protein: 14, carbs: 44, fat: 9, prepTime: '10 min', description: 'Thick plain yoghurt layered with toasted granola and fynbos honey', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Bobotie (Lean Turkey)', emoji: '🥘', cal: 600, protein: 40, carbs: 48, fat: 24, prepTime: '30 min', description: 'Cape Malay spiced turkey bake with sultanas, almonds and egg custard top', tags: ['high-protein'] },
+      { name: 'Bunny Chow (Light Bean Curry)', emoji: '🍛', cal: 580, protein: 22, carbs: 84, fat: 14, prepTime: '30 min', description: 'Durban-style hollowed loaf filled with mild sugar-bean curry', tags: ['vegetarian', 'vegan'] },
+      { name: 'Grilled Snoek + Sweet Potato', emoji: '🐠', cal: 520, protein: 40, carbs: 48, fat: 14, prepTime: '25 min', description: 'Apricot-glazed grilled snoek with roasted sweet potato wedges', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Chicken Sosaties (2 Skewers) + Salad', emoji: '🍢', cal: 540, protein: 42, carbs: 18, fat: 28, prepTime: '25 min', description: 'Cape Malay curried chicken skewers with dried apricots and green salad', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Braai Chicken (Lean) + Pap + Chakalaka', emoji: '🍗', cal: 620, protein: 44, carbs: 56, fat: 18, prepTime: '30 min', description: 'Flame-grilled chicken with stiff pap and spicy chakalaka relish', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pap + Lean Boerewors', emoji: '🌭', cal: 600, protein: 32, carbs: 58, fat: 24, prepTime: '25 min', description: 'Grilled lean farm sausage with soft pap and tomato-onion smoor', tags: ['high-protein'] },
+      { name: 'Cape Malay Chicken Curry + Brown Rice', emoji: '🍲', cal: 580, protein: 38, carbs: 62, fat: 16, prepTime: '30 min', description: 'Aromatic mild curry with cinnamon and turmeric over brown rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Butternut Soup + Wholewheat Roll', emoji: '🎃', cal: 460, protein: 12, carbs: 70, fat: 14, prepTime: '25 min', description: 'Velvet roast butternut soup with ginger, coconut and a warm roll', tags: ['vegetarian', 'vegan'] },
+    ],
+    snack: [
+      { name: 'Biltong (Lean, 40g)', emoji: '🥩', cal: 140, protein: 22, carbs: 2, fat: 6, prepTime: '10 min', description: 'Air-dried spiced beef strips — the original high-protein snack', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Droëwors (2 Sticks)', emoji: '🥓', cal: 180, protein: 14, carbs: 2, fat: 12, prepTime: '10 min', description: 'Dried coriander-spiced sausage sticks, chewy and savoury', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Koeksister (1, Light)', emoji: '🍩', cal: 200, protein: 3, carbs: 40, fat: 4, prepTime: '20 min', description: 'One syrup-soaked braided koeksister with cinnamon and lemon', tags: ['vegetarian'] },
+    ],
+  },
+
+  'central-america': {
+    breakfast: [
+      { name: 'Gallo Pinto + Eggs', emoji: '🍳', cal: 420, protein: 20, carbs: 58, fat: 12, prepTime: '20 min', description: 'Costa Rican rice-and-beans fried with Salsa Lizano and two eggs', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Baleadas (Bean + Egg, 2)', emoji: '🌯', cal: 450, protein: 20, carbs: 62, fat: 14, prepTime: '20 min', description: 'Soft Honduran flour tortillas folded around refried beans and egg', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Pupusas de Frijol (2)', emoji: '🫓', cal: 380, protein: 14, carbs: 62, fat: 8, prepTime: '25 min', description: 'Griddled Salvadoran corn cakes stuffed with beans, curtido on top', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Plátanos + Frijoles', emoji: '🍌', cal: 360, protein: 12, carbs: 70, fat: 6, prepTime: '15 min', description: 'Sweet fried plantain with savory black beans and a little crema', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Casado (Chicken)', emoji: '🍛', cal: 620, protein: 42, carbs: 68, fat: 16, prepTime: '30 min', description: 'The Costa Rican married plate: chicken, rice, beans, salad and plantain', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Olla de Carne (Light)', emoji: '🍲', cal: 560, protein: 38, carbs: 52, fat: 18, prepTime: '30 min', description: 'Hearty beef-and-vegetable stew with yuca, plantain and corn', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Rondón (Coconut Seafood Stew)', emoji: '🍤', cal: 580, protein: 36, carbs: 48, fat: 24, prepTime: '30 min', description: 'Caribbean-coast coconut stew with fish, shrimp, yuca and plantain', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Casado Vegetariano', emoji: '🥗', cal: 520, protein: 20, carbs: 80, fat: 14, prepTime: '25 min', description: 'Meat-free married plate: beans, rice, veg picadillo, salad and plantain', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+    ],
+    dinner: [
+      { name: 'Pescado Frito + Patacones (Light)', emoji: '🐟', cal: 580, protein: 40, carbs: 52, fat: 20, prepTime: '25 min', description: 'Crisp whole fried fish with twice-cooked green plantain tostones', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pollo en Salsa + Rice', emoji: '🍗', cal: 560, protein: 40, carbs: 58, fat: 16, prepTime: '30 min', description: 'Guatemalan chicken braised in tomato-recado sauce over white rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Jocón (Green Chicken Stew)', emoji: '🥘', cal: 540, protein: 42, carbs: 36, fat: 22, prepTime: '30 min', description: 'Tomatillo-and-cilantro green stew with tender chicken and rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Chiles Rellenos (Baked, Bean)', emoji: '🌶️', cal: 500, protein: 20, carbs: 62, fat: 18, prepTime: '30 min', description: 'Oven-baked poblano peppers stuffed with beans and cheese in tomato sauce', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+    ],
+    snack: [
+      { name: 'Tostones (2, Baked)', emoji: '🍌', cal: 150, protein: 2, carbs: 32, fat: 2, prepTime: '15 min', description: 'Smashed and baked green plantain rounds with garlic salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Yuca Frita (Baked, Light)', emoji: '🍠', cal: 170, protein: 2, carbs: 38, fat: 2, prepTime: '20 min', description: 'Golden baked yuca sticks with a squeeze of lime', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Atol de Elote (Small)', emoji: '🥛', cal: 180, protein: 5, carbs: 34, fat: 4, prepTime: '15 min', description: 'Warm sweet-corn atole drink with cinnamon', tags: ['vegetarian', 'gluten-free'] },
+    ],
+  },
+
+  'caribbean': {
+    breakfast: [
+      { name: 'Ackee + Saltfish (Light)', emoji: '🐟', cal: 380, protein: 26, carbs: 28, fat: 18, prepTime: '20 min', description: 'Jamaican national dish: buttery ackee with flaked saltfish and peppers', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Callaloo + Johnny Cakes (Baked)', emoji: '🥬', cal: 340, protein: 10, carbs: 58, fat: 8, prepTime: '25 min', description: 'Steamed island greens with thyme and oven-baked cornmeal johnny cakes', tags: ['vegetarian', 'vegan'] },
+      { name: 'Cornmeal Porridge', emoji: '🥣', cal: 300, protein: 8, carbs: 56, fat: 6, prepTime: '15 min', description: 'Silky coconut cornmeal porridge with nutmeg and vanilla', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Boiled Green Banana + Egg', emoji: '🍌', cal: 320, protein: 16, carbs: 52, fat: 6, prepTime: '20 min', description: 'Starchy boiled green bananas with a simply boiled egg and pepper sauce', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Jerk Chicken + Rice & Peas', emoji: '🍗', cal: 640, protein: 46, carbs: 62, fat: 18, prepTime: '30 min', description: 'Fire-jerked chicken with coconut rice and peas and fried plantain', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Grilled Snapper + Festival (Baked)', emoji: '🐠', cal: 580, protein: 44, carbs: 50, fat: 16, prepTime: '25 min', description: 'Escovitch-style grilled snapper with pickled veg and baked festival bread', tags: ['high-protein'] },
+      { name: 'Mofongo (Small, Shrimp)', emoji: '🍤', cal: 560, protein: 32, carbs: 58, fat: 22, prepTime: '30 min', description: 'Garlic-mashed plantain mound with Creole shrimp sauce', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ital Stew (Vegan Rasta)', emoji: '🥗', cal: 500, protein: 18, carbs: 72, fat: 16, prepTime: '30 min', description: 'Ital coconut stew with pumpkin, beans, callaloo and dumplings', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Curry Goat (Lean)', emoji: '🍛', cal: 600, protein: 42, carbs: 40, fat: 26, prepTime: '30 min', description: 'Slow-braised curried goat with potatoes over rice and peas', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Brown Stew Chicken + Rice', emoji: '🥘', cal: 580, protein: 44, carbs: 56, fat: 16, prepTime: '30 min', description: 'Caramel-braised chicken in rich gravy with white rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pepperpot + Cassava', emoji: '🍲', cal: 540, protein: 36, carbs: 52, fat: 20, prepTime: '30 min', description: 'Guyanese slow-cooked beef pepperpot with boiled cassava', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Trinidadian Pumpkin Soup', emoji: '🎃', cal: 460, protein: 12, carbs: 74, fat: 14, prepTime: '25 min', description: 'Thick pumpkin-and-coconut soup with corn, dasheen and dumplings', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Plantain Chips (Baked)', emoji: '🍌', cal: 150, protein: 2, carbs: 32, fat: 3, prepTime: '15 min', description: 'Thin baked ripe-plantain crisps with sea salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Coconut Drops (2)', emoji: '🥥', cal: 180, protein: 3, carbs: 30, fat: 7, prepTime: '25 min', description: 'Chewy Jamaican coconut-and-ginger drops', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Roasted Breadfruit Chips', emoji: '🍞', cal: 160, protein: 3, carbs: 36, fat: 2, prepTime: '20 min', description: 'Crisp roasted ulu chips with lime salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'andean': {
+    breakfast: [
+      { name: 'Quinoa Porridge + Fruit', emoji: '🥣', cal: 320, protein: 12, carbs: 56, fat: 7, prepTime: '15 min', description: 'Creamy quinoa cooked in milk with apple, cinnamon and honey', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Pan con Chicharrón (Light)', emoji: '🥪', cal: 420, protein: 26, carbs: 44, fat: 16, prepTime: '25 min', description: 'Crusty roll with lean crispy pork, sweet potato and salsa criolla', tags: ['high-protein'] },
+      { name: 'Humitas (2, Corn)', emoji: '🌽', cal: 300, protein: 8, carbs: 52, fat: 8, prepTime: '30 min', description: 'Steamed fresh-corn tamales with cheese, wrapped in corn husks', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Caldo de Gallina (Light)', emoji: '🍜', cal: 350, protein: 30, carbs: 30, fat: 12, prepTime: '30 min', description: 'Clear Peruvian hen soup with potato, egg noodles and scallions', tags: ['high-protein', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Ceviche Clásico + Camote', emoji: '🐟', cal: 480, protein: 42, carbs: 44, fat: 12, prepTime: '20 min', description: 'Leche-de-tigre cured sea bass with sweet potato and choclo corn', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Lomo Saltado (Chicken, Light)', emoji: '🥩', cal: 600, protein: 42, carbs: 58, fat: 18, prepTime: '25 min', description: 'Wok-tossed chicken with tomatoes and onions over rice and fries', tags: ['high-protein'] },
+      { name: 'Ajiaco (Chicken-Potato Soup)', emoji: '🍲', cal: 520, protein: 36, carbs: 56, fat: 14, prepTime: '30 min', description: 'Bogotá-style soup of three potatoes, guasca herbs and shredded chicken', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Quinoa Chaufa (Veg)', emoji: '🍚', cal: 500, protein: 18, carbs: 74, fat: 14, prepTime: '20 min', description: 'Peruvian-Chinese fried quinoa with egg ribbons, scallions and ginger', tags: ['vegetarian', 'vegan'] },
+    ],
+    dinner: [
+      { name: 'Bandeja Paisa (Light)', emoji: '🍛', cal: 680, protein: 44, carbs: 64, fat: 24, prepTime: '30 min', description: 'Lighter take on the paisa platter: beans, rice, grilled beef, egg and avocado', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pescado a lo Macho (Light)', emoji: '🐠', cal: 560, protein: 44, carbs: 46, fat: 18, prepTime: '30 min', description: 'Pan-fried fish in spicy seafood-tomato sauce with white rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ají de Gallina (Light)', emoji: '🍗', cal: 580, protein: 40, carbs: 52, fat: 20, prepTime: '30 min', description: 'Creamy yellow-chili chicken stew with walnuts over rice', tags: ['high-protein'] },
+      { name: 'Locro de Papa', emoji: '🥔', cal: 480, protein: 18, carbs: 68, fat: 16, prepTime: '25 min', description: 'Thick Andean potato-cheese soup with avocado and toasted corn', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Cancha (Toasted Corn Nuts)', emoji: '🌽', cal: 150, protein: 4, carbs: 30, fat: 3, prepTime: '10 min', description: 'Crunchy toasted choclo corn kernels with salt — the ceviche companion', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Choclo con Queso (Small)', emoji: '🧀', cal: 200, protein: 9, carbs: 32, fat: 5, prepTime: '15 min', description: 'Giant-kernel Andean corn on the cob with a slab of fresh cheese', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Lúcuma Smoothie (Light)', emoji: '🥤', cal: 180, protein: 8, carbs: 32, fat: 3, prepTime: '10 min', description: 'Caramel-sweet lúcuma fruit blended with milk and ice', tags: ['vegetarian', 'gluten-free'] },
+    ],
+  },
+
+  'brazil': {
+    breakfast: [
+      { name: 'Tapioca + Eggs + Cheese', emoji: '🍳', cal: 360, protein: 22, carbs: 46, fat: 12, prepTime: '15 min', description: 'Crisp cassava-starch crepe folded around eggs and queijo coalho', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Açaí Bowl (Unsweetened) + Granola', emoji: '🫐', cal: 380, protein: 10, carbs: 58, fat: 14, prepTime: '10 min', description: 'Thick unsweetened açaí topped with granola and banana', tags: ['vegetarian', 'vegan'] },
+      { name: 'Pão de Queijo (4, Light)', emoji: '🧀', cal: 320, protein: 10, carbs: 40, fat: 12, prepTime: '25 min', description: 'Four chewy cassava cheese breads, lighter on the oil', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Cuscuz Nordestino + Egg', emoji: '🌽', cal: 340, protein: 14, carbs: 52, fat: 8, prepTime: '15 min', description: 'Steamed corn couscous cake with a fried egg and queijo coalho', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Feijoada (Light, Lean Pork)', emoji: '🫘', cal: 640, protein: 42, carbs: 62, fat: 22, prepTime: '30 min', description: 'Leaner black-bean feijoada with rice, farofa and orange slices', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Moqueca de Peixe', emoji: '🐟', cal: 560, protein: 44, carbs: 36, fat: 24, prepTime: '30 min', description: 'Bahian fish stew in coconut milk, dendê and peppers with pirão', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Grilled Picanha + Farofa (Light)', emoji: '🥩', cal: 620, protein: 46, carbs: 40, fat: 26, prepTime: '30 min', description: 'Char-grilled picanha slices with light cassava farofa and vinaigrette', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Moqueca de Banana-da-Terra', emoji: '🍌', cal: 500, protein: 12, carbs: 78, fat: 18, prepTime: '25 min', description: 'Plantain moqueca in coconut milk with peppers and coriander', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Escondidinho de Frango (Light)', emoji: '🥘', cal: 560, protein: 40, carbs: 52, fat: 18, prepTime: '30 min', description: 'Shredded chicken hidden under creamy cassava mash, gratinéed light', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Bobó de Camarão (Light)', emoji: '🍤', cal: 580, protein: 38, carbs: 52, fat: 22, prepTime: '30 min', description: 'Shrimp in velvety cassava-coconut bobó cream with white rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Frango com Quiabo', emoji: '🍗', cal: 520, protein: 44, carbs: 30, fat: 22, prepTime: '30 min', description: 'Mineiro chicken braised with okra, finished with lime', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Acarajé (Baked, Light)', emoji: '🧆', cal: 480, protein: 18, carbs: 58, fat: 18, prepTime: '30 min', description: 'Oven-baked black-eyed pea fritter with vatapá and vinaigrette', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Castanha-do-Pará (6 Nuts)', emoji: '🌰', cal: 190, protein: 4, carbs: 4, fat: 19, prepTime: '10 min', description: 'Six buttery Brazil nuts — rich in selenium', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Biscoito de Polvilho (10)', emoji: '🍿', cal: 140, protein: 2, carbs: 30, fat: 2, prepTime: '20 min', description: 'Airy cassava-starch puffs, the classic Brazilian road-trip snack', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Coconut Water + Grated Coconut', emoji: '🥥', cal: 130, protein: 2, carbs: 24, fat: 4, prepTime: '10 min', description: 'Fresh coconut water with spoonfuls of young coconut flesh', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'argentina': {
+    breakfast: [
+      { name: 'Medialunas (2, Light)', emoji: '🥐', cal: 320, protein: 8, carbs: 48, fat: 10, prepTime: '15 min', description: 'Two buttery half-moon croissants, best dunked in café con leche', tags: ['vegetarian'] },
+      { name: 'Yogur + Granola + Frutas', emoji: '🥛', cal: 340, protein: 16, carbs: 50, fat: 8, prepTime: '10 min', description: 'Creamy yoghurt with honey granola and seasonal fruit', tags: ['vegetarian'] },
+      { name: 'Tortilla de Papa (Light)', emoji: '🍳', cal: 380, protein: 20, carbs: 40, fat: 14, prepTime: '25 min', description: 'Golden potato-and-onion Spanish omelette, light on the oil', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Avocado Toast + Huevo', emoji: '🥑', cal: 360, protein: 14, carbs: 36, fat: 18, prepTime: '10 min', description: 'Sourdough with smashed avocado, poached egg and chimichurri oil', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Bife de Chorizo (Lean Cut, 180g)', emoji: '🥩', cal: 620, protein: 48, carbs: 12, fat: 36, prepTime: '25 min', description: 'Grilled lean sirloin strip with chimichurri and grilled vegetables', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Milanesa de Pollo (Baked)', emoji: '🍗', cal: 580, protein: 44, carbs: 44, fat: 20, prepTime: '30 min', description: 'Oven-crisped breaded chicken cutlet with lemon and mixed salad', tags: ['high-protein'] },
+      { name: 'Empanadas (2, Baked, Chicken)', emoji: '🥟', cal: 520, protein: 30, carbs: 48, fat: 18, prepTime: '30 min', description: 'Two golden baked empanadas with juicy chicken, olive and egg', tags: ['high-protein'] },
+      { name: 'Humita en Chala + Salad', emoji: '🌽', cal: 480, protein: 14, carbs: 72, fat: 14, prepTime: '30 min', description: 'Sweet-corn humita steamed in its husk with a fresh garden salad', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Asado Mix (Lean Cuts) + Grilled Veg', emoji: '🍖', cal: 640, protein: 50, carbs: 18, fat: 38, prepTime: '30 min', description: 'Parrilla-grilled lean cuts — vacío and matambre — with ember-roasted vegetables', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Provoleta + Salad + Peppers', emoji: '🧀', cal: 500, protein: 28, carbs: 16, fat: 36, prepTime: '20 min', description: 'Melted provolone wheel with oregano, grilled peppers and green salad', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Milanesa Napolitana (Baked, Light)', emoji: '🍕', cal: 600, protein: 42, carbs: 46, fat: 22, prepTime: '30 min', description: 'Baked milanesa topped with tomato, ham and melted mozzarella', tags: ['high-protein'] },
+      { name: 'Tarta de Verdura (2 Slices)', emoji: '🥧', cal: 480, protein: 18, carbs: 52, fat: 22, prepTime: '30 min', description: 'Swiss-chard and ricotta tart with a crisp whole-grain crust', tags: ['vegetarian'] },
+    ],
+    snack: [
+      { name: 'Alfajor de Maicena (1)', emoji: '🍪', cal: 180, protein: 3, carbs: 30, fat: 6, prepTime: '20 min', description: 'Delicate cornstarch sandwich cookie with dulce de leche heart', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Picada Light (Cheese + Olives)', emoji: '🫒', cal: 220, protein: 12, carbs: 4, fat: 18, prepTime: '10 min', description: 'Small-board picada: aged cheese cubes, green olives and walnuts', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Mate + Nuts (30g)', emoji: '🧉', cal: 190, protein: 7, carbs: 7, fat: 17, prepTime: '10 min', description: 'Traditional bitter mate shared gourd-style with a handful of mixed nuts', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'australia-nz': {
+    breakfast: [
+      { name: 'Avo + Eggs on Sourdough', emoji: '🥑', cal: 420, protein: 20, carbs: 36, fat: 24, prepTime: '15 min', description: 'The café classic: smashed avo, two poached eggs and dukkah on sourdough', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Weet-Bix + Yogurt + Berries', emoji: '🥣', cal: 340, protein: 18, carbs: 56, fat: 6, prepTime: '10 min', description: 'Three Weet-Bix with Greek yoghurt, honey and mixed berries', tags: ['vegetarian'] },
+      { name: 'Ricotta Hotcakes (2, Light)', emoji: '🥞', cal: 400, protein: 18, carbs: 58, fat: 10, prepTime: '20 min', description: 'Cloud-light ricotta hotcakes with banana and maple syrup', tags: ['vegetarian'] },
+      { name: 'Smoked Salmon + Cream Cheese Bagel (Light)', emoji: '🥯', cal: 420, protein: 26, carbs: 44, fat: 16, prepTime: '10 min', description: 'Toasted bagel with light cream cheese, smoked salmon and capers', tags: ['high-protein'] },
+    ],
+    lunch: [
+      { name: 'Grilled Barramundi + Salad', emoji: '🐟', cal: 520, protein: 44, carbs: 28, fat: 24, prepTime: '25 min', description: 'Crispy-skin barramundi with mango-avocado salad and lime', tags: ['high-protein', 'gluten-free'] },
+      { name: 'BBQ Chicken + Sweet Potato', emoji: '🍗', cal: 600, protein: 46, carbs: 52, fat: 16, prepTime: '30 min', description: 'Smoky barbecued chicken breast with roast sweet potato and slaw', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Grilled Lamb + Veg (Light)', emoji: '🥩', cal: 620, protein: 44, carbs: 40, fat: 28, prepTime: '30 min', description: 'Rosemary lamb backstraps with grilled Mediterranean vegetables', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pumpkin + Feta Salad + Quinoa', emoji: '🥗', cal: 500, protein: 18, carbs: 62, fat: 20, prepTime: '25 min', description: 'Roast pumpkin, feta, spinach and quinoa with balsamic glaze', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Grilled Snapper + Asparagus', emoji: '🐠', cal: 540, protein: 46, carbs: 24, fat: 26, prepTime: '25 min', description: 'Whole grilled snapper with lemon butter and charred asparagus', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Beef Stir-Fry + Brown Rice', emoji: '🥘', cal: 600, protein: 42, carbs: 58, fat: 20, prepTime: '25 min', description: 'Ginger-soy beef strips with crunchy veg over brown rice', tags: ['high-protein'] },
+      { name: 'Chicken Schnitzel (Baked) + Slaw', emoji: '🍖', cal: 580, protein: 46, carbs: 42, fat: 20, prepTime: '30 min', description: 'Oven-crisped crumbed chicken with creamy apple slaw', tags: ['high-protein'] },
+      { name: 'Mushroom Risotto (Light)', emoji: '🍚', cal: 520, protein: 16, carbs: 76, fat: 16, prepTime: '30 min', description: 'Creamy arborio rice with roasted mushrooms, thyme and parmesan', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Tim Tam (1) + Skinny Flat White', emoji: '🍪', cal: 180, protein: 6, carbs: 26, fat: 7, prepTime: '10 min', description: 'One choc-biscuit Tim Tam with a small skinny flat white', tags: ['vegetarian'] },
+      { name: 'Vegemite Toast + Cheese', emoji: '🍞', cal: 220, protein: 12, carbs: 30, fat: 6, prepTime: '10 min', description: 'Buttered toast with a scrape of Vegemite and melted tasty cheese', tags: ['vegetarian'] },
+      { name: 'Tropical Fruit Salad + Coconut Yoghurt', emoji: '🥭', cal: 160, protein: 8, carbs: 30, fat: 2, prepTime: '10 min', description: 'Mango, pineapple and kiwi with dairy-free coconut yoghurt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'pacific-islands': {
+    breakfast: [
+      { name: 'Papaya + Lime + Toasted Coconut', emoji: '🥭', cal: 260, protein: 4, carbs: 52, fat: 7, prepTime: '10 min', description: 'Sun-ripe pawpaw with lime juice and toasted coconut flakes', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Taro Pancakes (2, Light)', emoji: '🥞', cal: 320, protein: 8, carbs: 58, fat: 7, prepTime: '20 min', description: 'Fluffy taro-flour pancakes with banana and coconut syrup', tags: ['vegetarian', 'vegan'] },
+      { name: 'Egg + Taro Hash', emoji: '🍳', cal: 360, protein: 18, carbs: 44, fat: 12, prepTime: '20 min', description: 'Crispy taro hash browns topped with fried eggs and spring onion', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Grilled Banana + Honey + Lime', emoji: '🍌', cal: 280, protein: 3, carbs: 62, fat: 4, prepTime: '15 min', description: 'Caramelised grilled bananas with honey, lime and cinnamon', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Oka i\'a (Raw Fish in Coconut-Lime)', emoji: '🐟', cal: 480, protein: 40, carbs: 24, fat: 24, prepTime: '20 min', description: 'Samoan-style ceviche: tuna cured in lime with coconut cream and cucumber', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Grilled Mahi-Mahi + Taro', emoji: '🐠', cal: 560, protein: 44, carbs: 48, fat: 18, prepTime: '25 min', description: 'Char-grilled mahi-mahi with boiled taro and miti sauce', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Palusami (Light Coconut) + Taro', emoji: '🥬', cal: 500, protein: 10, carbs: 68, fat: 22, prepTime: '30 min', description: 'Taro leaves baked in light coconut cream, served with boiled taro', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Poke-Style Bowl (Tuna + Rice)', emoji: '🍚', cal: 580, protein: 42, carbs: 58, fat: 16, prepTime: '15 min', description: 'Diced raw tuna with rice, edamame, mango and gluten-free tamari', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Lovo (Earth-Oven Chicken, Lean)', emoji: '🍗', cal: 600, protein: 46, carbs: 50, fat: 18, prepTime: '30 min', description: 'Fijian lovo-style slow-roasted chicken with taro and palusami', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Grilled Octopus + Ulu (Breadfruit)', emoji: '🐙', cal: 520, protein: 42, carbs: 44, fat: 16, prepTime: '30 min', description: 'Tender charred octopus with roasted breadfruit and lime', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Fish + Rourou in Coconut', emoji: '🍲', cal: 540, protein: 40, carbs: 42, fat: 22, prepTime: '30 min', description: 'White fish simmered with taro leaves in coconut milk, cassava alongside', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ulu + Coconut Curry (Veg)', emoji: '🍛', cal: 500, protein: 12, carbs: 74, fat: 18, prepTime: '25 min', description: 'Breadfruit and island vegetables in a fragrant coconut curry', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Fresh Coconut (Meat + Water)', emoji: '🥥', cal: 200, protein: 3, carbs: 16, fat: 16, prepTime: '10 min', description: 'Cracked green coconut — drink the water, scoop the jelly flesh', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Pani Popo (1 Bun, Light)', emoji: '🍞', cal: 220, protein: 5, carbs: 40, fat: 5, prepTime: '25 min', description: 'Soft Samoan coconut bun baked in sweet coconut sauce', tags: ['vegetarian'] },
+      { name: 'Grilled Pineapple + Lime', emoji: '🍍', cal: 130, protein: 1, carbs: 32, fat: 1, prepTime: '10 min', description: 'Caramelised pineapple rings with lime zest and mint', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'spain': {
+    breakfast: [
+      { name: 'Tortilla Española (light)', emoji: '🥔', cal: 300, protein: 14, carbs: 28, fat: 14, prepTime: '25 min', description: 'Classic potato and onion omelette, baked light with less oil', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Tostada con Tomate', emoji: '🍞', cal: 290, protein: 8, carbs: 38, fat: 12, prepTime: '10 min', description: 'Whole grain toast rubbed with tomato, garlic and olive oil', tags: ['vegetarian', 'vegan'] },
+      { name: 'Yogur con Miel y Nueces', emoji: '🍯', cal: 260, protein: 14, carbs: 24, fat: 12, prepTime: '10 min', description: 'Creamy yogurt with honey, walnuts and cinnamon', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Huevos a la Flamenca (light)', emoji: '🍳', cal: 280, protein: 20, carbs: 18, fat: 14, prepTime: '20 min', description: 'Baked eggs over tomato-pepper sofrito with peas', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+    ],
+    lunch: [
+      { name: 'Paella de Mariscos', emoji: '🥘', cal: 520, protein: 32, carbs: 65, fat: 14, prepTime: '30 min', description: 'Saffron seafood paella with shrimp, mussels and peas', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ensalada de Garbanzos y Atún', emoji: '🥗', cal: 450, protein: 30, carbs: 45, fat: 16, prepTime: '15 min', description: 'Chickpea salad with tuna, red onion, tomato and sherry vinegar', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pollo al Ajillo con Patatas', emoji: '🍗', cal: 470, protein: 38, carbs: 35, fat: 20, prepTime: '30 min', description: 'Garlic chicken with roasted potatoes and rosemary', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pisto con Huevo y Pan', emoji: '🫑', cal: 460, protein: 24, carbs: 45, fat: 20, prepTime: '25 min', description: 'Manchego ratatouille topped with fried egg and whole grain bread', tags: ['vegetarian'] },
+    ],
+    dinner: [
+      { name: 'Lubina a la Plancha', emoji: '🐟', cal: 480, protein: 40, carbs: 35, fat: 20, prepTime: '25 min', description: 'Grilled sea bass with patatas bravas (light) and green salad', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Fabada Asturiana (light)', emoji: '🫘', cal: 450, protein: 28, carbs: 48, fat: 16, prepTime: '30 min', description: 'White bean stew with lean chorizo and morcilla, light on fat', tags: ['gluten-free'] },
+      { name: 'Gambas al Ajillo con Arroz', emoji: '🍤', cal: 490, protein: 32, carbs: 45, fat: 20, prepTime: '20 min', description: 'Garlic shrimp sizzled in olive oil over steamed rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Cocido Madrileño (light)', emoji: '🍲', cal: 510, protein: 32, carbs: 55, fat: 18, prepTime: '30 min', description: 'Chickpea stew with chicken, vegetables and a little chorizo', tags: ['gluten-free'] },
+    ],
+    snack: [
+      { name: 'Aceitunas y Manchego', emoji: '🫒', cal: 200, protein: 10, carbs: 4, fat: 16, prepTime: '10 min', description: 'Marinated olives with aged manchego cheese', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Pan con Tomate (small)', emoji: '🍅', cal: 190, protein: 5, carbs: 25, fat: 8, prepTime: '10 min', description: 'Small tomato-rubbed toast with olive oil and sea salt', tags: ['vegetarian', 'vegan'] },
+      { name: 'Almendras Marcona', emoji: '🌰', cal: 190, protein: 6, carbs: 6, fat: 16, prepTime: '10 min', description: 'Handful of roasted marcona almonds with sea salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'portugal': {
+    breakfast: [
+      { name: 'Ovos Mexidos com Queijo', emoji: '🍳', cal: 330, protein: 22, carbs: 20, fat: 18, prepTime: '10 min', description: 'Scrambled eggs with flamengo cheese on toasted broa', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Papas de Aveia com Mel', emoji: '🥣', cal: 290, protein: 10, carbs: 48, fat: 6, prepTime: '10 min', description: 'Creamy oatmeal with honey, banana and cinnamon', tags: ['vegetarian'] },
+      { name: 'Iogurte com Granola', emoji: '🥛', cal: 300, protein: 14, carbs: 38, fat: 10, prepTime: '10 min', description: 'Natural yogurt layered with granola and seasonal fruit', tags: ['vegetarian'] },
+      { name: 'Pão de Centeio com Queijo Fresco', emoji: '🧀', cal: 280, protein: 16, carbs: 32, fat: 10, prepTime: '10 min', description: 'Rye bread with fresh cheese, tomato and oregano', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Bacalhau à Brás', emoji: '🐟', cal: 480, protein: 36, carbs: 40, fat: 20, prepTime: '25 min', description: 'Shredded salt cod with matchstick potatoes, egg and olives', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Arroz de Pato (light)', emoji: '🍚', cal: 510, protein: 32, carbs: 55, fat: 18, prepTime: '30 min', description: 'Baked duck rice with chouriço, light on fat', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Sardinhas Assadas', emoji: '🐟', cal: 450, protein: 34, carbs: 30, fat: 22, prepTime: '20 min', description: 'Grilled sardines with roasted peppers and boiled potatoes', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Feijoada à Transmontana (light)', emoji: '🫘', cal: 470, protein: 30, carbs: 52, fat: 16, prepTime: '30 min', description: 'Red bean stew with lean pork and greens, light version', tags: ['gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Cataplana de Marisco', emoji: '🍲', cal: 450, protein: 38, carbs: 35, fat: 18, prepTime: '30 min', description: 'Seafood cataplana with tomato, peppers and white wine', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Frango Piri-Piri com Arroz', emoji: '🍗', cal: 530, protein: 42, carbs: 45, fat: 20, prepTime: '30 min', description: 'Flame-grilled piri-piri chicken with tomato rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Açorda de Camarão', emoji: '🍤', cal: 470, protein: 30, carbs: 52, fat: 16, prepTime: '25 min', description: 'Alentejo bread soup with shrimp, coriander and poached egg', tags: [] },
+      { name: 'Bacalhau no Forno', emoji: '🐟', cal: 480, protein: 40, carbs: 40, fat: 18, prepTime: '30 min', description: 'Baked cod loin with potatoes, onions and roasted vegetables', tags: ['high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Queijo da Serra com Maçã', emoji: '🧀', cal: 220, protein: 8, carbs: 20, fat: 12, prepTime: '10 min', description: 'Creamy mountain cheese with crisp apple slices', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Tremoços', emoji: '🫘', cal: 120, protein: 10, carbs: 12, fat: 4, prepTime: '10 min', description: 'Briny lupin beans with lemon — the classic Portuguese bar snack', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Pastel de Nata (1)', emoji: '🥧', cal: 200, protein: 4, carbs: 28, fat: 8, prepTime: '10 min', description: 'One warm custard tart with cinnamon — portion controlled', tags: ['vegetarian'] },
+    ],
+  },
+
+  'france': {
+    breakfast: [
+      { name: 'Omelette aux Fines Herbes', emoji: '🍳', cal: 300, protein: 20, carbs: 6, fat: 22, prepTime: '10 min', description: 'Herb omelette with chives, parsley and a little gruyère', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Tartine Complète', emoji: '🍞', cal: 300, protein: 8, carbs: 45, fat: 10, prepTime: '10 min', description: 'Whole grain toast with butter, jam and a café crème', tags: ['vegetarian'] },
+      { name: 'Fromage Blanc aux Fruits', emoji: '🫐', cal: 310, protein: 18, carbs: 42, fat: 8, prepTime: '10 min', description: 'Fromage blanc with muesli, berries and honey', tags: ['vegetarian'] },
+      { name: 'Galette Complète (légère)', emoji: '🥞', cal: 340, protein: 20, carbs: 28, fat: 16, prepTime: '15 min', description: 'Buckwheat crêpe with egg, ham and emmental — light version', tags: ['high-protein', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Poulet Rôti et Ratatouille', emoji: '🍗', cal: 510, protein: 42, carbs: 40, fat: 20, prepTime: '30 min', description: 'Roast chicken with provençal ratatouille and quinoa', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Bouillabaisse Complète', emoji: '🍲', cal: 470, protein: 38, carbs: 40, fat: 18, prepTime: '30 min', description: 'Provençal fish stew with rouille and toasted bread', tags: ['high-protein'] },
+      { name: 'Steak Haché Frites (light)', emoji: '🥩', cal: 460, protein: 36, carbs: 35, fat: 20, prepTime: '20 min', description: 'Lean minute steak with baked frites and green beans', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Cassoulet Léger', emoji: '🫘', cal: 490, protein: 32, carbs: 50, fat: 18, prepTime: '30 min', description: 'White bean cassoulet with lean sausage and duck (light)', tags: ['gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Sole aux Légumes et Riz', emoji: '🐟', cal: 490, protein: 36, carbs: 45, fat: 18, prepTime: '25 min', description: 'Dover sole with steamed vegetables and pilaf rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Blanquette de Veau (légère)', emoji: '🍲', cal: 490, protein: 38, carbs: 45, fat: 18, prepTime: '30 min', description: 'Light veal blanquette with carrots and rice, low-cream', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Gratin Dauphinois au Poulet', emoji: '🍗', cal: 490, protein: 34, carbs: 40, fat: 22, prepTime: '30 min', description: 'Light potato gratin with sliced roast chicken and salad', tags: ['high-protein'] },
+      { name: 'Lentilles du Puy', emoji: '🫘', cal: 460, protein: 28, carbs: 50, fat: 16, prepTime: '25 min', description: 'Puy lentils with smoked sausage, carrots and mustard', tags: ['gluten-free'] },
+    ],
+    snack: [
+      { name: 'Pomme et Comté', emoji: '🧀', cal: 210, protein: 9, carbs: 22, fat: 10, prepTime: '10 min', description: 'Apple slices with aged comté cheese', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Yaourt au Miel', emoji: '🍯', cal: 170, protein: 10, carbs: 24, fat: 4, prepTime: '10 min', description: 'Plain yogurt with a spoon of honey and cinnamon', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Noix (30g)', emoji: '🌰', cal: 200, protein: 5, carbs: 4, fat: 18, prepTime: '10 min', description: 'A small handful of walnuts — classic French goûter', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'germany': {
+    breakfast: [
+      { name: 'Rührei mit Vollkornbrot', emoji: '🍳', cal: 350, protein: 22, carbs: 30, fat: 16, prepTime: '10 min', description: 'Scrambled eggs with chives on whole grain bread', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Haferbrei mit Apfel', emoji: '🥣', cal: 290, protein: 10, carbs: 50, fat: 6, prepTime: '10 min', description: 'Oatmeal cooked in oat milk with apple and cinnamon', tags: ['vegetarian', 'vegan'] },
+      { name: 'Quark mit Beeren', emoji: '🫐', cal: 320, protein: 22, carbs: 45, fat: 6, prepTime: '10 min', description: 'Low-fat quark with oats, berries and honey', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Vollkornbrot mit Käse', emoji: '🧀', cal: 330, protein: 18, carbs: 32, fat: 14, prepTime: '10 min', description: 'Whole grain bread with gouda, tomato and cucumber', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Schnitzel mit Kartoffelsalat', emoji: '🍗', cal: 490, protein: 38, carbs: 45, fat: 18, prepTime: '25 min', description: 'Oven-baked chicken schnitzel with light potato salad', tags: ['high-protein'] },
+      { name: 'Erbsensuppe mit Speck', emoji: '🍲', cal: 450, protein: 26, carbs: 50, fat: 16, prepTime: '30 min', description: 'Split pea soup with a little bacon and root vegetables', tags: ['gluten-free'] },
+      { name: 'Sauerbraten mit Knödel', emoji: '🥩', cal: 510, protein: 36, carbs: 50, fat: 18, prepTime: '30 min', description: 'Marinated roast beef with potato dumplings and red cabbage', tags: ['high-protein'] },
+      { name: 'Hering mit Bratkartoffeln', emoji: '🐟', cal: 450, protein: 32, carbs: 40, fat: 18, prepTime: '20 min', description: 'Pan-fried herring with fried potatoes and apple-onion salad', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Bratwurst mit Sauerkraut', emoji: '🥨', cal: 470, protein: 28, carbs: 35, fat: 24, prepTime: '20 min', description: 'Two lean bratwurst with sauerkraut and mustard, one roll', tags: ['high-protein'] },
+      { name: 'Käsespätzle mit Salat', emoji: '🧀', cal: 500, protein: 24, carbs: 55, fat: 20, prepTime: '25 min', description: 'Cheese spaetzle with crispy onions and green salad', tags: ['vegetarian'] },
+      { name: 'Schweinefilet mit Kartoffeln', emoji: '🍖', cal: 460, protein: 42, carbs: 38, fat: 16, prepTime: '30 min', description: 'Grilled pork tenderloin with boiled potatoes and vegetables', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Linseneintopf', emoji: '🫘', cal: 480, protein: 30, carbs: 55, fat: 16, prepTime: '30 min', description: 'Hearty lentil stew with frankfurter slices and vinegar', tags: ['gluten-free'] },
+    ],
+    snack: [
+      { name: 'Apfel mit Handkäse', emoji: '🍎', cal: 170, protein: 12, carbs: 25, fat: 2, prepTime: '10 min', description: 'Apple wedges with tangy handkäse and caraway', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Nüsse (30g)', emoji: '🌰', cal: 190, protein: 6, carbs: 6, fat: 16, prepTime: '10 min', description: 'A small handful of mixed nuts', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Buttermilch mit Banane', emoji: '🍌', cal: 190, protein: 10, carbs: 32, fat: 2, prepTime: '10 min', description: 'Buttermilk blended with banana — light and filling', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+    ],
+  },
+
+  'alpine': {
+    breakfast: [
+      { name: 'Birchermüesli', emoji: '🥣', cal: 350, protein: 14, carbs: 52, fat: 10, prepTime: '10 min', description: 'Overnight oats with grated apple, yogurt and hazelnuts', tags: ['vegetarian'] },
+      { name: 'Rösti mit Spiegelei', emoji: '🍳', cal: 390, protein: 16, carbs: 40, fat: 18, prepTime: '20 min', description: 'Crispy potato rösti topped with a fried egg', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Zopf mit Käse', emoji: '🍞', cal: 350, protein: 16, carbs: 40, fat: 14, prepTime: '10 min', description: 'Braided sunday bread with alpine cheese and jam', tags: ['vegetarian'] },
+      { name: 'Joghurt mit Honig und Nüssen', emoji: '🍯', cal: 320, protein: 16, carbs: 36, fat: 12, prepTime: '10 min', description: 'Mountain yogurt with honey, walnuts and dried fruit', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Wiener Schnitzel (gebacken)', emoji: '🍗', cal: 470, protein: 36, carbs: 40, fat: 18, prepTime: '25 min', description: 'Oven-baked veal schnitzel with lingonberries and salad', tags: ['high-protein'] },
+      { name: 'Käsespätzle mit Salat', emoji: '🧀', cal: 520, protein: 26, carbs: 58, fat: 20, prepTime: '25 min', description: 'Alpine cheese spaetzle with crispy onions and green salad', tags: ['vegetarian'] },
+      { name: 'Zürcher Geschnetzeltes', emoji: '🍲', cal: 470, protein: 36, carbs: 42, fat: 18, prepTime: '25 min', description: 'Sliced veal in light cream sauce with rösti', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Tiroler Gröstl', emoji: '🥔', cal: 480, protein: 30, carbs: 45, fat: 20, prepTime: '25 min', description: 'Pan-fried potatoes with beef, onion and fried egg', tags: ['gluten-free', 'high-protein'] },
+    ],
+    dinner: [
+      { name: 'Käsefondue Léger', emoji: '🫕', cal: 470, protein: 26, carbs: 28, fat: 28, prepTime: '20 min', description: 'Light half-portion fondue with vegetables for dipping', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Forelle Müllerinart', emoji: '🐟', cal: 450, protein: 36, carbs: 35, fat: 18, prepTime: '25 min', description: 'Pan-fried trout with parsley potatoes and lemon', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Älplermagronen (light)', emoji: '🧀', cal: 490, protein: 22, carbs: 60, fat: 18, prepTime: '25 min', description: 'Alpine macaroni with potato, light cheese and applesauce', tags: ['vegetarian'] },
+      { name: 'Gulaschsuppe mit Brot', emoji: '🍲', cal: 460, protein: 32, carbs: 48, fat: 16, prepTime: '30 min', description: 'Hearty beef goulash soup with dark bread', tags: ['high-protein'] },
+    ],
+    snack: [
+      { name: 'Apfelstrudel (klein)', emoji: '🍎', cal: 260, protein: 4, carbs: 38, fat: 10, prepTime: '10 min', description: 'A small slice of apple strudel with cinnamon', tags: ['vegetarian'] },
+      { name: 'Bergkäse mit Trauben', emoji: '🧀', cal: 240, protein: 10, carbs: 18, fat: 14, prepTime: '10 min', description: 'Aged mountain cheese with red grapes', tags: ['vegetarian', 'gluten-free', 'high-protein'] },
+      { name: 'Studentenfutter (30g)', emoji: '🌰', cal: 190, protein: 6, carbs: 14, fat: 12, prepTime: '10 min', description: 'Trail mix of nuts, raisins and dark chocolate chips', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'benelux': {
+    breakfast: [
+      { name: 'Uitsmijter (light)', emoji: '🍳', cal: 380, protein: 24, carbs: 30, fat: 18, prepTime: '15 min', description: 'Two fried eggs on whole-grain bread with ham and cheese, light on butter', tags: ['high-protein'] },
+      { name: 'Havermout met Fruit', emoji: '🥣', cal: 320, protein: 12, carbs: 55, fat: 6, prepTime: '10 min', description: 'Oatmeal with yogurt, apple, and cinnamon', tags: ['vegetarian'] },
+      { name: 'Roggebrood met Kaas', emoji: '🍞', cal: 350, protein: 16, carbs: 45, fat: 11, prepTime: '10 min', description: 'Dark rye bread with aged cheese and apple slices', tags: ['vegetarian'] },
+      { name: 'Wentelteefjes (light)', emoji: '🥞', cal: 340, protein: 14, carbs: 48, fat: 10, prepTime: '15 min', description: 'Light whole-grain French toast with berries and a dusting of sugar', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Hutspot met Rookworst (light)', emoji: '🥘', cal: 620, protein: 26, carbs: 70, fat: 26, prepTime: '30 min', description: 'Mashed potato, carrot and onion with lean smoked sausage', tags: ['high-protein'] },
+      { name: 'Waterzooi (light)', emoji: '🍲', cal: 520, protein: 34, carbs: 40, fat: 25, prepTime: '30 min', description: 'Flemish chicken and vegetable stew, light on cream', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Stamppot Boerenkool (light)', emoji: '🥬', cal: 580, protein: 24, carbs: 65, fat: 24, prepTime: '25 min', description: 'Kale and potato mash with lean sausage and mustard', tags: ['high-protein'] },
+      { name: 'Broodje Gezond', emoji: '🥪', cal: 480, protein: 22, carbs: 55, fat: 19, prepTime: '10 min', description: 'Whole-grain sandwich with cheese, egg, and salad', tags: ['vegetarian', 'high-protein'] },
+    ],
+    dinner: [
+      { name: 'Moules-Frites (light)', emoji: '🍟', cal: 650, protein: 38, carbs: 62, fat: 28, prepTime: '25 min', description: 'Mussels steamed in white wine with a small portion of oven fries', tags: ['high-protein'] },
+      { name: 'Stoofvlees (light)', emoji: '🍖', cal: 640, protein: 36, carbs: 55, fat: 31, prepTime: '30 min', description: 'Flemish beef stewed in dark beer with light mashed potato', tags: ['high-protein'] },
+      { name: 'Zuurkoolstamppot (light)', emoji: '🥬', cal: 540, protein: 22, carbs: 60, fat: 23, prepTime: '25 min', description: 'Sauerkraut and potato mash with light bacon bits', tags: ['high-protein'] },
+      { name: 'Erwtensoep (vegetarian)', emoji: '🍲', cal: 460, protein: 20, carbs: 62, fat: 13, prepTime: '30 min', description: 'Thick split-pea soup with carrot, celery, and rye bread, no pork', tags: ['vegetarian', 'vegan', 'high-protein'] },
+    ],
+    snack: [
+      { name: 'Mini Stroopwafel', emoji: '🍪', cal: 150, protein: 2, carbs: 28, fat: 4, prepTime: '10 min', description: 'Small caramel syrup waffle with black coffee', tags: ['vegetarian'] },
+      { name: 'Vlaflip (light)', emoji: '🍮', cal: 180, protein: 10, carbs: 28, fat: 3, prepTime: '10 min', description: 'Layered yogurt dessert with fruit syrup', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Kaasblokjes met Appel', emoji: '🧀', cal: 220, protein: 12, carbs: 15, fat: 13, prepTime: '10 min', description: 'Cheese cubes with apple slices', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+    ],
+  },
+
+  'uk-ireland': {
+    breakfast: [
+      { name: 'Porridge with Berries', emoji: '🥣', cal: 320, protein: 10, carbs: 58, fat: 7, prepTime: '10 min', description: 'Oat porridge with mixed berries and honey', tags: ['vegetarian'] },
+      { name: 'Light Full Breakfast', emoji: '🍳', cal: 430, protein: 28, carbs: 35, fat: 20, prepTime: '20 min', description: 'Two eggs, grilled tomato, mushrooms, one turkey sausage, whole-grain toast', tags: ['high-protein'] },
+      { name: 'Kippers on Toast', emoji: '🐟', cal: 360, protein: 26, carbs: 32, fat: 14, prepTime: '15 min', description: 'Smoked kippers with lemon on whole-grain toast', tags: ['high-protein'] },
+      { name: 'Welsh Rarebit (light)', emoji: '🧀', cal: 340, protein: 16, carbs: 38, fat: 14, prepTime: '15 min', description: 'Light cheese sauce on toasted whole-grain bread with mustard', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Ploughman\u2019s (light)', emoji: '🧀', cal: 520, protein: 24, carbs: 55, fat: 23, prepTime: '10 min', description: 'Cheese, pickle, and salad with whole-grain bread', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Cullen Skink (light)', emoji: '🍲', cal: 480, protein: 30, carbs: 45, fat: 20, prepTime: '25 min', description: 'Smoked haddock and potato soup, light on cream', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Coronation Chicken Wrap (light)', emoji: '🌯', cal: 540, protein: 32, carbs: 55, fat: 21, prepTime: '15 min', description: 'Curried chicken in light yogurt dressing, whole-grain wrap', tags: ['high-protein'] },
+      { name: 'Leek and Potato Soup', emoji: '🍲', cal: 460, protein: 14, carbs: 62, fat: 18, prepTime: '25 min', description: 'Creamy leek and potato soup with a small cheese scone', tags: ['vegetarian'] },
+    ],
+    dinner: [
+      { name: 'Lean Shepherd\u2019s Pie', emoji: '🥧', cal: 620, protein: 34, carbs: 58, fat: 28, prepTime: '30 min', description: 'Lean minced lamb with vegetables under light mashed potato', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Roast Chicken Dinner (light)', emoji: '🍗', cal: 640, protein: 42, carbs: 55, fat: 28, prepTime: '30 min', description: 'Roast chicken breast, roast potatoes, carrots, and gravy', tags: ['high-protein'] },
+      { name: 'Baked Cod with Mushy Peas', emoji: '🐟', cal: 520, protein: 38, carbs: 50, fat: 19, prepTime: '25 min', description: 'Oven-baked cod with mushy peas and a small portion of chips', tags: ['high-protein'] },
+      { name: 'Bubble and Squeak with Eggs', emoji: '🍳', cal: 480, protein: 20, carbs: 55, fat: 21, prepTime: '20 min', description: 'Crisped potato and cabbage cake topped with two poached eggs', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Small Scone with Jam', emoji: '🍪', cal: 220, protein: 4, carbs: 42, fat: 5, prepTime: '10 min', description: 'One small scone with jam and tea', tags: ['vegetarian'] },
+      { name: 'Cheese and Oatcakes', emoji: '🧀', cal: 240, protein: 10, carbs: 22, fat: 13, prepTime: '10 min', description: 'Cheddar with three oatcakes', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Apple with Peanut Butter', emoji: '🍎', cal: 200, protein: 6, carbs: 22, fat: 11, prepTime: '10 min', description: 'Sliced apple with a tablespoon of peanut butter', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'nordics': {
+    breakfast: [
+      { name: 'Skyr with Berries', emoji: '🫐', cal: 280, protein: 24, carbs: 38, fat: 3, prepTime: '10 min', description: 'Icelandic skyr with bilberries and honey', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Rye Porridge with Apple', emoji: '🥣', cal: 300, protein: 8, carbs: 60, fat: 5, prepTime: '15 min', description: 'Danish rye porridge with stewed apple and cinnamon', tags: ['vegetarian', 'vegan'] },
+      { name: 'Smoked Salmon on Crispbread', emoji: '🐟', cal: 340, protein: 24, carbs: 32, fat: 13, prepTime: '10 min', description: 'Smoked salmon with light cream cheese on rye crispbread', tags: ['high-protein'] },
+      { name: 'Light Egg Cake', emoji: '🍳', cal: 360, protein: 20, carbs: 28, fat: 19, prepTime: '20 min', description: 'Danish oven egg cake with chives, light on butter', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Gravlax on Rye', emoji: '🐟', cal: 520, protein: 32, carbs: 45, fat: 24, prepTime: '15 min', description: 'Cured salmon on dark rye with mustard-dill sauce', tags: ['high-protein'] },
+      { name: 'Swedish Pea Soup (light)', emoji: '🍲', cal: 480, protein: 26, carbs: 58, fat: 16, prepTime: '30 min', description: 'Yellow pea soup with vegetables, vegetarian style', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Shrimp Sandwich (light)', emoji: '🦐', cal: 540, protein: 34, carbs: 52, fat: 22, prepTime: '15 min', description: 'Open-faced shrimp sandwich with light mayo, lemon, and dill', tags: ['high-protein'] },
+      { name: 'Salmon Soup (light)', emoji: '🍲', cal: 560, protein: 32, carbs: 48, fat: 27, prepTime: '25 min', description: 'Finnish lohikeitto with potato and leek, light cream', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Lean Meatballs with Lingonberry', emoji: '🧆', cal: 640, protein: 36, carbs: 62, fat: 27, prepTime: '30 min', description: 'Swedish meatballs, lean mince, with light mash and lingonberry', tags: ['high-protein'] },
+      { name: 'Baked Salmon with Root Veg', emoji: '🐟', cal: 620, protein: 38, carbs: 45, fat: 31, prepTime: '30 min', description: 'Oven salmon with roasted carrots, parsnip, and dill', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Herring with New Potatoes', emoji: '🐟', cal: 520, protein: 28, carbs: 55, fat: 21, prepTime: '20 min', description: 'Pickled herring with warm new potatoes, dill, and sour cream', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Root Vegetable Gratin (light)', emoji: '🥔', cal: 480, protein: 14, carbs: 65, fat: 18, prepTime: '30 min', description: 'Baked celeriac, carrot, and potato gratin with cheese, side salad', tags: ['vegetarian', 'gluten-free'] },
+    ],
+    snack: [
+      { name: 'Mini Skyr with Cloudberry', emoji: '🫐', cal: 140, protein: 14, carbs: 20, fat: 1, prepTime: '10 min', description: 'Small skyr pot with cloudberry jam', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Crispbread with Cheese', emoji: '🧀', cal: 200, protein: 10, carbs: 24, fat: 8, prepTime: '10 min', description: 'Two rye crispbreads with hard cheese', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Smoked Almonds (small)', emoji: '🌰', cal: 170, protein: 6, carbs: 6, fat: 15, prepTime: '10 min', description: 'Small handful of smoked almonds', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'poland-eastern-europe': {
+    breakfast: [
+      { name: 'Owsianka with Apple', emoji: '🥣', cal: 310, protein: 9, carbs: 58, fat: 6, prepTime: '10 min', description: 'Polish oatmeal with grated apple and cinnamon', tags: ['vegetarian'] },
+      { name: 'Jajecznica on Rye', emoji: '🍳', cal: 380, protein: 22, carbs: 32, fat: 21, prepTime: '15 min', description: 'Scrambled eggs with chives on dark rye bread', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Twarog with Radish', emoji: '🧀', cal: 340, protein: 24, carbs: 34, fat: 12, prepTime: '10 min', description: 'Farmer cheese with radish, chives, and rye bread', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Light Berry Pancakes', emoji: '🥞', cal: 360, protein: 12, carbs: 58, fat: 9, prepTime: '20 min', description: 'Thin Polish pancakes with berries and light sour cream', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Zurek with Egg', emoji: '🍲', cal: 520, protein: 24, carbs: 48, fat: 26, prepTime: '25 min', description: 'Sour rye soup with egg and light sausage', tags: ['high-protein'] },
+      { name: 'Pierogi Ruskie (light)', emoji: '🥟', cal: 560, protein: 20, carbs: 78, fat: 19, prepTime: '25 min', description: 'Six potato-cheese dumplings with skyr instead of sour cream', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Golabki (lean)', emoji: '🥬', cal: 580, protein: 30, carbs: 62, fat: 23, prepTime: '30 min', description: 'Cabbage rolls with lean meat and rice in tomato sauce', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Barszcz with Uszka', emoji: '🍲', cal: 420, protein: 12, carbs: 68, fat: 11, prepTime: '25 min', description: 'Clear beet soup with small mushroom dumplings', tags: ['vegetarian', 'vegan'] },
+    ],
+    dinner: [
+      { name: 'Lean Bigos', emoji: '🥘', cal: 540, protein: 34, carbs: 42, fat: 26, prepTime: '30 min', description: 'Hunter stew with turkey, sauerkraut, and mushrooms', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Grilled Kielbasa with Beets', emoji: '🌭', cal: 620, protein: 30, carbs: 62, fat: 28, prepTime: '25 min', description: 'Lean grilled sausage with roasted beets and buckwheat', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Baked Pork Cutlet', emoji: '🍖', cal: 600, protein: 38, carbs: 45, fat: 27, prepTime: '30 min', description: 'Oven-baked pork cutlet with cucumber salad (mizeria)', tags: ['high-protein'] },
+      { name: 'Baked Potato Pancakes', emoji: '🥔', cal: 640, protein: 30, carbs: 65, fat: 29, prepTime: '30 min', description: 'Oven-baked potato pancakes with light beef goulash', tags: ['high-protein'] },
+    ],
+    snack: [
+      { name: 'Kisiel with Berries', emoji: '🍮', cal: 130, protein: 2, carbs: 30, fat: 1, prepTime: '10 min', description: 'Polish fruit jelly with fresh berries', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Oscypek with Cranberry', emoji: '🧀', cal: 200, protein: 12, carbs: 8, fat: 14, prepTime: '10 min', description: 'Small smoked mountain cheese with cranberry sauce', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Rye Bread with Hummus', emoji: '🍞', cal: 220, protein: 8, carbs: 34, fat: 7, prepTime: '10 min', description: 'Dark rye bread with hummus and cucumber', tags: ['vegetarian', 'vegan'] },
+    ],
+  },
+
+  'russia': {
+    breakfast: [
+      { name: 'Baked Syrniki', emoji: '🥞', cal: 380, protein: 22, carbs: 45, fat: 14, prepTime: '20 min', description: 'Oven-baked cottage cheese pancakes with light sour cream and berries', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Buckwheat Kasha', emoji: '🥣', cal: 330, protein: 11, carbs: 62, fat: 6, prepTime: '15 min', description: 'Buckwheat porridge with warm milk and honey', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Blini with Salmon', emoji: '🐟', cal: 360, protein: 20, carbs: 42, fat: 13, prepTime: '20 min', description: 'Two thin blini with smoked salmon and light cream cheese', tags: ['high-protein'] },
+      { name: 'Mushroom Omelette', emoji: '🍳', cal: 350, protein: 20, carbs: 28, fat: 19, prepTime: '15 min', description: 'Three-egg omelette with mushrooms and rye bread', tags: ['vegetarian', 'high-protein'] },
+    ],
+    lunch: [
+      { name: 'Borscht (light)', emoji: '🍲', cal: 480, protein: 18, carbs: 62, fat: 18, prepTime: '30 min', description: 'Beet and cabbage soup with light sour cream and rye bread', tags: ['vegetarian'] },
+      { name: 'Light Pelmeni', emoji: '🥟', cal: 560, protein: 28, carbs: 58, fat: 24, prepTime: '20 min', description: 'Eight lean-meat dumplings with a spoon of light sour cream', tags: ['high-protein'] },
+      { name: 'Light Beef Stroganoff', emoji: '🍖', cal: 620, protein: 38, carbs: 55, fat: 27, prepTime: '30 min', description: 'Beef strips in yogurt sauce over buckwheat', tags: ['high-protein'] },
+      { name: 'Shchi with Potato', emoji: '🍲', cal: 420, protein: 14, carbs: 60, fat: 14, prepTime: '30 min', description: 'Cabbage soup with potato and rye bread', tags: ['vegetarian', 'vegan'] },
+    ],
+    dinner: [
+      { name: 'Baked Chicken Kotlety', emoji: '🍗', cal: 600, protein: 36, carbs: 55, fat: 26, prepTime: '30 min', description: 'Oven-baked chicken patties with light mashed potato', tags: ['high-protein'] },
+      { name: 'Baked Pike-Perch', emoji: '🐟', cal: 560, protein: 40, carbs: 48, fat: 23, prepTime: '30 min', description: 'Baked sudak with buckwheat and dill', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Golubtsy (lean)', emoji: '🥬', cal: 580, protein: 30, carbs: 60, fat: 25, prepTime: '30 min', description: 'Cabbage rolls with lean meat and rice, light sour cream', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Light Mushroom Julienne', emoji: '🍄', cal: 460, protein: 16, carbs: 48, fat: 23, prepTime: '25 min', description: 'Baked mushrooms in light cream sauce with rye bread', tags: ['vegetarian'] },
+    ],
+    snack: [
+      { name: 'Small Pryanik', emoji: '🍪', cal: 150, protein: 2, carbs: 32, fat: 2, prepTime: '10 min', description: 'One small honey spice cookie with tea', tags: ['vegetarian'] },
+      { name: 'Tvorog with Honey', emoji: '🍯', cal: 190, protein: 16, carbs: 22, fat: 5, prepTime: '10 min', description: 'Cottage cheese with a drizzle of honey', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Pickles with Crispbread', emoji: '🥒', cal: 120, protein: 4, carbs: 22, fat: 2, prepTime: '10 min', description: 'Pickled cucumber with rye crispbread', tags: ['vegetarian', 'vegan'] },
+    ],
+  },
+
+  'balkans': {
+    breakfast: [
+      { name: 'Light Cheese Burek', emoji: '🥐', cal: 420, protein: 18, carbs: 48, fat: 17, prepTime: '20 min', description: 'Small flaky burek with cheese and a glass of yogurt', tags: ['vegetarian'] },
+      { name: 'Kajgana with Ajvar', emoji: '🍳', cal: 380, protein: 20, carbs: 38, fat: 17, prepTime: '15 min', description: 'Balkan scrambled eggs with ajvar and bread', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Proja with Kajmak', emoji: '🌽', cal: 350, protein: 12, carbs: 52, fat: 10, prepTime: '20 min', description: 'Cornbread with light kajmak and tomato', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Savory French Toast', emoji: '🍞', cal: 360, protein: 16, carbs: 44, fat: 13, prepTime: '15 min', description: 'Balkan-style przenice with cheese', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Lean Cevapi', emoji: '🍖', cal: 640, protein: 34, carbs: 55, fat: 31, prepTime: '25 min', description: 'Five lean minced-meat sausages in small lepinja with onions', tags: ['high-protein'] },
+      { name: 'Sarma (lean)', emoji: '🥬', cal: 580, protein: 30, carbs: 58, fat: 25, prepTime: '30 min', description: 'Sauerkraut rolls with lean meat and rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pasulj (light)', emoji: '🫘', cal: 540, protein: 22, carbs: 78, fat: 16, prepTime: '30 min', description: 'White bean stew with vegetables and bread', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Shopska with Chicken', emoji: '🥗', cal: 520, protein: 38, carbs: 28, fat: 28, prepTime: '20 min', description: 'Shopska salad topped with grilled chicken', tags: ['high-protein', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Lean Pljeskavica', emoji: '🍖', cal: 620, protein: 38, carbs: 35, fat: 36, prepTime: '25 min', description: 'Baked lean Balkan burger patty with grilled vegetables', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Stuffed Peppers (lean)', emoji: '🫑', cal: 560, protein: 30, carbs: 55, fat: 24, prepTime: '30 min', description: 'Peppers stuffed with lean meat and rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Fish Soup with Bread', emoji: '🍲', cal: 480, protein: 32, carbs: 48, fat: 18, prepTime: '30 min', description: 'Balkan river-fish soup with bread', tags: ['high-protein'] },
+      { name: 'Prebranac with Salad', emoji: '🫘', cal: 500, protein: 20, carbs: 72, fat: 15, prepTime: '30 min', description: 'Oven-baked beans with onion and green salad', tags: ['vegetarian', 'vegan', 'high-protein'] },
+    ],
+    snack: [
+      { name: 'Ajvar with Breadsticks', emoji: '🫑', cal: 180, protein: 4, carbs: 32, fat: 5, prepTime: '10 min', description: 'Roasted pepper spread with breadsticks', tags: ['vegetarian', 'vegan'] },
+      { name: 'Light Kajmak with Cucumber', emoji: '🥒', cal: 150, protein: 8, carbs: 6, fat: 11, prepTime: '10 min', description: 'Light creamy kajmak with cucumber slices', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Roasted Chestnuts', emoji: '🌰', cal: 200, protein: 3, carbs: 44, fat: 2, prepTime: '20 min', description: 'Handful of roasted chestnuts (kestenje)', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
+  'caucasus': {
+    breakfast: [
+      { name: 'Small Khachapuri (light)', emoji: '🧀', cal: 420, protein: 20, carbs: 52, fat: 15, prepTime: '25 min', description: 'Small cheese-filled bread, lighter dough, one egg', tags: ['vegetarian'] },
+      { name: 'Lavash with Cheese and Herbs', emoji: '🫓', cal: 360, protein: 20, carbs: 40, fat: 13, prepTime: '10 min', description: 'Lavash wrapped with cheese, egg, and fresh tarragon', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Harissa Porridge', emoji: '🥣', cal: 340, protein: 18, carbs: 52, fat: 7, prepTime: '20 min', description: 'Armenian slow-cooked wheat and chicken porridge', tags: ['high-protein'] },
+      { name: 'Matzoon with Honey', emoji: '🍯', cal: 300, protein: 14, carbs: 30, fat: 15, prepTime: '10 min', description: 'Thick Armenian yogurt with honey and walnuts', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+    ],
+    lunch: [
+      { name: 'Khinkali (4, lean)', emoji: '🥟', cal: 560, protein: 28, carbs: 60, fat: 23, prepTime: '30 min', description: 'Four Georgian soup dumplings with lean meat and herbs', tags: ['high-protein'] },
+      { name: 'Lobio with Mchadi', emoji: '🫘', cal: 520, protein: 20, carbs: 72, fat: 16, prepTime: '30 min', description: 'Red kidney bean stew with cornbread', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Dolma (lean)', emoji: '🍇', cal: 540, protein: 26, carbs: 58, fat: 22, prepTime: '30 min', description: 'Grape leaves stuffed with lean meat and rice, yogurt dip', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Badrijani with Lavash', emoji: '🍆', cal: 460, protein: 12, carbs: 42, fat: 27, prepTime: '25 min', description: 'Eggplant rolls with walnut-garlic filling and lavash', tags: ['vegetarian', 'vegan'] },
+    ],
+    dinner: [
+      { name: 'Georgian Chicken Kebab', emoji: '🍗', cal: 620, protein: 42, carbs: 48, fat: 29, prepTime: '30 min', description: 'Marinated chicken skewers with grilled vegetables and lavash', tags: ['high-protein'] },
+      { name: 'Chakhokhbili (light)', emoji: '🍲', cal: 600, protein: 38, carbs: 58, fat: 24, prepTime: '30 min', description: 'Georgian chicken and tomato stew with rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Ajapsandali with Cheese', emoji: '🍆', cal: 480, protein: 16, carbs: 55, fat: 22, prepTime: '30 min', description: 'Caucasus vegetable stew with suluguni cheese', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Lean Lamb Lyulya', emoji: '🍖', cal: 640, protein: 36, carbs: 52, fat: 32, prepTime: '30 min', description: 'Lean minced-lamb kebab with bulgur and onion salad', tags: ['high-protein'] },
+    ],
+    snack: [
+      { name: 'Small Churchkhela', emoji: '🍇', cal: 180, protein: 4, carbs: 36, fat: 3, prepTime: '10 min', description: 'Grape-and-walnut sweet, one small piece', tags: ['vegetarian', 'vegan'] },
+      { name: 'Suluguni with Tomato', emoji: '🧀', cal: 220, protein: 16, carbs: 4, fat: 16, prepTime: '10 min', description: 'Sliced suluguni cheese with tomato', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Walnuts with Apricots', emoji: '🌰', cal: 190, protein: 5, carbs: 20, fat: 12, prepTime: '10 min', description: 'Handful of walnuts with dried apricots', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
   global: {
     breakfast: [
       { name: 'Oatmeal with Berries', emoji: '🥣', cal: 310, protein: 10, carbs: 52, fat: 6, prepTime: '8 min', description: 'Warm rolled oats with mixed berries, banana, and a drizzle of honey', tags: ['vegetarian', 'vegan'] },
@@ -458,14 +1572,21 @@ const REGIONAL_DB: RegionalFoodDB = {
   },
 };
 
-// Alias regions to base regions
+// Alias legacy / alternate region keys to canonical food-database regions.
+// detectRegion() now returns canonical keys directly; this is a safety net.
 const REGION_ALIASES: Record<string, string> = {
-  'saudi': 'gulf', 'uae': 'gulf', 'iran': 'gulf', 'turkey': 'gulf', 'egypt': 'gulf', 'levant': 'gulf',
-  'spain': 'greece', 'france': 'italy', 'germany': 'italy', 'europe': 'italy', 'uk': 'usa', 'canada': 'usa',
-  'bangladesh': 'east-india', 'nepal': 'north-india',
-  'thailand': 'global', 'vietnam': 'global', 'indonesia': 'global', 'malaysia': 'global', 'philippines': 'global',
-  'brazil': 'global', 'colombia': 'global',
-  'west-africa': 'global', 'east-africa': 'global', 'south-africa': 'global',
+  'saudi': 'gulf', 'uae': 'gulf', 'yemen': 'gulf',
+  'iraq': 'levant', 'israel': 'levant',
+  'hong-kong': 'china', 'macau': 'china', 'mongolia': 'central-asia',
+  'bhutan': 'nepal', 'tibet': 'nepal', 'maldives': 'sri-lanka',
+  'canada': 'usa', 'chile': 'argentina', 'uruguay': 'argentina', 'paraguay': 'argentina',
+  'guyana': 'caribbean', 'suriname': 'caribbean', 'belize': 'central-america',
+  'iceland': 'nordics', 'ireland': 'uk-ireland', 'cyprus': 'greece', 'malta': 'greece',
+  'ukraine': 'poland-eastern-europe', 'belarus': 'russia',
+  'madagascar': 'swahili-coast', 'mauritius': 'swahili-coast', 'seychelles': 'swahili-coast',
+  'somalia': 'ethiopia-east-africa', 'sudan': 'ethiopia-east-africa',
+  'west-africa': 'nigeria-west-africa', 'east-africa': 'ethiopia-east-africa',
+  'uk': 'uk-ireland', 'europe': 'italy', 'malaysia': 'malaysia-singapore',
 };
 
 function resolveRegion(region: string): string {
@@ -565,8 +1686,23 @@ export async function generateDietPlan(profile: UserProfile, calculations: Calcu
 
   const regionLabel: Record<string, string> = {
     'north-india': 'North India', 'south-india': 'South India', 'west-india': 'West India', 'east-india': 'East India',
-    'pakistan': 'Pakistan', 'gulf': 'Middle East / Gulf', 'japan': 'Japan', 'korea': 'Korea',
-    'greece': 'Mediterranean', 'italy': 'Italy', 'mexico': 'Mexico', 'usa': 'USA / Canada', 'global': 'Global',
+    'pakistan': 'Pakistan', 'bangladesh': 'Bangladesh', 'nepal': 'Nepal & Himalayas', 'sri-lanka': 'Sri Lanka',
+    'afghanistan': 'Afghanistan', 'central-asia': 'Central Asia',
+    'gulf': 'Middle East / Gulf', 'iran': 'Iran', 'turkey': 'Turkey', 'levant': 'Levant / Middle East',
+    'egypt': 'Egypt', 'maghreb': 'North Africa / Maghreb',
+    'japan': 'Japan', 'korea': 'Korea', 'china': 'China', 'taiwan': 'Taiwan',
+    'thailand': 'Thailand', 'vietnam': 'Vietnam', 'mekong': 'Myanmar / Laos / Cambodia',
+    'indonesia': 'Indonesia', 'malaysia-singapore': 'Malaysia / Singapore', 'philippines': 'Philippines',
+    'italy': 'Italy', 'spain': 'Spain', 'portugal': 'Portugal', 'greece': 'Greece / Mediterranean',
+    'france': 'France', 'germany': 'Germany', 'alpine': 'Switzerland / Austria', 'benelux': 'Benelux',
+    'uk-ireland': 'UK / Ireland', 'nordics': 'Nordics', 'poland-eastern-europe': 'Eastern Europe',
+    'russia': 'Russia', 'balkans': 'Balkans', 'caucasus': 'Caucasus',
+    'nigeria-west-africa': 'West Africa', 'central-africa': 'Central Africa', 'swahili-coast': 'East Africa / Swahili Coast',
+    'ethiopia-east-africa': 'Ethiopia / Horn of Africa', 'south-africa': 'Southern Africa',
+    'usa': 'USA / Canada', 'mexico': 'Mexico', 'central-america': 'Central America', 'caribbean': 'Caribbean',
+    'andean': 'Andean / South America', 'brazil': 'Brazil', 'argentina': 'Argentina / Southern Cone',
+    'australia-nz': 'Australia / New Zealand', 'pacific-islands': 'Pacific Islands',
+    'global': 'Global',
   };
 
   const summary = `Your personalized plan is crafted with ${regionLabel[region] || 'regionally relevant'} meals. At ${calculations.dailyCalorieGoal} kcal/day with ${calculations.proteinG}g protein · ${calculations.carbsG}g carbs · ${calculations.fatG}g fat — you're on track to meet your ${goal.replace('_', ' ')} goal.`;
