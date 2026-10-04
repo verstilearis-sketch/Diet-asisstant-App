@@ -5,45 +5,9 @@ import { useRouter } from 'next/navigation';
 import { getSession } from '@/lib/storage';
 import Link from 'next/link';
 import {
-  SaladIcon, CalculatorIcon, MapPinIcon, BotIcon, ScaleIcon,
-  DropletsIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
-  WheatIcon, UtensilsIcon,
+  SaladIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
+  WheatIcon,
 } from '@/components/icons';
-
-// ── What's inside the plan (maps 1:1 to what the engine generates) ──
-
-const INSIDE = [
-  {
-    icon: CalculatorIcon,
-    title: 'Your numbers, computed',
-    desc: 'BMI, BMR, TDEE and a daily calorie target calculated with the Mifflin–St Jeor equation — adjusted for your goal. Not guessed, not generic.',
-  },
-  {
-    icon: UtensilsIcon,
-    title: 'A real 7-day meal plan',
-    desc: 'Five meals a day — breakfast, two snacks, lunch, dinner — each with calories and macros, portioned to hit your daily target.',
-  },
-  {
-    icon: MapPinIcon,
-    title: 'Food you actually eat',
-    desc: 'Tell us your city and meals are matched to your region’s cuisine and the markets near you — 40+ regional profiles, five continents.',
-  },
-  {
-    icon: ScaleIcon,
-    title: 'Calories you can picture',
-    desc: 'Your target ships with real-world equivalences — so “500 kcal” means something concrete the next time you read a menu.',
-  },
-  {
-    icon: DropletsIcon,
-    title: 'Hydration & supplements',
-    desc: 'A daily water target based on your body weight, plus evidence-based supplement notes matched to your goal.',
-  },
-  {
-    icon: BotIcon,
-    title: 'A coach that knows your plan',
-    desc: 'The built-in AI health agent answers nutrition questions with your numbers and your plan in context — not canned advice.',
-  },
-];
 
 // ── The math the app actually uses (src/lib/calculations.ts) ──
 
@@ -115,7 +79,6 @@ export default function LandingPage() {
             DietAI
           </Link>
           <div className="nav-links">
-            <a href="#what-you-get" className="nav-link">What’s inside</a>
             <a href="#math" className="nav-link">The math</a>
             <a href="#how-it-works" className="nav-link">How it works</a>
             <a href="#faq" className="nav-link">FAQ</a>
@@ -199,33 +162,6 @@ export default function LandingPage() {
               Matched to your cuisine, allergies and goal — swaps in one tap.
             </p>
           </div>
-        </div>
-      </section>
-
-      {/* ── What's inside (the preface) ─────────────────── */}
-      <section id="what-you-get" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
-        <div className="section-head">
-          <div className="eyebrow">What you get</div>
-          <h2>One questionnaire. A complete plan.</h2>
-          <p>Not a PDF of generic tips — a structured, computable plan your dashboard and your coach both work from.</p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
-          {INSIDE.map((f, i) => (
-            <div key={f.title} className="glass-card" style={{ padding: '1.6rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', marginBottom: '0.8rem' }}>
-                <div style={{
-                  width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-                  background: 'var(--color-accent-soft)', color: 'var(--color-accent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <f.icon size={20} />
-                </div>
-                <span className="mono" style={{ fontSize: '0.75rem', color: 'var(--color-faint)' }}>0{i + 1}</span>
-              </div>
-              <h3 style={{ fontSize: '1.02rem', marginBottom: '0.4rem' }}>{f.title}</h3>
-              <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', lineHeight: 1.65 }}>{f.desc}</p>
-            </div>
-          ))}
         </div>
       </section>
 
