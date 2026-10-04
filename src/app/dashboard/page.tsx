@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, DailyLog, resetAllData, updatePlan } from '@/lib/storage';
-import { computeAll } from '@/lib/calculations';
+import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, getDailyLogsRange, DailyLog, resetAllData, updatePlan } from '@/lib/storage';
+import { computeAll, calculateMacros } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
-import type { SavedPlan, ExtraMeal } from '@/lib/storage';
+import type { SavedPlan, ExtraMeal, ExerciseEntry } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
 import { getMealAlternatives, type MealType } from '@/lib/ai-engine';
+import { checkAdaptation, type AdaptationCheck } from '@/lib/adaptive';
 import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
@@ -67,6 +68,11 @@ export default function DashboardPage() {
   const [extraText, setExtraText] = useState('');
   const [extraBusy, setExtraBusy] = useState(false);
   const [extraError, setExtraError] = useState<string | null>(null);
+  const [exerciseText, setExerciseText] = useState('');
+  const [exerciseBusy, setExerciseBusy] = useState(false);
+  const [exerciseError, setExerciseError] = useState<string | null>(null);
+  const [adaptation, setAdaptation] = useState<AdaptationCheck | null>(null);
+  const adaptCheckedFor = useRef<string | null>(null);
   const [savedAt, setSavedAt] = useState('');
   const [todayStr] = useState(getTodayString());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -114,8 +120,19 @@ export default function DashboardPage() {
     if (!draftLog || !savedPlan || saveState === 'saving') return;
     setSaveState('saving');
     try {
-      await saveDailyLog(savedPlan.userId, draftLog);
-      setDailyLog(draftLog);
+      // Snapshot intake + burn so trends/adaptation don't depend on the plan staying unchanged.
+      const dayPlan = savedPlan.plan.weeklyPlan[activeDay];
+      const planMeals = dayPlan
+        ? [dayPlan.breakfast, dayPlan.morningSnack, dayPlan.lunch, dayPlan.afternoonSnack, dayPlan.dinner]
+        : [];
+      const intakeKcal =
+        planMeals.reduce((a, m, i) => a + (draftLog.mealsCompleted[i] && m ? m.calories : 0), 0) +
+        (draftLog.extraMeals || []).reduce((a, m) => a + m.calories, 0);
+      const burnedKcal = (draftLog.exercises || []).reduce((a, e) => a + e.caloriesBurned, 0);
+      const toSave = { ...draftLog, intakeKcal, burnedKcal };
+      await saveDailyLog(savedPlan.userId, toSave);
+      setDailyLog(toSave);
+      setDraftLog(toSave);
       setSaveState('saved');
       setSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (e) {
@@ -169,6 +186,51 @@ export default function DashboardPage() {
     setSaveState('idle');
   };
 
+  // Exercise logging: estimate burn via AI, add to the draft day log.
+  const handleEstimateExercise = async () => {
+    const text = exerciseText.trim();
+    if (!text || exerciseBusy || !savedPlan) return;
+    setExerciseBusy(true);
+    setExerciseError(null);
+    try {
+      const res = await fetch('/api/parse-exercise', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, weightKg: savedPlan.profile.weightKg }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Could not estimate this workout');
+      const e = data.exercise as { name: string; caloriesBurned: number; durationMin?: number };
+      const entry: ExerciseEntry = {
+        id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `ex-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: e.name,
+        description: text,
+        caloriesBurned: e.caloriesBurned,
+        ...(typeof e.durationMin === 'number' ? { durationMin: e.durationMin } : {}),
+      };
+      setDraftLog((d) =>
+        d ? { ...d, exercises: [...(d.exercises || []), entry], exerciseDone: true } : d,
+      );
+      setExerciseText('');
+      setSaveState('idle');
+    } catch (e) {
+      setExerciseError(e instanceof Error ? e.message : 'Could not estimate this workout');
+    } finally {
+      setExerciseBusy(false);
+    }
+  };
+
+  const removeExercise = (id: string) => {
+    setDraftLog((d) => {
+      if (!d) return d;
+      const exercises = (d.exercises || []).filter((e) => e.id !== id);
+      return { ...d, exercises, exerciseDone: d.exerciseDone || exercises.length > 0 };
+    });
+    setSaveState('idle');
+  };
+
   const handleSignOut = async () => { await signOut(); router.replace('/'); };
 
   // Swap a meal for an alternative (from the "can't make this" picker).
@@ -205,6 +267,56 @@ export default function DashboardPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [showResetConfirm]);
 
+  // Adaptive targets: once per plan, learn the real TDEE from logged intake + weight.
+  useEffect(() => {
+    if (!savedPlan || adaptCheckedFor.current === savedPlan.id) return;
+    adaptCheckedFor.current = savedPlan.id;
+    let cancelled = false;
+    (async () => {
+      try {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 21);
+        const fmtD = (d: Date) =>
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const logs = await getDailyLogsRange(savedPlan.userId, fmtD(start), fmtD(end));
+        const { profile, plan } = savedPlan;
+        const base = computeAll(profile);
+        const result = checkAdaptation({
+          logs,
+          plan,
+          profile,
+          currentTarget: plan.adaptiveTarget?.calories ?? base.dailyCalorieGoal,
+          bmr: base.bmr,
+        });
+        if (cancelled) return;
+        setAdaptation(result);
+        if (result.status === 'adapted' && result.newTarget && result.reason) {
+          const updated = {
+            ...plan,
+            adaptiveTarget: {
+              calories: result.newTarget,
+              adjustedAt: new Date().toISOString(),
+              reason: result.reason,
+            },
+          };
+          setSavedPlan({ ...savedPlan, plan: updated });
+          try {
+            await updatePlan(savedPlan.id, updated);
+          } catch (e) {
+            console.error('Failed to persist adaptive target:', e);
+          }
+        }
+      } catch (e) {
+        console.error('Adaptive target check failed:', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedPlan]);
+
   if (loading || !savedPlan || !dailyLog || !draftLog) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -218,13 +330,22 @@ export default function DashboardPage() {
 
   const { profile, plan } = savedPlan;
   const firstName = (userName || profile.name || '').split(' ')[0];
-  const calcs = computeAll(profile);
+  const baseCalcs = computeAll(profile);
+  // Adaptive target overrides the formula goal once the engine has learned from logs.
+  const dailyGoal = plan.adaptiveTarget?.calories ?? baseCalcs.dailyCalorieGoal;
+  const calcs = plan.adaptiveTarget
+    ? { ...baseCalcs, dailyCalorieGoal: dailyGoal, ...calculateMacros(dailyGoal, profile.goal, profile.weightKg) }
+    : baseCalcs;
   const selectedDayPlan = plan.weeklyPlan[activeDay];
 
   const mealsList = MEAL_META.map((m) => selectedDayPlan[m.key]);
   const extraCals = (log: DailyLog) => (log.extraMeals || []).reduce((a, m) => a + m.calories, 0);
   const calsConsumed = mealsList.reduce((acc, meal, i) => acc + (dailyLog.mealsCompleted[i] ? meal.calories : 0), 0) + extraCals(dailyLog);
   const draftCalsConsumed = mealsList.reduce((acc, meal, i) => acc + (draftLog.mealsCompleted[i] ? meal.calories : 0), 0) + extraCals(draftLog);
+  const draftBurned = (draftLog.exercises || []).reduce((a, e) => a + e.caloriesBurned, 0);
+  const draftNet = draftCalsConsumed - draftBurned;
+  const exerciseDoneToday = dailyLog.exerciseDone || (dailyLog.exercises || []).length > 0;
+  const burnedToday = (dailyLog.exercises || []).reduce((a, e) => a + e.caloriesBurned, 0);
   const draftCaloriePct = Math.min(100, Math.round((draftCalsConsumed / calcs.dailyCalorieGoal) * 100));
   const mealsDoneCount = dailyLog.mealsCompleted.filter(Boolean).length;
 
@@ -318,6 +439,30 @@ export default function DashboardPage() {
               <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>{todayLabel} · {GOAL_LABELS[profile.goal] || 'Your nutrition'} plan</p>
             </div>
 
+            {plan.adaptiveTarget && (
+              <div className="glass-card fade-in-up" style={{ padding: '1.1rem 1.25rem', borderLeft: '3px solid var(--color-accent)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginBottom: '0.45rem' }}>
+                  <span className="badge badge-green">Target adapted</span>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--color-faint)' }}>
+                    {new Date(plan.adaptiveTarget.adjustedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.65, margin: 0 }}>
+                  {plan.adaptiveTarget.reason}
+                </p>
+              </div>
+            )}
+
+            {!plan.adaptiveTarget && adaptation?.status === 'not-enough-data' && (adaptation.daysLogged ?? 0) >= 2 && (
+              <div className="glass-card fade-in-up" style={{ padding: '1rem 1.25rem', display: 'flex', gap: '0.8rem', alignItems: 'flex-start' }}>
+                <span style={{ color: 'var(--color-muted)', marginTop: '0.1rem', flexShrink: 0 }}><BulbIcon size={18} /></span>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.6, margin: 0 }}>
+                  <strong style={{ color: 'var(--color-text)' }}>Adaptive targets unlock soon.</strong>{' '}
+                  Keep logging your meals{(adaptation.weighIns ?? 0) < 2 ? ' and weigh yourself a couple of times' : ''} — with about a week of data, your calorie target starts learning from your real progress.
+                </p>
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
               <div className="glass-card" style={{ padding: '1.4rem' }}>
                 <h3 style={{ marginBottom: '1.1rem', fontSize: '0.98rem' }}>Your profile</h3>
@@ -367,7 +512,14 @@ export default function DashboardPage() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Exercise</span>
-                    <span className={`badge ${dailyLog.exerciseDone ? 'badge-green' : 'badge-grey'}`}>{dailyLog.exerciseDone ? 'Done' : 'Not yet'}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                      {burnedToday > 0 && (
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-accent)', fontVariantNumeric: 'tabular-nums' }}>
+                          −{burnedToday} kcal
+                        </span>
+                      )}
+                      <span className={`badge ${exerciseDoneToday ? 'badge-green' : 'badge-grey'}`}>{exerciseDoneToday ? 'Done' : 'Not yet'}</span>
+                    </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Meals logged</span>
@@ -504,6 +656,20 @@ export default function DashboardPage() {
                 <span>{draftCaloriePct}% of target</span>
                 <span>{calcs.dailyCalorieGoal - draftCalsConsumed} kcal remaining</span>
               </div>
+              <div style={{ marginTop: '1rem', paddingTop: '0.9rem', borderTop: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-muted)' }}>Eaten</span>
+                  <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{draftCalsConsumed} kcal</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-muted)' }}>Burned</span>
+                  <strong style={{ fontVariantNumeric: 'tabular-nums' }}>−{draftBurned} kcal</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-muted)' }}>Net</span>
+                  <strong style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--color-accent)' }}>{draftNet} kcal</strong>
+                </div>
+              </div>
             </div>
 
             <div className="glass-card" style={{ padding: '1.4rem' }}>
@@ -602,22 +768,70 @@ export default function DashboardPage() {
                 <div style={{ fontSize: '0.74rem', color: 'var(--color-faint)', marginTop: '0.3rem', textAlign: 'right' }}>Target: {calcs.waterLiters}L</div>
               </div>
 
-              <button onClick={() => updateDraft({ exerciseDone: !draftLog.exerciseDone })}
-                className={`option-card ${draftLog.exerciseDone ? 'selected' : ''}`}
-                style={{ padding: '0.85rem 1rem', alignItems: 'center', marginBottom: '1.3rem' }}>
-                <span style={{
-                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                  background: draftLog.exerciseDone ? 'var(--color-accent)' : 'var(--color-surface2)',
-                  color: draftLog.exerciseDone ? '#fff' : 'var(--color-muted)',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <DumbbellIcon size={18} />
-                </span>
-                <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9rem' }}>Exercise completed</span>
-                <span className={`badge ${draftLog.exerciseDone ? 'badge-green' : 'badge-grey'}`}>
-                  {draftLog.exerciseDone ? 'Done' : 'Not yet'}
-                </span>
-              </button>
+              <div style={{ marginBottom: '1.3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+                  <label className="input-label" style={{ marginBottom: 0 }}>Exercise</label>
+                  {(draftLog.exercises || []).length > 0 && (
+                    <span style={{ fontWeight: 750, color: 'var(--color-accent)', fontVariantNumeric: 'tabular-nums', fontSize: '0.85rem' }}>
+                      −{draftBurned} kcal burned
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                  <input
+                    type="text" className="input-field" style={{ marginBottom: 0, flex: 1 }}
+                    value={exerciseText}
+                    onChange={(e) => setExerciseText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleEstimateExercise(); }}
+                    placeholder="e.g. 30 min cricket, morning walk"
+                    maxLength={300}
+                    aria-label="Describe your workout"
+                  />
+                  <button
+                    type="button" className="btn-primary" onClick={handleEstimateExercise}
+                    disabled={!exerciseText.trim() || exerciseBusy}
+                    style={{ flexShrink: 0, padding: '0 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                  >
+                    {exerciseBusy ? <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> : <PlusIcon size={16} />}
+                    Log
+                  </button>
+                </div>
+                {exerciseError && (
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-danger)', marginBottom: '0.6rem' }}>
+                    {exerciseError} — <button type="button" className="btn-ghost" style={{ padding: '0.15rem 0.5rem', fontSize: '0.8rem' }} onClick={handleEstimateExercise}>Try again</button>
+                  </p>
+                )}
+                {(draftLog.exercises || []).length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {draftLog.exercises.map((e) => (
+                      <div key={e.id} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.7rem',
+                        background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.6rem 0.8rem',
+                      }}>
+                        <span style={{
+                          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                          background: 'var(--color-accent)', color: '#fff',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <DumbbellIcon size={16} />
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 650, fontSize: '0.86rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                            {e.durationMin ? `${e.durationMin} min · ` : ''}−{e.caloriesBurned} kcal
+                          </div>
+                        </div>
+                        <button type="button" className="btn-ghost" onClick={() => removeExercise(e.id)}
+                          aria-label={`Remove ${e.name}`} title="Remove" style={{ padding: '0.4rem', flexShrink: 0 }}>
+                          <TrashIcon size={15} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-faint)' }}>No workouts logged yet today.</p>
+                )}
+              </div>
 
               <div style={{ marginBottom: '1.3rem' }}>
                 <label className="input-label" htmlFor="log-weight">Today's weight (kg)</label>

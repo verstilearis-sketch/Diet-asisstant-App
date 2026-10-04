@@ -40,6 +40,14 @@ export interface ExtraMeal {
   fatG: number;
 }
 
+export interface ExerciseEntry {
+  id: string;
+  name: string;
+  description: string;
+  caloriesBurned: number;
+  durationMin?: number;
+}
+
 export interface DailyLog {
   date: string; // YYYY-MM-DD
   weight?: number;
@@ -49,6 +57,12 @@ export interface DailyLog {
   mood?: 'great' | 'good' | 'okay' | 'bad';
   /** Free-text meals the user logged on top of the plan (AI-estimated nutrition). */
   extraMeals: ExtraMeal[];
+  /** Described workouts with AI-estimated calorie burn. */
+  exercises: ExerciseEntry[];
+  /** Snapshot of total intake when the day was saved (used by adaptive targets). */
+  intakeKcal?: number;
+  /** Snapshot of total exercise burn when the day was saved. */
+  burnedKcal?: number;
 }
 
 export type AuthResult = {
@@ -65,6 +79,7 @@ const defaultLog = (date: string): DailyLog => ({
   mealsCompleted: [false, false, false, false, false],
   exerciseDone: false,
   extraMeals: [],
+  exercises: [],
 });
 
 function configError(err: unknown): string {
@@ -302,4 +317,19 @@ export async function fetchDailyLog(userId: string, date: string): Promise<Daily
   const stored = (data as { log?: Partial<DailyLog> } | null)?.log;
   if (!stored) return null;
   return { ...defaultLog(date), ...stored, date };
+}
+
+/** Full logs for a date range (inclusive), oldest first — for trends and adaptation. */
+export async function getDailyLogsRange(userId: string, from: string, to: string): Promise<DailyLog[]> {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('daily_logs')
+    .select('log')
+    .eq('user_id', userId)
+    .gte('date', from)
+    .lte('date', to)
+    .order('date', { ascending: true });
+  return (((data as { log?: Partial<DailyLog> }[] | null) ?? [])
+    .map((r) => (r.log ? { ...defaultLog(r.log.date || ''), ...r.log } : null))
+    .filter((l): l is DailyLog => !!l && !!l.date));
 }

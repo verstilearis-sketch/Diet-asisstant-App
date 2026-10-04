@@ -231,8 +231,15 @@ export default function MiniCalendar({ userId }: { userId: string }) {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: 'var(--color-muted)' }}>Exercise</span>
-                  <span className={`badge ${detail.exerciseDone ? 'badge-green' : 'badge-grey'}`}>
-                    {detail.exerciseDone ? 'Done' : 'Not yet'}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                    {(detail.exercises || []).length > 0 && (
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-accent)', fontVariantNumeric: 'tabular-nums' }}>
+                        −{(detail.exercises || []).reduce((a, e) => a + e.caloriesBurned, 0)} kcal
+                      </span>
+                    )}
+                    <span className={`badge ${detail.exerciseDone || (detail.exercises || []).length > 0 ? 'badge-green' : 'badge-grey'}`}>
+                      {detail.exerciseDone || (detail.exercises || []).length > 0 ? 'Done' : 'Not yet'}
+                    </span>
                   </span>
                 </div>
                 {typeof detail.weight === 'number' && detail.weight > 0 && (

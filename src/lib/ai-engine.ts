@@ -33,6 +33,12 @@ export interface DietPlan {
   calorieEquivalences: { amount: number; examples: string[] }[];
   progressMilestones: { week: number; milestone: string }[];
   region: string;
+  /** Adaptive calorie target learned from logged intake + weight trend. */
+  adaptiveTarget?: {
+    calories: number;
+    adjustedAt: string; // ISO timestamp
+    reason: string; // human-readable explanation shown on Home
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
