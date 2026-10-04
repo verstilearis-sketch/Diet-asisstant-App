@@ -17,7 +17,7 @@ import {
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  MapPinIcon, FlameIcon, TrashIcon,
+  FlameIcon, TrashIcon,
 } from '@/components/icons';
 
 const GOAL_LABELS: Record<string, string> = {
@@ -234,16 +234,11 @@ export default function DashboardPage() {
       <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem', position: 'relative', zIndex: 1 }}>
         {/* ── Header ────────────────────────────────────── */}
         <div className="fade-in-up" style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.9rem' }}>
-            <div>
-              <h1 style={{ fontSize: 'clamp(1.4rem, 2.8vw, 1.9rem)', marginBottom: '0.3rem' }}>
-                {firstName ? `${firstName}'s ${GOAL_LABELS[profile.goal] || 'nutrition'} plan` : `Your ${GOAL_LABELS[profile.goal] || 'nutrition'} plan`}
-              </h1>
-              <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', maxWidth: 640 }}>{plan.summary.split('\n')[0]}</p>
-            </div>
-            <span className="badge badge-green" style={{ fontSize: '0.76rem', padding: '0.4rem 0.85rem' }}>
-              <MapPinIcon size={13} /> {(plan.region || 'global').replace(/-/g, ' ')} cuisine
-            </span>
+          <div>
+            <h1 style={{ fontSize: 'clamp(1.4rem, 2.8vw, 1.9rem)', marginBottom: '0.3rem' }}>
+              {firstName ? `${firstName}'s ${GOAL_LABELS[profile.goal] || 'nutrition'} plan` : `Your ${GOAL_LABELS[profile.goal] || 'nutrition'} plan`}
+            </h1>
+            <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', maxWidth: 640 }}>{plan.summary.split('\n')[0]}</p>
           </div>
         </div>
 
