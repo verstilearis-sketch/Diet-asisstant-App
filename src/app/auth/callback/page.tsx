@@ -20,45 +20,61 @@ function CallbackHandler() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const sb = getSupabase();
       const code = searchParams.get('code');
       const errDesc = searchParams.get('error_description') || searchParams.get('error');
+      const debugUrl = () => {
+        const q = typeof window !== 'undefined' ? window.location.search : '';
+        const h = typeof window !== 'undefined' ? window.location.hash : '';
+        return `query: ${q.slice(0, 160) || '(empty)'} | hash: ${h.slice(0, 80) || '(empty)'}`;
+      };
       if (errDesc) {
         if (!cancelled) {
           setError(decodeURIComponent(errDesc).replace(/\+/g, ' '));
-          setDebug(typeof window !== 'undefined' ? window.location.search.slice(0, 200) : '');
+          setDebug(debugUrl());
         }
         return;
       }
-      if (!code) {
-        // No code: the user may already have a session (e.g. the browser
-        // auto-detected tokens from the URL, or they are already signed in).
+      if (code) {
         try {
-          const { data } = await getSupabase().auth.getSession();
-          if (data.session) {
-            if (!cancelled) router.replace('/dashboard');
-            return;
+          const { error } = await sb.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+        } catch (e) {
+          // The code may already have been redeemed (e.g. a retried page
+          // load) — a session may still have been established. Check first.
+          try {
+            const { data } = await sb.auth.getSession();
+            if (data.session) {
+              if (!cancelled) router.replace('/dashboard');
+              return;
+            }
+          } catch {
+            /* fall through to the error below */
           }
-        } catch {
-          /* fall through to the error below */
-        }
-        if (!cancelled) {
-          setError('Sign-in was interrupted. Please try again.');
-          // Diagnostic: shows what the callback actually received.
-          const q = typeof window !== 'undefined' ? window.location.search : '';
-          const h = typeof window !== 'undefined' ? window.location.hash : '';
-          setDebug(`query: ${q.slice(0, 160) || '(empty)'} | hash: ${h.slice(0, 80) || '(empty)'}`);
-        }
-        return;
-      }
-      try {
-        const { error } = await getSupabase().auth.exchangeCodeForSession(code);
-        if (error) {
-          if (!cancelled) setError('Could not complete Google sign-in. Please try again.');
+          if (!cancelled) {
+            setError('Could not complete Google sign-in. Please try again.');
+            const msg = e instanceof Error ? e.message : String(e);
+            setDebug(`exchange failed: ${msg.slice(0, 160)} | ${debugUrl()}`);
+          }
           return;
         }
         if (!cancelled) router.replace('/dashboard');
+        return;
+      }
+      // No code: the user may already have a session (already signed in).
+      try {
+        const { data } = await sb.auth.getSession();
+        if (data.session) {
+          if (!cancelled) router.replace('/dashboard');
+          return;
+        }
       } catch {
-        if (!cancelled) setError('Could not complete Google sign-in. Please try again.');
+        /* fall through to the error below */
+      }
+      if (!cancelled) {
+        setError('Sign-in was interrupted. Please try again.');
+        // Diagnostic: shows what the callback actually received.
+        setDebug(debugUrl());
       }
     })();
     return () => {

@@ -22,7 +22,12 @@ export function getSupabase(): SupabaseClient {
     // callback exchanges it. Without this, the client falls back to the
     // legacy implicit flow (#access_token in the URL hash), which the
     // callback page is not built to handle.
-    auth: { flowType: 'pkce' },
+    //
+    // detectSessionInUrl is OFF on purpose: the client would otherwise
+    // auto-exchange ?code= during initialization and race the callback
+    // page's own exchangeCodeForSession call — one of the two redeems the
+    // code and the other fails with "code already used".
+    auth: { flowType: 'pkce', detectSessionInUrl: false },
   });
   return client;
 }
