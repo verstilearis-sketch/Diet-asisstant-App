@@ -38,12 +38,6 @@ const FORMULAS = [
   },
 ];
 
-const CUISINES = [
-  'North Indian', 'South Indian', 'Japanese', 'Korean', 'Thai',
-  'Mexican', 'Italian', 'Mediterranean', 'Middle Eastern', 'West African',
-  'Brazilian', 'American',
-];
-
 const STEPS = [
   { n: '01', title: 'Create your account', desc: 'Sign up with your name and email. About a minute.' },
   { n: '02', title: 'Answer the questions', desc: 'Four short steps: your body, your goal, your lifestyle, your food preferences.' },
@@ -237,9 +231,17 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-            {CUISINES.map((c) => (
-              <span key={c} className="cuisine-chip">{c}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+            {[
+              { n: '01', title: 'Tell us your city', example: '“Hyderabad, India”' },
+              { n: '02', title: 'We match your food culture', example: 'Hyderabadi dishes & ingredients' },
+              { n: '03', title: 'Portions tuned to your goals', example: 'Biryani · 520 kcal · 32g protein' },
+            ].map((s) => (
+              <div key={s.n} style={{ padding: '1rem 1.1rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.75rem' }}>
+                <div className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.35rem' }}>{s.n}</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 650, marginBottom: '0.25rem' }}>{s.title}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{s.example}</div>
+              </div>
             ))}
           </div>
         </div>
