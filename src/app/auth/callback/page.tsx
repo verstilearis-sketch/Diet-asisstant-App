@@ -15,6 +15,7 @@ function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState('');
+  const [debug, setDebug] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -22,11 +23,20 @@ function CallbackHandler() {
       const code = searchParams.get('code');
       const errDesc = searchParams.get('error_description') || searchParams.get('error');
       if (errDesc) {
-        if (!cancelled) setError(errDesc);
+        if (!cancelled) {
+          setError(decodeURIComponent(errDesc).replace(/\+/g, ' '));
+          setDebug(typeof window !== 'undefined' ? window.location.search.slice(0, 200) : '');
+        }
         return;
       }
       if (!code) {
-        if (!cancelled) setError('Sign-in was interrupted. Please try again.');
+        if (!cancelled) {
+          setError('Sign-in was interrupted. Please try again.');
+          // Temporary diagnostic: shows what the callback actually received.
+          const q = typeof window !== 'undefined' ? window.location.search : '';
+          const h = typeof window !== 'undefined' ? window.location.hash : '';
+          setDebug(`query: ${q.slice(0, 160) || '(empty)'} | hash: ${h.slice(0, 80) || '(empty)'}`);
+        }
         return;
       }
       try {
@@ -56,6 +66,11 @@ function CallbackHandler() {
             <div className="error-box" style={{ textAlign: 'left', marginBottom: '1.25rem' }}>
               <AlertIcon size={16} /> {error}
             </div>
+            {debug && (
+              <p style={{ fontSize: '0.72rem', color: 'var(--color-faint)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '1.25rem', textAlign: 'left' }}>
+                Detail: {debug}
+              </p>
+            )}
             <Link href="/auth" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
               Back to sign in
             </Link>
