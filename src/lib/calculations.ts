@@ -4,6 +4,8 @@
 export type Gender = 'male' | 'female' | 'other';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
 export type Goal = 'lose_weight' | 'gain_weight' | 'maintain' | 'improve_health' | 'athletic';
+export type BudgetTier = 'budget' | 'moderate' | 'premium';
+export type CuisineMix = 'local' | 'mixed' | 'international';
 
 export interface UserProfile {
   name: string;
@@ -24,6 +26,8 @@ export interface UserProfile {
   dietaryRestrictions?: string[];
   allergies?: string[];
   location?: string;
+  budget?: BudgetTier;       // cost preference for meal planning
+  cuisineMix?: CuisineMix;   // how much regional vs international food
 }
 
 export interface Calculations {
@@ -83,7 +87,7 @@ export function calculateDailyCalorieGoal(tdee: number, goal: Goal): number {
   }
 }
 
-export function calculateMacros(calories: number, goal: Goal): { proteinG: number; carbsG: number; fatG: number } {
+export function calculateMacros(calories: number, goal: Goal, weightKg: number): { proteinG: number; carbsG: number; fatG: number } {
   let proteinPct: number, carbsPct: number, fatPct: number;
 
   switch (goal) {
@@ -98,11 +102,15 @@ export function calculateMacros(calories: number, goal: Goal): { proteinG: numbe
       proteinPct = 0.25; carbsPct = 0.45; fatPct = 0.30; break;
   }
 
-  return {
-    proteinG: Math.round((calories * proteinPct) / 4),
-    carbsG:   Math.round((calories * carbsPct)  / 4),
-    fatG:     Math.round((calories * fatPct)    / 9),
-  };
+  // ISSN-aligned ceiling: meta-analyses (Morton et al. 2018) show no added benefit
+  // beyond ~2.2 g/kg/day even in a deficit; excess protein just displaces carbs/fat.
+  const proteinG = Math.min(Math.round((calories * proteinPct) / 4), Math.round(2.2 * weightKg));
+  const remainingCal = Math.max(0, calories - proteinG * 4);
+  const carbShare = carbsPct / (carbsPct + fatPct);
+  const carbsG = Math.round((remainingCal * carbShare) / 4);
+  const fatG = Math.round((remainingCal * (1 - carbShare)) / 9);
+
+  return { proteinG, carbsG, fatG };
 }
 
 export function calculateWater(weightKg: number, activityLevel: ActivityLevel): number {
@@ -119,7 +127,7 @@ export function computeAll(profile: UserProfile): Calculations {
   const bmr = calculateBMR(profile);
   const tdee = calculateTDEE(bmr, profile.activityLevel);
   const dailyCalorieGoal = calculateDailyCalorieGoal(tdee, profile.goal);
-  const macros = calculateMacros(dailyCalorieGoal, profile.goal);
+  const macros = calculateMacros(dailyCalorieGoal, profile.goal, profile.weightKg);
   const waterLiters = calculateWater(profile.weightKg, profile.activityLevel);
   const weeklyWeightChangeKg = Math.round(((dailyCalorieGoal - tdee) * 7) / 7700 * 100) / 100;
 

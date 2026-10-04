@@ -1,5 +1,5 @@
 // ── Smart AI Diet Plan Engine — Enhanced Regional Food Database ──────────────
-import type { UserProfile, Calculations } from './calculations';
+import type { UserProfile, Calculations, BudgetTier, CuisineMix } from './calculations';
 
 export interface Meal {
   name: string;
@@ -1585,19 +1585,35 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Oatmeal with Berries', emoji: '🥣', cal: 310, protein: 10, carbs: 52, fat: 6, prepTime: '8 min', description: 'Warm rolled oats with mixed berries, banana, and a drizzle of honey', tags: ['vegetarian', 'vegan'] },
       { name: 'Egg White Scramble', emoji: '🍳', cal: 250, protein: 28, carbs: 10, fat: 9, prepTime: '10 min', description: 'Fluffy egg whites with spinach, tomatoes, and bell peppers', tags: ['high-protein', 'low-carb', 'gluten-free'] },
       { name: 'Protein Smoothie', emoji: '🥤', cal: 340, protein: 26, carbs: 42, fat: 6, prepTime: '5 min', description: 'Banana, protein powder, oats, almond milk blended smooth', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Soya Chunk Bhurji & Toast', emoji: '🍳', cal: 320, protein: 24, carbs: 38, fat: 6, prepTime: '12 min', description: 'Crumbled soya chunks sautéed with onion-tomato masala on whole wheat toast', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Paneer Bhurji (150g) & 2 Roti', emoji: '🫓', cal: 430, protein: 26, carbs: 36, fat: 18, prepTime: '15 min', description: 'Crumbled paneer with peas, turmeric and coriander, 2 whole wheat rotis', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Chana Dal Cheela (3 pc)', emoji: '🥞', cal: 340, protein: 18, carbs: 44, fat: 8, prepTime: '20 min', description: 'Savory chickpea-flour pancakes with onion, green chili and mint chutney', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Milk & Soya Porridge (500ml)', emoji: '🥣', cal: 420, protein: 24, carbs: 52, fat: 10, prepTime: '12 min', description: 'Warm milk porridge with oats, soya granules, banana and jaggery', tags: ['vegetarian', 'high-protein'] },
     ],
     lunch: [
       { name: 'Quinoa Buddha Bowl', emoji: '🥙', cal: 480, protein: 20, carbs: 58, fat: 16, prepTime: '25 min', description: 'Quinoa with roasted vegetables, chickpeas, and tahini dressing', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Lentil Soup & Bread', emoji: '🍲', cal: 380, protein: 18, carbs: 55, fat: 8, prepTime: '30 min', description: 'Hearty red lentil soup with whole grain bread and olive oil', tags: ['vegetarian', 'vegan'] },
       { name: 'Grilled Chicken & Brown Rice', emoji: '🍗', cal: 450, protein: 38, carbs: 44, fat: 12, prepTime: '25 min', description: 'Simple grilled chicken breast with brown rice and steamed broccoli', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Soya Chunk Curry & Rice', emoji: '🍛', cal: 520, protein: 30, carbs: 68, fat: 12, prepTime: '30 min', description: 'Protein-packed soya chunk curry in onion-tomato gravy with steamed rice', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Double Chana Masala & 2 Roti', emoji: '🫘', cal: 540, protein: 24, carbs: 78, fat: 12, prepTime: '35 min', description: 'Extra-chickpea chana masala with 2 whole wheat rotis and onion salad', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Cottage Cheese Veg Sandwich', emoji: '🥪', cal: 450, protein: 22, carbs: 48, fat: 16, prepTime: '10 min', description: 'Low-fat cottage cheese with cucumber, tomato and mint chutney on whole wheat', tags: ['vegetarian', 'high-protein'] },
     ],
     dinner: [
       { name: 'Baked Chicken & Veggies', emoji: '🍗', cal: 420, protein: 42, carbs: 20, fat: 16, prepTime: '35 min', description: 'Herb-baked chicken thighs with roasted zucchini and peppers', tags: ['high-protein', 'low-carb', 'gluten-free'] },
       { name: 'Stir-Fried Tofu & Vegetables', emoji: '🥢', cal: 380, protein: 22, carbs: 38, fat: 14, prepTime: '20 min', description: 'Crispy tofu with bok choy, peppers in ginger-soy sauce over rice', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Masoor Dal Tadka (large) & 2 Roti', emoji: '🍲', cal: 480, protein: 24, carbs: 66, fat: 10, prepTime: '30 min', description: 'Double-portion red lentil dal with garlic tadka, 2 whole wheat rotis', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Tofu Soya Fried Rice', emoji: '🍚', cal: 500, protein: 26, carbs: 62, fat: 14, prepTime: '25 min', description: 'Tofu and soya granules tossed with brown rice, spring onion, soy-ginger sauce', tags: ['vegetarian', 'vegan', 'high-protein'] },
     ],
     snack: [
       { name: 'Mixed Nuts (30g)', emoji: '🥜', cal: 180, protein: 5, carbs: 6, fat: 16, prepTime: '0 min', description: 'Handful of almonds, walnuts, and cashews', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Greek Yogurt & Berries', emoji: '🫐', cal: 150, protein: 12, carbs: 18, fat: 3, prepTime: '2 min', description: 'Plain Greek yogurt topped with fresh or frozen berries', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Roasted Soya Nuts (50g)', emoji: '🥜', cal: 220, protein: 18, carbs: 14, fat: 10, prepTime: '0 min', description: 'Crunchy roasted soya nuts with chaat masala', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Peanut Chana Mix (50g)', emoji: '🥜', cal: 280, protein: 14, carbs: 22, fat: 16, prepTime: '0 min', description: 'Roasted peanuts and black chana with lemon and chili', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Boiled Chana Chaat (large)', emoji: '🫘', cal: 250, protein: 14, carbs: 38, fat: 4, prepTime: '10 min', description: 'Big bowl of boiled black chickpeas with onion, tomato and lemon', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Paneer Tikka (200g)', emoji: '🧀', cal: 400, protein: 36, carbs: 14, fat: 22, prepTime: '25 min', description: 'Char-grilled spiced paneer cubes with peppers and onion', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Greek Yogurt Peanut Bowl (300g)', emoji: '🥜', cal: 450, protein: 30, carbs: 22, fat: 24, prepTime: '5 min', description: 'Thick Greek yogurt with roasted peanuts, honey and cinnamon', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Paneer Tikka (100g)', emoji: '🧀', cal: 200, protein: 18, carbs: 7, fat: 11, prepTime: '20 min', description: 'Small portion of char-grilled spiced paneer cubes — protein-rich snack', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Greek Yogurt (200g) + Flaxseed', emoji: '🫐', cal: 190, protein: 20, carbs: 13, fat: 5, prepTime: '2 min', description: 'Thick Greek yogurt with ground flaxseed and cinnamon', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
     ],
   },
 };
@@ -1634,6 +1650,8 @@ function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
   return foods.filter(f => {
     if (restrictions.includes('vegan') && !f.tags.includes('vegan')) return false;
     if (restrictions.includes('vegetarian') && !f.tags.includes('vegetarian')) return false;
+    // Indian-style vegetarian excludes egg (dishes tagged veg but containing egg slip through otherwise)
+    if (restrictions.includes('vegetarian') && /egg|huevo/.test(`${f.name} ${f.description}`.toLowerCase())) return false;
     if ((restrictions.includes('keto') || restrictions.includes('low-carb')) && f.carbs > 25) return false;
     if (restrictions.includes('gluten-free') && !f.tags.includes('gluten-free')) return false;
     if (restrictions.includes('high-protein') && !f.tags.includes('high-protein')) return false;
@@ -1644,14 +1662,154 @@ function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
   });
 }
 
-function pickMeal(foods: FoodItem[], fallback: FoodItem[], used: Set<number>): FoodItem {
-  const pool = foods.length >= 2 ? foods : fallback;
-  const available = pool.map((f, i) => ({ f, i })).filter(({ i }) => !used.has(i));
-  if (!available.length) { used.clear(); return pool[0]; }
-  const sorted = available.sort((a, b) => a.i - b.i);
-  const pick = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
-  used.add(pick.i);
-  return pick.f;
+// ─────────────────────────────────────────────────────────────────────────────
+// BUDGET — keyword-based cost tiers (1 = everyday staples, 2 = affordable
+// proteins, 3 = premium). Heuristic so all 55 regions work without retagging.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function estimateCostTier(f: FoodItem): 1 | 2 | 3 {
+  const t = `${f.name} ${f.description}`.toLowerCase();
+  if (/(salmon|tuna|prawn|shrimp|lobster|crab|mutton|lamb|quinoa|avocado|blueberr|whey|protein powder|saffron|zafran|kesar|kahwa|pistachio|macadamia|steak|ribeye|scallop|truffle|wagyu|halibut|sea bass|branzino|\bduck\b|sashimi|parmesan|asparagus|artichoke)/.test(t)) return 3;
+  if (/(chicken|turkey|\bfish\b|tofu|paneer|cheese|feta|mozzarella|yogurt|yoghurt|\bcurd\b|egg|tempeh|edamame|hummus|tahini|olive oil|almond|walnut|cashew|\boats\b|greek)/.test(t)) return 2;
+  return 1;
+}
+
+function budgetAllows(tier: 1 | 2 | 3, budget: BudgetTier): boolean {
+  if (budget === 'budget') return tier <= 2; // staples + affordable proteins; no luxuries
+  return true; // moderate & premium: everything is fair game
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUISINE MIX — blend regional comfort food with international variety, so a
+// native of a place isn't locked into only local dishes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+type PoolSet = Record<MealType, { regional: FoodItem[]; international: FoodItem[] }>;
+
+function buildMealPools(region: string): PoolSet {
+  const globalDb = REGIONAL_DB['global'];
+  const otherKeys = shuffled(Object.keys(REGIONAL_DB).filter((k) => k !== 'global' && k !== region)).slice(0, 4);
+  const db = REGIONAL_DB[region];
+  const pools = {} as PoolSet;
+  (['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).forEach((mt) => {
+    pools[mt] = {
+      regional: db[mt] || [],
+      international: [
+        ...(globalDb[mt] || []),
+        ...otherKeys.flatMap((k) => REGIONAL_DB[k][mt] || []),
+      ],
+    };
+  });
+  return pools;
+}
+
+function rollSource(cuisineMix: CuisineMix): 'regional' | 'international' {
+  const r = Math.random();
+  if (cuisineMix === 'local') return r < 0.8 ? 'regional' : 'international';
+  if (cuisineMix === 'international') return r < 0.8 ? 'international' : 'regional';
+  return r < 0.45 ? 'regional' : 'international'; // mixed — the default
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCIENCE-BASED SELECTION — greedy macro targeting so the day's meals actually
+// land on the calculated calorie/protein/carb/fat goals instead of random sums.
+// Meal calorie split follows common sports-nutrition distribution; protein is
+// spread across meals to support muscle protein synthesis through the day.
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SlotTarget { cal: number; protein: number; carbs: number; fat: number; }
+
+const SLOT_ORDER: { type: MealType; key: 'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner'; calShare: number }[] = [
+  { type: 'breakfast', key: 'breakfast', calShare: 0.25 },
+  { type: 'snack', key: 'morningSnack', calShare: 0.10 },
+  { type: 'lunch', key: 'lunch', calShare: 0.30 },
+  { type: 'snack', key: 'afternoonSnack', calShare: 0.10 },
+  { type: 'dinner', key: 'dinner', calShare: 0.25 },
+];
+
+function scoreCandidate(f: FoodItem, t: SlotTarget, proteinWeight: number, budget: BudgetTier): number {
+  const calErr = Math.abs(f.cal - t.cal) / Math.max(t.cal, 60);
+  // One-sided: only penalize protein SHORTFALL — overshoot is fine (and desirable).
+  const pErr = Math.max(0, t.protein - f.protein) / Math.max(t.protein, 6);
+  const cErr = Math.abs(f.carbs - t.carbs) / Math.max(t.carbs, 6);
+  const fErr = Math.abs(f.fat - t.fat) / Math.max(t.fat, 4);
+  const calW = 1 - proteinWeight - 0.15 - 0.10;
+  const err = calErr * calW + pErr * proteinWeight + cErr * 0.15 + fErr * 0.10;
+  let score = 1 / (1 + err);
+  // Prefer protein-DENSE foods when the target demands a high protein share —
+  // absolute protein alone can't fix a ratio mismatch (scaling preserves ratios).
+  const targetShare = (t.protein * 4) / Math.max(t.cal, 1);
+  const foodShare = (f.protein * 4) / Math.max(f.cal, 1);
+  score -= Math.max(0, targetShare - foodShare) * proteinWeight * 1.5;
+  if (budget === 'budget') score -= (estimateCostTier(f) - 1) * 0.05; // prefer cheaper staples when close
+  return score;
+}
+
+const FALLBACK_FOOD: FoodItem = {
+  name: 'Oats with banana & nuts', emoji: '🥣', cal: 350, protein: 12, carbs: 58, fat: 10,
+  prepTime: '10 min', description: 'Rolled oats cooked in milk, topped with banana and mixed nuts.',
+  tags: ['vegetarian'],
+};
+
+function pickSmart(
+  type: MealType,
+  target: SlotTarget,
+  pools: PoolSet,
+  recent: Record<MealType, string[]>,
+  profile: UserProfile,
+  budget: BudgetTier,
+  cuisineMix: CuisineMix,
+  proteinWeight: number,
+): FoodItem {
+  const primary = rollSource(cuisineMix);
+  const secondary = primary === 'regional' ? 'international' : 'regional';
+  const scored: { f: FoodItem; s: number }[] = [];
+  const seen = new Set<string>();
+
+  const collect = (
+    source: 'regional' | 'international',
+    freshOnly: boolean,
+    budgetStrict: boolean,
+    penalty: number,
+  ) => {
+    let pool = filterFoods(pools[type][source], profile);
+    if (budgetStrict) pool = pool.filter((f) => budgetAllows(estimateCostTier(f), budget));
+    for (const f of pool) {
+      if (seen.has(f.name)) continue;
+      if (freshOnly && recent[type].includes(f.name)) continue;
+      seen.add(f.name);
+      scored.push({ f, s: scoreCandidate(f, target, proteinWeight, budget) - penalty });
+    }
+  };
+
+  // Fresh + budget-respecting first (primary source preferred via penalty on secondary).
+  collect(primary, true, true, 0);
+  collect(secondary, true, true, 0.06);
+  // Then allow repeats, still budget-respecting.
+  if (scored.length < 4) {
+    collect(primary, false, true, 0.01);
+    collect(secondary, false, true, 0.07);
+  }
+  // Budget is the hardest constraint: relax it only when nothing else works.
+  if (scored.length < 2) {
+    collect(primary, true, false, 0.06);
+    collect(secondary, true, false, 0.08);
+  }
+  if (!scored.length) return FALLBACK_FOOD;
+
+  scored.sort((a, b) => b.s - a.s);
+  // Deterministic best pick — the recent-names exclusion (10 deep per meal type)
+  // already forces week-long variety, so we always take the best macro fit.
+  return scored[0].f;
 }
 
 function toMeal(f: FoodItem): Meal {
@@ -1665,30 +1823,80 @@ export async function generateDietPlan(profile: UserProfile, calculations: Calcu
 
   const rawRegion = detectRegion(profile.location);
   const region = resolveRegion(rawRegion);
-  const db = REGIONAL_DB[region];
-  const globalDb = REGIONAL_DB['global'];
+  const budget: BudgetTier = profile.budget || 'moderate';
+  const cuisineMix: CuisineMix = profile.cuisineMix || 'mixed';
+  const pools = buildMealPools(region);
+  // High-protein goals get extra protein weighting in meal scoring
+  const proteinWeight = profile.goal === 'lose_weight' ? 0.36
+    : (profile.goal === 'gain_weight' || profile.goal === 'athletic') ? 0.38 : 0.30;
 
-  const filtered = {
-    breakfast: filterFoods(db.breakfast, profile),
-    lunch: filterFoods(db.lunch, profile),
-    dinner: filterFoods(db.dinner, profile),
-    snack: filterFoods(db.snack, profile),
-  };
+  const recent: Record<MealType, string[]> = { breakfast: [], lunch: [], dinner: [], snack: [] };
 
-  const usedB = new Set<number>(), usedL = new Set<number>(), usedD = new Set<number>(), usedS = new Set<number>();
-
-  const weeklyPlan: DayPlan[] = DAYS.map(day => {
-    const breakfast      = toMeal(pickMeal(filtered.breakfast, globalDb.breakfast, usedB));
-    const morningSnack   = toMeal(pickMeal(filtered.snack, globalDb.snack, usedS));
-    const lunch          = toMeal(pickMeal(filtered.lunch, globalDb.lunch, usedL));
-    const afternoonSnack = toMeal(pickMeal(filtered.snack, globalDb.snack, usedS));
-    const dinner         = toMeal(pickMeal(filtered.dinner, globalDb.dinner, usedD));
-    const totalCalories  = breakfast.calories + morningSnack.calories + lunch.calories + afternoonSnack.calories + dinner.calories;
-    return { day, breakfast, morningSnack, lunch, afternoonSnack, dinner, totalCalories };
+  const weeklyPlan: DayPlan[] = DAYS.map((dayName) => {
+    // Greedy fill: each slot targets its share of what's still left for the day,
+    // so the day lands on the calculated calorie + macro goals.
+    let remCal = calculations.dailyCalorieGoal;
+    let remP = calculations.proteinG, remC = calculations.carbsG, remF = calculations.fatG;
+    let remShare = 1;
+    const picked = {} as Record<'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner', Meal>;
+    for (const slot of SLOT_ORDER) {
+      const share = slot.calShare / remShare;
+      // Per-slot protein soft cap (~0.4 g/kg, the per-meal muscle-protein-synthesis
+      // ceiling): keeps targets achievable so the scorer can discriminate between
+      // candidates instead of rating everything as a failure.
+      const slotProteinCap = 0.4 * profile.weightKg;
+      const target: SlotTarget = {
+        cal: remCal * share,
+        protein: Math.min(remP * share, slotProteinCap),
+        carbs: remC * share,
+        fat: remF * share,
+      };
+      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight);
+      const meal = toMeal(food);
+      // Portion-scale (up to 2×) so the slot actually meets its calorie target —
+      // pools have fixed serving sizes, and real dietetics adjusts portions, not wishes.
+      const rawScale = target.cal / Math.max(food.cal, 1);
+      if (rawScale > 1.15) {
+        const scale = Math.min(2, Math.round(rawScale * 2) / 2);
+        if (scale > 1) {
+          meal.calories = Math.round(food.cal * scale);
+          meal.protein = Math.round(food.protein * scale * 10) / 10;
+          meal.carbs = Math.round(food.carbs * scale * 10) / 10;
+          meal.fat = Math.round(food.fat * scale * 10) / 10;
+          meal.description = `${food.description} (Portion: ${scale}× serving to meet your calorie goal.)`;
+        }
+      }
+      picked[slot.key] = meal;
+      remCal -= meal.calories; remP -= meal.protein; remC -= meal.carbs; remF -= meal.fat;
+      remShare -= slot.calShare;
+      recent[slot.type].push(food.name);
+      if (recent[slot.type].length > 10) recent[slot.type].shift();
+    }
+    const meals = [picked.breakfast, picked.morningSnack, picked.lunch, picked.afternoonSnack, picked.dinner];
+    const totalCalories = meals.reduce((a, m) => a + m.calories, 0);
+    return {
+      day: dayName,
+      breakfast: picked.breakfast,
+      morningSnack: picked.morningSnack,
+      lunch: picked.lunch,
+      afternoonSnack: picked.afternoonSnack,
+      dinner: picked.dinner,
+      totalCalories,
+    };
   });
 
   const { goal } = profile;
   const tips = getTips(goal);
+
+  // Honest protein-gap coaching: if the week's food can't fully reach a very high
+  // protein target (e.g. vegetarian + budget constraints), say so and give the fix.
+  const avgProtein = weeklyPlan.reduce((a, d) =>
+    a + [d.breakfast, d.morningSnack, d.lunch, d.afternoonSnack, d.dinner]
+      .reduce((x, m) => x + m.protein, 0), 0) / weeklyPlan.length;
+  if (avgProtein < calculations.proteinG * 0.85) {
+    const gap = Math.round(calculations.proteinG - avgProtein);
+    tips.unshift(`🥛 Your meals average ~${Math.round(avgProtein)}g protein vs the ${calculations.proteinG}g target — close the ${gap}g gap with 200g Greek yogurt (+20g) or a whey shake (+25g).`);
+  }
   const hydrationPlan = `Drink ${calculations.waterLiters}L (${Math.round(calculations.waterLiters * 33.8)} oz) of water daily. Start morning with 500ml warm water. Carry a 750ml bottle and refill ${Math.ceil(calculations.waterLiters / 0.75)} times. Add electrolytes if you exercise over 60 minutes.`;
 
   const supplementSuggestions = [
@@ -1735,7 +1943,14 @@ export async function generateDietPlan(profile: UserProfile, calculations: Calcu
     'global': 'Global',
   };
 
-  const summary = `Your personalized plan is crafted with ${regionLabel[region] || 'regionally relevant'} meals. At ${calculations.dailyCalorieGoal} kcal/day with ${calculations.proteinG}g protein · ${calculations.carbsG}g carbs · ${calculations.fatG}g fat — you're on track to meet your ${goal.replace('_', ' ')} goal.`;
+  const budgetLabel: Record<BudgetTier, string> = { budget: 'budget-friendly', moderate: 'balanced-cost', premium: 'premium' };
+  const regionName = (regionLabel[region] || 'regional').toLowerCase();
+  const mixLabel = cuisineMix === 'local'
+    ? `rooted in ${regionName} favorites`
+    : cuisineMix === 'international'
+      ? 'full of flavors from around the world'
+      : `blending ${regionName} staples with international variety`;
+  const summary = `Your ${budgetLabel[budget]} plan is ${mixLabel}. At ${calculations.dailyCalorieGoal} kcal/day with ${calculations.proteinG}g protein · ${calculations.carbsG}g carbs · ${calculations.fatG}g fat — you're on track to meet your ${goal.replace('_', ' ')} goal.`;
 
   return { summary, weeklyPlan, tips, hydrationPlan, supplementSuggestions, shoppingList, calorieEquivalences, progressMilestones, region };
 }

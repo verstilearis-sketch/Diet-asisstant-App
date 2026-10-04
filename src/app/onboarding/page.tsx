@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSession, savePlan } from '@/lib/storage';
 import { computeAll, calculateBMI, getBMICategory } from '@/lib/calculations';
 import { generateDietPlan } from '@/lib/ai-engine';
-import type { UserProfile, Gender, ActivityLevel, Goal } from '@/lib/calculations';
+import type { UserProfile, Gender, ActivityLevel, Goal, BudgetTier, CuisineMix } from '@/lib/calculations';
 import {
   UserIcon, TargetIcon, ActivityIcon, GlobeIcon, SparklesIcon,
   FlameIcon, DumbbellIcon, ScaleIcon, LeafIcon, TrophyIcon,
@@ -41,10 +41,22 @@ const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string }[] =
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Keto', 'Low-carb', 'Gluten-free', 'Dairy-free', 'Halal', 'Kosher', 'Paleo'];
 const ALLERGY_OPTIONS = ['Nuts', 'Shellfish', 'Dairy', 'Eggs', 'Soy', 'Wheat', 'Fish', 'Peanuts'];
 
+const BUDGET_OPTIONS: { value: BudgetTier; label: string; desc: string }[] = [
+  { value: 'budget', label: 'Budget-friendly', desc: 'Everyday staples, easy on the wallet' },
+  { value: 'moderate', label: 'Moderate', desc: 'Balanced cost and variety' },
+  { value: 'premium', label: 'Premium', desc: 'The best ingredients, no compromises' },
+];
+
+const CUISINE_OPTIONS: { value: CuisineMix; label: string; desc: string }[] = [
+  { value: 'local', label: 'Local favorites', desc: 'Mostly dishes from your region' },
+  { value: 'mixed', label: 'Mixed cuisines', desc: 'Your region plus international variety' },
+  { value: 'international', label: 'International', desc: 'Flavors from around the world' },
+];
+
 const GEN_MESSAGES = [
   'Analyzing your body metrics',
   'Calculating calorie targets',
-  'Matching local cuisine preferences',
+  'Matching your budget, taste & cuisine style',
   'Building your 7-day meal plan',
   'Finalizing tips and shopping list',
 ];
@@ -55,6 +67,7 @@ const initProfile: Partial<UserProfile> = {
   name: '', gender: 'male', age: 25, heightCm: 170, weightKg: 70,
   goal: 'lose_weight', activityLevel: 'moderate',
   dietaryRestrictions: [], allergies: [], location: '',
+  budget: 'moderate', cuisineMix: 'mixed',
   sleepHours: 7, stressLevel: 3, workType: 'desk',
   exerciseFrequency: 3, exerciseDuration: 45,
 };
@@ -464,7 +477,7 @@ export default function OnboardingPage() {
           <div className="fade-in-up" key="s4">
             <h2 style={{ fontSize: '1.7rem', marginBottom: '0.4rem' }}>Preferences & location</h2>
             <p style={{ color: 'var(--color-muted)', marginBottom: '1.75rem', fontSize: '0.95rem' }}>
-              We'll suggest culturally relevant, locally available meals.
+              We'll shape meals around your budget, taste and what's available near you.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
@@ -475,6 +488,36 @@ export default function OnboardingPage() {
                 <p style={{ fontSize: '0.78rem', color: 'var(--color-faint)', marginTop: '0.4rem' }}>
                   Used only to personalize meal suggestions — never shared.
                 </p>
+              </div>
+
+              <div>
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>Food budget</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.6rem' }}>
+                  {BUDGET_OPTIONS.map((b) => (
+                    <button key={b.value} type="button"
+                      className={`option-card ${(profile.budget || 'moderate') === b.value ? 'selected' : ''}`}
+                      onClick={() => update('budget', b.value)}
+                      style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{b.label}</span>
+                      <span style={{ fontSize: '0.76rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{b.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>Cuisine style</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.6rem' }}>
+                  {CUISINE_OPTIONS.map((c) => (
+                    <button key={c.value} type="button"
+                      className={`option-card ${(profile.cuisineMix || 'mixed') === c.value ? 'selected' : ''}`}
+                      onClick={() => update('cuisineMix', c.value)}
+                      style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{c.label}</span>
+                      <span style={{ fontSize: '0.76rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{c.desc}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
