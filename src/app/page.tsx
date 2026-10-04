@@ -268,7 +268,6 @@ export default function LandingPage() {
       <section id="faq" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
         <div className="section-head">
           <div className="eyebrow">FAQ</div>
-          <h2>Straight answers</h2>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', maxWidth: 780 }}>
           {FAQS.map((f) => (
