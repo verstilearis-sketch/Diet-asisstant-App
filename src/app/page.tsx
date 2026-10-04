@@ -217,7 +217,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Cuisines ────────────────────────────────────── */}
+      {/* ── Personalization ─────────────────────────────── */}
       <section className="container" style={{ paddingTop: '1rem', paddingBottom: '3.5rem' }}>
         <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
@@ -229,9 +229,11 @@ export default function LandingPage() {
               <WheatIcon size={20} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.1rem' }}>40+ regional cuisines, not one generic menu</h3>
+              <h3 style={{ fontSize: '1.1rem' }}>Built around the food you actually eat</h3>
               <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
-                Tell us your city — meals are built from the cuisine and the markets around you.
+                Nutrition research is consistent on one point: people stick to plans built on
+                familiar foods. Tell us your city and your plan is generated from 40+ regional
+                food profiles — the dishes and ingredients of your food culture, portioned to your macros.
               </p>
             </div>
           </div>
