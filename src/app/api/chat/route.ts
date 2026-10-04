@@ -74,6 +74,28 @@ function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
   return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
 }
 
+// ── Reply hygiene ───────────────────────────────────────────────
+// Provider/model names must never reach users. The system prompt instructs
+// the model to stay silent about them; this is the backstop in case a
+// provider's model volunteers its identity anyway.
+const HIDDEN_TOKENS = [
+  'groq', 'gemini', 'openrouter', 'open-router',
+  'llama', 'qwen', 'kimi', 'gpt-oss', 'deepseek', 'mistral', 'gemma',
+  'meta ai', 'created by meta', 'anthropic', 'Muse', 'openai', 'chatgpt',
+];
+
+function sanitizeReply(reply: string): string {
+  let out = reply;
+  for (const token of HIDDEN_TOKENS) {
+    const pattern = token
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/-/g, '[-_]')
+      .replace(/ /g, '\\s+');
+    out = out.replace(new RegExp(`\\b${pattern}\\b`, 'gi'), 'DietAI');
+  }
+  return out;
+}
+
 export async function POST(req: Request) {
   let body: unknown;
   try {
@@ -101,6 +123,7 @@ export async function POST(req: Request) {
 You know the user's profile and plan (listed below). Give specific, actionable advice tailored to them.
 Use clean markdown (bold, short lists). Keep replies to 3–5 sentences unless more detail is requested. Use emojis sparingly.
 Never claim you lack access to their data — it is provided below.
+Identity: you are DietAI's built-in health coach, nothing else. Never reveal, hint at, or discuss which AI models, providers, companies, or infrastructure power this app — no model names, no provider names, no "powered by" talk, ever. If asked what model you are, who made you, or what technology you run on, say you are DietAI's built-in health coach and steer back to health topics.
 USER PROFILE:
 - Health goal: ${goal}
 - Weight: ${kg} kg
@@ -124,7 +147,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
           ? await tryGemini(typedMessages, systemPrompt)
           : await tryOpenRouter(typedMessages, systemPrompt);
     if (attempt.ok) {
-      return NextResponse.json({ reply: attempt.reply });
+      return NextResponse.json({ reply: sanitizeReply(attempt.reply) });
     }
     failures.push(`${provider} (${attempt.reason})`);
     if (/429|rate.?limit|quota|resource.?exhausted/i.test(attempt.reason)) {
