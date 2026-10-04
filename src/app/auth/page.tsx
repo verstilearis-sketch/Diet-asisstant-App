@@ -10,6 +10,7 @@ function AuthForm() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,9 +51,25 @@ function AuthForm() {
 
         {error && <div className="error-box" style={{ marginBottom: '1rem' }}><AlertIcon size={16} /> {error}</div>}
 
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginTop: '1.25rem', cursor: 'pointer', fontSize: '0.84rem', color: 'var(--color-muted)', lineHeight: 1.55 }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            style={{ marginTop: '0.2rem', width: 16, height: 16, accentColor: 'var(--color-accent)', flexShrink: 0, cursor: 'pointer' }}
+          />
+          <span>
+            I&apos;ve read and agree to the{' '}
+            <Link href="/privacy" style={{ color: 'var(--color-text)', textDecoration: 'underline' }} onClick={(e) => e.stopPropagation()}>
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+
         <button
-          type="button" className="btn-secondary" onClick={handleGoogle} disabled={loading}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '0.8rem' }}
+          type="button" className="btn-secondary" onClick={handleGoogle} disabled={loading || !agreed}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '0.8rem', marginTop: '1rem', opacity: loading || !agreed ? 0.6 : 1 }}
         >
           {loading ? (
             <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
@@ -61,14 +78,6 @@ function AuthForm() {
           )}
           {loading ? 'Redirecting to Google…' : 'Continue with Google'}
         </button>
-
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.78rem', color: 'var(--color-faint)', lineHeight: 1.6 }}>
-          By continuing, you agree to our{' '}
-          <Link href="/privacy" style={{ color: 'var(--color-muted)', textDecoration: 'underline' }}>
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </div>
     </div>
   );
