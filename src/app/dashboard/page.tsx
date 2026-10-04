@@ -1479,7 +1479,7 @@ export default function DashboardPage() {
               <div>
                 <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>Weekly inventory</h3>
                 <p style={{ color: 'var(--color-muted)', fontSize: '0.86rem' }}>
-                  Tick off what you already have stocked for your {(plan.region || 'global').replace(/-/g, ' ')} plan
+                  Tick off what you already have stocked for your plan
                 </p>
               </div>
               <span className="badge badge-green">{plan.shoppingList.length} items</span>
