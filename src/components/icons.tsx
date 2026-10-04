@@ -84,6 +84,7 @@ export const BrainIcon = ic(<><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 
 export const TrendUpIcon = ic(<><path d="m22 7-8.5 8.5-5-5L2 17" /><path d="M16 7h6v6" /></>);
 export const WheatIcon = ic(<><path d="M12 22V8" /><path d="M12 8C12 4 9 2 5 2c0 4 3 6 7 6Z" /><path d="M12 8c0-4 3-6 7-6 0 4-3 6-7 6Z" /><path d="M12 14c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 14c3 0 5-2 5-5-3 0-5 2-5 5Z" /></>);
 export const PlusIcon = ic(<><path d="M12 5v14M5 12h14" /></>);
+export const MinusIcon = ic(<><path d="M5 12h14" /></>);
 export const GlassWaterIcon = ic(<><path d="M6 3h12l-1.5 18h-9Z" /><path d="M6 8h12" /></>);
 export const ClipboardIcon = ic(<><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></>);
 export const TrashIcon = ic(<><path d="M3 6h18" /><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /></>);

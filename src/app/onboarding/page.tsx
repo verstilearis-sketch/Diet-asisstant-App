@@ -9,7 +9,7 @@ import type { UserProfile, Gender, ActivityLevel, Goal } from '@/lib/calculation
 import {
   UserIcon, TargetIcon, ActivityIcon, GlobeIcon, SparklesIcon,
   FlameIcon, DumbbellIcon, ScaleIcon, LeafIcon, TrophyIcon,
-  CheckIcon, ArrowRightIcon, ArrowLeftIcon, BrainIcon, AlertIcon,
+  CheckIcon, ArrowRightIcon, ArrowLeftIcon, BrainIcon, AlertIcon, PlusIcon, MinusIcon,
 } from '@/components/icons';
 
 // ── Step definitions ──────────────────────────────────────────
@@ -393,9 +393,26 @@ export default function OnboardingPage() {
                 </div>
                 <div>
                   <label className="input-label" htmlFor="lifestyle-exercise-dur">Session length <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(min)</span></label>
-                  <input id="lifestyle-exercise-dur" className="input-field" type="number" min={0} max={180}
-                    value={profile.exerciseDuration ?? 45}
-                    onChange={(e) => update('exerciseDuration', +e.target.value)} />
+                  <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.5rem' }}>
+                    <button type="button" aria-label="Decrease session length by 5 minutes"
+                      onClick={() => update('exerciseDuration', Math.max(0, (profile.exerciseDuration ?? 45) - 5))}
+                      disabled={(profile.exerciseDuration ?? 45) <= 0}
+                      className="option-card"
+                      style={{ width: 46, justifyContent: 'center', alignItems: 'center', padding: 0 }}>
+                      <MinusIcon size={18} />
+                    </button>
+                    <div id="lifestyle-exercise-dur" className="input-field"
+                      style={{ flex: 1, textAlign: 'center', fontWeight: 750, fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {profile.exerciseDuration ?? 45} min
+                    </div>
+                    <button type="button" aria-label="Increase session length by 5 minutes"
+                      onClick={() => update('exerciseDuration', Math.min(180, (profile.exerciseDuration ?? 45) + 5))}
+                      disabled={(profile.exerciseDuration ?? 45) >= 180}
+                      className="option-card"
+                      style={{ width: 46, justifyContent: 'center', alignItems: 'center', padding: 0 }}>
+                      <PlusIcon size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
