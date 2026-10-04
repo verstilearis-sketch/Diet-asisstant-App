@@ -30,6 +30,16 @@ export interface SavedPlan {
   createdAt: string;
 }
 
+export interface ExtraMeal {
+  id: string;
+  name: string;
+  text: string;
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+}
+
 export interface DailyLog {
   date: string; // YYYY-MM-DD
   weight?: number;
@@ -37,6 +47,8 @@ export interface DailyLog {
   mealsCompleted: boolean[]; // Array of 5 booleans for the 5 meals
   exerciseDone: boolean;
   mood?: 'great' | 'good' | 'okay' | 'bad';
+  /** Free-text meals the user logged on top of the plan (AI-estimated nutrition). */
+  extraMeals: ExtraMeal[];
 }
 
 export type AuthResult = {
@@ -52,6 +64,7 @@ const defaultLog = (date: string): DailyLog => ({
   waterLiters: 0,
   mealsCompleted: [false, false, false, false, false],
   exerciseDone: false,
+  extraMeals: [],
 });
 
 function configError(err: unknown): string {

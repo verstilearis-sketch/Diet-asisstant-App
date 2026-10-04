@@ -217,6 +217,14 @@ export default function MiniCalendar({ userId }: { userId: string }) {
                     {detail.mealsCompleted.filter(Boolean).length} / 5
                   </strong>
                 </div>
+                {(detail.extraMeals || []).length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--color-muted)' }}>Extra meals</span>
+                    <strong style={{ fontVariantNumeric: 'tabular-nums' }}>
+                      {detail.extraMeals.length} · +{detail.extraMeals.reduce((a, m) => a + m.calories, 0)} kcal
+                    </strong>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--color-muted)' }}>Water</span>
                   <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{detail.waterLiters}L</strong>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, DailyLog, resetAllData, updatePlan } from '@/lib/storage';
 import { computeAll } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
-import type { SavedPlan } from '@/lib/storage';
+import type { SavedPlan, ExtraMeal } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
 import { getMealAlternatives, type MealType } from '@/lib/ai-engine';
 import RecipeModal from '@/components/RecipeModal';
@@ -18,7 +18,7 @@ import {
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  FlameIcon, TrashIcon,
+  FlameIcon, TrashIcon, PlusIcon,
 } from '@/components/icons';
 
 const GOAL_LABELS: Record<string, string> = {
@@ -64,6 +64,9 @@ export default function DashboardPage() {
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
   const [draftLog, setDraftLog] = useState<DailyLog | null>(null);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [extraText, setExtraText] = useState('');
+  const [extraBusy, setExtraBusy] = useState(false);
+  const [extraError, setExtraError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState('');
   const [todayStr] = useState(getTodayString());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -121,6 +124,51 @@ export default function DashboardPage() {
     }
   };
 
+  // Free-text meal logging: estimate nutrition via AI, add to the draft day log.
+  const handleEstimateMeal = async () => {
+    const text = extraText.trim();
+    if (!text || extraBusy || !savedPlan) return;
+    setExtraBusy(true);
+    setExtraError(null);
+    try {
+      const res = await fetch('/api/parse-meal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          restrictions: savedPlan.profile.dietaryRestrictions,
+          region: savedPlan.plan.region,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Could not estimate this meal');
+      const m = data.meal as { name: string; calories: number; proteinG: number; carbsG: number; fatG: number };
+      const entry: ExtraMeal = {
+        id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `em-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: m.name,
+        text,
+        calories: m.calories,
+        proteinG: m.proteinG,
+        carbsG: m.carbsG,
+        fatG: m.fatG,
+      };
+      setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
+      setExtraText('');
+      setSaveState('idle');
+    } catch (e) {
+      setExtraError(e instanceof Error ? e.message : 'Could not estimate this meal');
+    } finally {
+      setExtraBusy(false);
+    }
+  };
+
+  const removeExtraMeal = (id: string) => {
+    setDraftLog((d) => (d ? { ...d, extraMeals: (d.extraMeals || []).filter((m) => m.id !== id) } : d));
+    setSaveState('idle');
+  };
+
   const handleSignOut = async () => { await signOut(); router.replace('/'); };
 
   // Swap a meal for an alternative (from the "can't make this" picker).
@@ -174,8 +222,9 @@ export default function DashboardPage() {
   const selectedDayPlan = plan.weeklyPlan[activeDay];
 
   const mealsList = MEAL_META.map((m) => selectedDayPlan[m.key]);
-  const calsConsumed = mealsList.reduce((acc, meal, i) => acc + (dailyLog.mealsCompleted[i] ? meal.calories : 0), 0);
-  const draftCalsConsumed = mealsList.reduce((acc, meal, i) => acc + (draftLog.mealsCompleted[i] ? meal.calories : 0), 0);
+  const extraCals = (log: DailyLog) => (log.extraMeals || []).reduce((a, m) => a + m.calories, 0);
+  const calsConsumed = mealsList.reduce((acc, meal, i) => acc + (dailyLog.mealsCompleted[i] ? meal.calories : 0), 0) + extraCals(dailyLog);
+  const draftCalsConsumed = mealsList.reduce((acc, meal, i) => acc + (draftLog.mealsCompleted[i] ? meal.calories : 0), 0) + extraCals(draftLog);
   const draftCaloriePct = Math.min(100, Math.round((draftCalsConsumed / calcs.dailyCalorieGoal) * 100));
   const mealsDoneCount = dailyLog.mealsCompleted.filter(Boolean).length;
 
@@ -484,6 +533,60 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '1.4rem' }}>
+              <h3 style={{ marginBottom: '0.25rem', fontSize: '0.98rem' }}>Log what you ate</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '1rem' }}>
+                Anything off-plan — describe it in plain words and we'll estimate the nutrition
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <input
+                  type="text" className="input-field" style={{ marginBottom: 0, flex: 1 }}
+                  value={extraText}
+                  onChange={(e) => setExtraText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleEstimateMeal(); }}
+                  placeholder="e.g. 2 rotis, dal, 1 glass lassi"
+                  maxLength={500}
+                  aria-label="Describe what you ate"
+                />
+                <button
+                  type="button" className="btn-primary" onClick={handleEstimateMeal}
+                  disabled={!extraText.trim() || extraBusy}
+                  style={{ flexShrink: 0, padding: '0 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  {extraBusy ? <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} /> : <PlusIcon size={16} />}
+                  Log
+                </button>
+              </div>
+              {extraError && (
+                <p style={{ fontSize: '0.82rem', color: 'var(--color-danger)', marginBottom: '0.75rem' }}>
+                  {extraError} — <button type="button" className="btn-ghost" style={{ padding: '0.15rem 0.5rem', fontSize: '0.8rem' }} onClick={handleEstimateMeal}>Try again</button>
+                </p>
+              )}
+              {(draftLog.extraMeals || []).length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {draftLog.extraMeals.map((m) => (
+                    <div key={m.id} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.7rem',
+                      background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.6rem 0.8rem',
+                    }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 650, fontSize: '0.86rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                          {m.calories} kcal · {m.proteinG}g protein
+                        </div>
+                      </div>
+                      <button type="button" className="btn-ghost" onClick={() => removeExtraMeal(m.id)}
+                        aria-label={`Remove ${m.name}`} title="Remove" style={{ padding: '0.4rem', flexShrink: 0 }}>
+                        <TrashIcon size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-faint)' }}>Nothing extra logged today.</p>
+              )}
             </div>
 
             <div className="glass-card" style={{ padding: '1.4rem' }}>
