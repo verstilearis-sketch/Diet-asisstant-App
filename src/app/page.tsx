@@ -90,9 +90,8 @@ const FAQS = [
   },
 ];
 
-// ── Dashboard preview numbers (consistent with the engine's math) ──
-// Sample day at 2,286 kcal target; lose_weight macro split is
-// 35% protein / 35% carbs / 30% fat → 200p / 200c / 76f
+// ── Sample plan numbers ──
+// Sample day at 2,100 kcal target (480 + 680 + 240 + 650)
 
 export default function LandingPage() {
   const router = useRouter();
@@ -157,58 +156,50 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Dashboard preview — what the user lands on after the questionnaire */}
+          {/* Sample plan — the actual output of the questionnaire */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.15rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
-                Your dashboard
+                Your 7-day plan
               </span>
-              <span className="badge badge-green">Preview</span>
+              <span className="badge badge-green">Sample</span>
             </div>
 
-            <div style={{ display: 'flex', gap: '1.4rem', alignItems: 'center', marginBottom: '1.3rem' }}>
-              <svg width="112" height="112" viewBox="0 0 112 112" style={{ flexShrink: 0 }} role="img" aria-label="1540 of 2286 kilocalories eaten">
-                <circle cx="56" cy="56" r="47" fill="none" stroke="var(--color-surface2)" strokeWidth="11" />
-                <circle cx="56" cy="56" r="47" fill="none" stroke="var(--color-accent)" strokeWidth="11" strokeLinecap="round"
-                  strokeDasharray="295.3" strokeDashoffset="96.4" transform="rotate(-90 56 56)" />
-                <text x="56" y="54" textAnchor="middle" fill="var(--color-text)" fontSize="19" fontWeight="700" style={{ fontFamily: 'var(--font-sans)' }}>1,540</text>
-                <text x="56" y="72" textAnchor="middle" fill="var(--color-muted)" fontSize="10.5" style={{ fontFamily: 'var(--font-sans)' }}>of 2,286 kcal</text>
-              </svg>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                {[
-                  { label: 'Protein', eaten: 118, target: 200, color: 'var(--chart-protein)' },
-                  { label: 'Carbs', eaten: 165, target: 200, color: 'var(--chart-carbs)' },
-                  { label: 'Fat', eaten: 48, target: 76, color: 'var(--chart-fat)' },
-                ].map((m) => (
-                  <div key={m.label}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', marginBottom: '0.25rem' }}>
-                      <span style={{ fontWeight: 600 }}>{m.label}</span>
-                      <span className="mono" style={{ color: 'var(--color-muted)' }}>{m.eaten}/{m.target}g</span>
-                    </div>
-                    <div className="progress-bar-track" style={{ height: 6 }}>
-                      <div className="progress-bar-fill" style={{ width: `${Math.round((m.eaten / m.target) * 100)}%`, background: m.color }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '1.1rem' }}>
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => (
+                <span key={d} style={{
+                  fontSize: '0.72rem', fontWeight: 600, padding: '0.32rem 0', flex: 1, textAlign: 'center',
+                  borderRadius: '0.5rem',
+                  background: i === 0 ? 'var(--color-accent-soft)' : 'transparent',
+                  color: i === 0 ? 'var(--color-accent)' : 'var(--color-faint)',
+                  border: i === 0 ? '1px solid var(--color-accent)' : '1px solid transparent',
+                }}>{d}</span>
+              ))}
             </div>
 
-            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.6rem' }}>Today</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '0.9rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1rem' }}>
               {[
-                { name: 'Vegetable poha with peanuts', kcal: 500 },
-                { name: 'Brown rice, sambar, poriyal', kcal: 700 },
-                { name: 'Buttermilk + roasted makhana', kcal: 200 },
-                { name: 'Sprouted moong chaat', kcal: 140 },
+                { meal: 'Breakfast', name: '3-egg bhurji, 2 toast, glass of milk', kcal: 480, protein: 28 },
+                { meal: 'Lunch', name: 'Grilled chicken, brown rice, dal', kcal: 680, protein: 52 },
+                { meal: 'Snack', name: 'Greek yogurt, roasted makhana', kcal: 240, protein: 18 },
+                { meal: 'Dinner', name: 'Paneer tikka, 2 rotis, salad', kcal: 650, protein: 30 },
               ].map((m) => (
-                <div key={m.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.6rem' }}>
-                  <span style={{ fontSize: '0.82rem', fontWeight: 550 }}>{m.name}</span>
-                  <span className="mono" style={{ fontSize: '0.76rem', color: 'var(--color-muted)' }}>{m.kcal} kcal</span>
+                <div key={m.meal} style={{ padding: '0.6rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.6rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.15rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-accent)' }}>{m.meal}</span>
+                    <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--color-muted)' }}>{m.kcal} kcal · {m.protein}g protein</span>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 550 }}>{m.name}</div>
                 </div>
               ))}
             </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 0.9rem', background: 'var(--color-accent-soft)', borderRadius: '0.6rem', marginBottom: '0.8rem' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Day total</span>
+              <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-accent)' }}>2,050 / 2,100 kcal</span>
+            </div>
             <p style={{ fontSize: '0.76rem', color: 'var(--color-muted)' }}>
-              <strong style={{ color: 'var(--color-accent)' }}>746 kcal</strong> remaining today · dinner still to log
+              Matched to your cuisine, allergies and goal — swaps in one tap.
             </p>
           </div>
         </div>
