@@ -19,7 +19,7 @@ import {
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  FlameIcon, TrashIcon, PlusIcon,
+  FlameIcon, TrashIcon, PlusIcon, CameraIcon,
 } from '@/components/icons';
 
 const GOAL_LABELS: Record<string, string> = {
@@ -73,6 +73,12 @@ export default function DashboardPage() {
   const [exerciseError, setExerciseError] = useState<string | null>(null);
   const [adaptation, setAdaptation] = useState<AdaptationCheck | null>(null);
   const adaptCheckedFor = useRef<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const newEntryId = (prefix: string) =>
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const [savedAt, setSavedAt] = useState('');
   const [todayStr] = useState(getTodayString());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -161,15 +167,14 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(data?.error || 'Could not estimate this meal');
       const m = data.meal as { name: string; calories: number; proteinG: number; carbsG: number; fatG: number };
       const entry: ExtraMeal = {
-        id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `em-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        id: newEntryId('em'),
         name: m.name,
         text,
         calories: m.calories,
         proteinG: m.proteinG,
         carbsG: m.carbsG,
         fatG: m.fatG,
+        source: 'text',
       };
       setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
       setExtraText('');
@@ -184,6 +189,68 @@ export default function DashboardPage() {
   const removeExtraMeal = (id: string) => {
     setDraftLog((d) => (d ? { ...d, extraMeals: (d.extraMeals || []).filter((m) => m.id !== id) } : d));
     setSaveState('idle');
+  };
+
+  // Photo meal logging: downscale client-side, estimate via vision, add to the draft log.
+  const processPhotoFile = (file: File): Promise<{ base64: string; mimeType: string }> =>
+    new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDim = 1024;
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve({ base64: dataUrl.slice(dataUrl.indexOf(',') + 1), mimeType: 'image/jpeg' });
+        } catch (e) {
+          URL.revokeObjectURL(url);
+          reject(e);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Could not read that photo — try a JPG or PNG'));
+      };
+      img.src = url;
+    });
+
+  const handlePhotoMeal = async (file: File | undefined) => {
+    if (!file || extraBusy || !savedPlan) return;
+    setExtraBusy(true);
+    setExtraError(null);
+    try {
+      const { base64, mimeType } = await processPhotoFile(file);
+      const res = await fetch('/api/parse-meal-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mimeType }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Could not read this photo');
+      const m = data.meal as { name: string; calories: number; proteinG: number; carbsG: number; fatG: number };
+      const entry: ExtraMeal = {
+        id: newEntryId('em'),
+        name: m.name,
+        text: 'Photo estimate',
+        calories: m.calories,
+        proteinG: m.proteinG,
+        carbsG: m.carbsG,
+        fatG: m.fatG,
+        source: 'photo',
+      };
+      setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
+      setSaveState('idle');
+    } catch (e) {
+      setExtraError(e instanceof Error ? e.message : 'Could not read this photo');
+    } finally {
+      setExtraBusy(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
   };
 
   // Exercise logging: estimate burn via AI, add to the draft day log.
@@ -202,9 +269,7 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(data?.error || 'Could not estimate this workout');
       const e = data.exercise as { name: string; caloriesBurned: number; durationMin?: number };
       const entry: ExerciseEntry = {
-        id: typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `ex-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        id: newEntryId('ex'),
         name: e.name,
         description: text,
         caloriesBurned: e.caloriesBurned,
@@ -704,8 +769,13 @@ export default function DashboardPage() {
             <div className="glass-card" style={{ padding: '1.4rem' }}>
               <h3 style={{ marginBottom: '0.25rem', fontSize: '0.98rem' }}>Log what you ate</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '1rem' }}>
-                Anything off-plan — describe it in plain words and we'll estimate the nutrition
+                Anything off-plan — describe it or snap a photo, and we'll estimate the nutrition
               </p>
+              <input
+                ref={photoInputRef} type="file" accept="image/*" capture="environment"
+                style={{ display: 'none' }} aria-label="Take a photo of your meal"
+                onChange={(e) => handlePhotoMeal(e.target.files?.[0])}
+              />
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <input
                   type="text" className="input-field" style={{ marginBottom: 0, flex: 1 }}
@@ -717,6 +787,13 @@ export default function DashboardPage() {
                   aria-label="Describe what you ate"
                 />
                 <button
+                  type="button" className="btn-ghost" onClick={() => photoInputRef.current?.click()}
+                  disabled={extraBusy} title="Snap a photo of your meal" aria-label="Snap a photo of your meal"
+                  style={{ flexShrink: 0, padding: '0 0.75rem', display: 'inline-flex', alignItems: 'center' }}
+                >
+                  <CameraIcon size={18} />
+                </button>
+                <button
                   type="button" className="btn-primary" onClick={handleEstimateMeal}
                   disabled={!extraText.trim() || extraBusy}
                   style={{ flexShrink: 0, padding: '0 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
@@ -725,6 +802,11 @@ export default function DashboardPage() {
                   Log
                 </button>
               </div>
+              {extraBusy && (
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '0.6rem' }}>
+                  Analyzing your meal…
+                </p>
+              )}
               {extraError && (
                 <p style={{ fontSize: '0.82rem', color: 'var(--color-danger)', marginBottom: '0.75rem' }}>
                   {extraError} — <button type="button" className="btn-ghost" style={{ padding: '0.15rem 0.5rem', fontSize: '0.8rem' }} onClick={handleEstimateMeal}>Try again</button>
@@ -738,7 +820,14 @@ export default function DashboardPage() {
                       background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.6rem 0.8rem',
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 650, fontSize: '0.86rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                          <span style={{ fontWeight: 650, fontSize: '0.86rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</span>
+                          {m.source === 'photo' && (
+                            <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Estimated from a photo — approximate">
+                              photo · estimate
+                            </span>
+                          )}
+                        </div>
                         <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
                           {m.calories} kcal · {m.proteinG}g protein
                         </div>

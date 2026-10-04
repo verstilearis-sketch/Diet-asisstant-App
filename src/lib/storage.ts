@@ -38,6 +38,8 @@ export interface ExtraMeal {
   proteinG: number;
   carbsG: number;
   fatG: number;
+  /** How the meal was logged — photo estimates are more approximate. */
+  source?: 'text' | 'photo';
 }
 
 export interface ExerciseEntry {

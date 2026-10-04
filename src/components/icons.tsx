@@ -67,6 +67,7 @@ export const ChatIcon = ic(<><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 
 export const LogoutIcon = ic(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></>);
 export const CoffeeIcon = ic(<><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /><path d="M7 2v2M11 2v2M15 2v2" /></>);
 export const AppleIcon = ic(<><path d="M12 20.5c-4.5-2-7-5.5-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 21 10.5c0 4.5-2.5 8-7 10l-2-.5Z" /><path d="M12 7.5c0-2 1-3.5 3-4.5" /></>);
+export const CameraIcon = ic(<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></>);
 export const SunIcon = ic(<><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>);
 export const MoonIcon = ic(<><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></>);
 export const CookieIcon = ic(<><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5Z" /><path d="M8.5 8.5h.01M12 12h.01M15.5 9.5h.01M11 16h.01" /></>);

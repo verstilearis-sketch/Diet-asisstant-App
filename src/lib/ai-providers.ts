@@ -127,6 +127,39 @@ export async function runAiChain(
   return { ok: false, failures };
 }
 
+/** Vision via Gemini: describe/estimate what's in a photo. Groq's vision
+ *  models keep retiring, so photos go straight to Gemini. */
+export async function tryGeminiVision(
+  imageBase64: string,
+  mimeType: string,
+  prompt: string,
+  opts: { maxTokens?: number; temperature?: number } = {},
+): Promise<Attempt> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'GEMINI_API_KEY not set' };
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBase64 } }],
+        },
+      ],
+      config: {
+        temperature: opts.temperature ?? 0.2,
+        maxOutputTokens: opts.maxTokens ?? 400,
+      },
+    });
+    const reply = response.text?.trim();
+    if (!reply) return { ok: false, reason: 'empty response body' };
+    return { ok: true, reply };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
+}
+
 /** Pull a JSON object out of a model reply that may include code fences. */
 export function extractJsonObject(raw: string): Record<string, unknown> | null {
   try {
