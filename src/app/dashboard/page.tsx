@@ -65,7 +65,7 @@ const TABS = [
   { id: 'home', label: 'Home', icon: DashboardIcon },
   { id: 'meals', label: 'Meal plan', icon: UtensilsIcon },
   { id: 'tracker', label: 'Daily tracker', icon: ClipboardIcon },
-  { id: 'shopping', label: 'Shopping', icon: CartIcon },
+  { id: 'inventory', label: 'Inventory', icon: CartIcon },
 ] as const;
 
 const MOODS = [
@@ -84,7 +84,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [savedPlan, setSavedPlan] = useState<SavedPlan | null>(null);
   const [activeDay, setActiveDay] = useState((new Date().getDay() + 6) % 7);
-  const [activeTab, setActiveTab] = useState<'home' | 'meals' | 'tracker' | 'shopping'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'meals' | 'tracker' | 'inventory'>('home');
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
@@ -1473,20 +1473,20 @@ export default function DashboardPage() {
         )}
 
         {/* ── SHOPPING ──────────────────────────────────── */}
-        {activeTab === 'shopping' && (
+        {activeTab === 'inventory' && (
           <div className="fade-in-up">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>Weekly shopping list</h3>
+                <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>Weekly inventory</h3>
                 <p style={{ color: 'var(--color-muted)', fontSize: '0.86rem' }}>
-                  Everything you need for your {(plan.region || 'global').replace(/-/g, ' ')} plan
+                  Tick off what you already have stocked for your {(plan.region || 'global').replace(/-/g, ' ')} plan
                 </p>
               </div>
               <span className="badge badge-green">{plan.shoppingList.length} items</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.6rem' }}>
               {plan.shoppingList.map((item, i) => (
-                <ShoppingItem key={i} item={item} />
+                <InventoryItem key={i} item={item} />
               ))}
             </div>
           </div>
@@ -1641,7 +1641,7 @@ function MealCard({
   );
 }
 
-function ShoppingItem({ item }: { item: string }) {
+function InventoryItem({ item }: { item: string }) {
   const [checked, setChecked] = useState(false);
   return (
     <button
