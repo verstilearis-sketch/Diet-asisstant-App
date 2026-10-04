@@ -41,8 +41,11 @@ export interface DietPlan {
 export function detectRegion(location?: string): string {
   const loc = (location || '').toLowerCase();
 
+  // ── Jammu & Kashmir (Wazwan cuisine — distinct from North Indian) ──
+  if (/kashmir|srinagar|jammu|ladakh|leh|anantnag|baramulla|kathua|udhampur|rajouri|poonch|doda|kishtwar|kupwara|pulwama|ganderbal/.test(loc)) return 'kashmir';
+
   // ── South Asia ──
-  if (/delhi|punjab|haryana|uttar pradesh|rajasthan|himachal|jammu|ladakh|chandigarh|\bup\b|lucknow|jaipur|amritsar|agra|varanasi|madhya pradesh|chhattisgarh|bhopal|indore/.test(loc)) return 'north-india';
+  if (/delhi|punjab|haryana|uttar pradesh|rajasthan|himachal|chandigarh|\bup\b|lucknow|jaipur|amritsar|agra|varanasi|madhya pradesh|chhattisgarh|bhopal|indore/.test(loc)) return 'north-india';
   if (/mumbai|maharashtra|goa|gujarat|pune|nagpur|surat|ahmedabad|nashik/.test(loc)) return 'west-india';
   if (/chennai|tamil|kerala|bangalore|bengaluru|karnataka|andhra|telangana|hyderabad|kochi|coimbatore|mysore|mysuru|pondicherry|puducherry/.test(loc)) return 'south-india';
   if (/kolkata|bengal|odisha|bihar|jharkhand|assam|northeast|guwahati|bhubaneswar|meghalaya|manipur|mizoram|nagaland|tripura|sikkim|patna|ranchi/.test(loc)) return 'east-india';
@@ -1550,6 +1553,33 @@ const REGIONAL_DB: RegionalFoodDB = {
     ],
   },
 
+  // ── KASHMIR (J&K) ───────────────────────────────────────────────────────────
+  'kashmir': {
+    breakfast: [
+      { name: 'Kahwa & Girda', emoji: '🍵', cal: 180, protein: 4, carbs: 32, fat: 5, prepTime: '10 min', description: 'Saffron green tea with almonds and a traditional girda bread', tags: ['vegetarian'] },
+      { name: 'Noon Chai & Lavasa', emoji: '🫖', cal: 200, protein: 5, carbs: 30, fat: 7, prepTime: '15 min', description: 'Salted pink tea brewed with milk, served with soft lavasa bread', tags: ['vegetarian'] },
+      { name: 'Kashmiri Harissa', emoji: '🥣', cal: 420, protein: 28, carbs: 35, fat: 18, prepTime: '30 min', description: 'Slow-cooked mutton and rice porridge — the classic winter breakfast', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Zafrani Doodh & Kulcha', emoji: '🥛', cal: 300, protein: 10, carbs: 42, fat: 10, prepTime: '10 min', description: 'Warm saffron milk with a crisp Kashmiri kulcha', tags: ['vegetarian'] },
+    ],
+    lunch: [
+      { name: 'Rogan Josh & Rice', emoji: '🍛', cal: 580, protein: 38, carbs: 45, fat: 26, prepTime: '30 min', description: 'Slow-braised mutton in Kashmiri chili gravy with steamed rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Rajma Chawal (Jammu style)', emoji: '🫘', cal: 520, protein: 20, carbs: 85, fat: 12, prepTime: '30 min', description: 'Jammu\'s beloved red kidney beans with steamed basmati rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Mutton Yakhni & Rice', emoji: '🍲', cal: 540, protein: 36, carbs: 42, fat: 24, prepTime: '30 min', description: 'Delicate yogurt-based mutton curry with fennel and dry mint', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Haak Saag & Rice', emoji: '🥬', cal: 380, protein: 10, carbs: 55, fat: 14, prepTime: '20 min', description: 'Collard greens sautéed with mustard oil and garlic over rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+    dinner: [
+      { name: 'Rista & Rice', emoji: '🧆', cal: 560, protein: 34, carbs: 44, fat: 28, prepTime: '30 min', description: 'Hand-pounded mutton meatballs in fiery red wazwan gravy', tags: ['high-protein'] },
+      { name: 'Gushtaba & Rice', emoji: '🍖', cal: 590, protein: 36, carbs: 40, fat: 30, prepTime: '30 min', description: 'The wazwan finale — tender meatballs in creamy yogurt gravy', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Nadru Yakhni & Rice', emoji: '🪷', cal: 420, protein: 12, carbs: 58, fat: 16, prepTime: '25 min', description: 'Lotus stem from Dal Lake simmered in spiced yogurt', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Tabak Maaz (grilled) & Rice', emoji: '🍢', cal: 520, protein: 32, carbs: 38, fat: 26, prepTime: '25 min', description: 'Grilled rib chops with Kashmiri spices — lighter than the fried classic', tags: ['high-protein'] },
+    ],
+    snack: [
+      { name: 'Kahwa & Shufta (small)', emoji: '🍵', cal: 200, protein: 4, carbs: 28, fat: 9, prepTime: '10 min', description: 'Saffron tea with a small portion of dry-fruit shufta dessert', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kaladi Kulcha (Jammu)', emoji: '🧀', cal: 280, protein: 14, carbs: 28, fat: 12, prepTime: '15 min', description: 'Grilled kaladi cheese stuffed in a crisp kulcha — Jammu street classic', tags: ['vegetarian'] },
+      { name: 'Roasted Kashmiri Walnuts', emoji: '🌰', cal: 180, protein: 5, carbs: 4, fat: 18, prepTime: '10 min', description: 'A handful of local walnuts, dry-roasted with a pinch of salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+    ],
+  },
+
   global: {
     breakfast: [
       { name: 'Oatmeal with Berries', emoji: '🥣', cal: 310, protein: 10, carbs: 52, fat: 6, prepTime: '8 min', description: 'Warm rolled oats with mixed berries, banana, and a drizzle of honey', tags: ['vegetarian', 'vegan'] },
@@ -1686,7 +1716,7 @@ export async function generateDietPlan(profile: UserProfile, calculations: Calcu
 
   const regionLabel: Record<string, string> = {
     'north-india': 'North India', 'south-india': 'South India', 'west-india': 'West India', 'east-india': 'East India',
-    'pakistan': 'Pakistan', 'bangladesh': 'Bangladesh', 'nepal': 'Nepal & Himalayas', 'sri-lanka': 'Sri Lanka',
+    'kashmir': 'Kashmir (J&K)', 'pakistan': 'Pakistan', 'bangladesh': 'Bangladesh', 'nepal': 'Nepal & Himalayas', 'sri-lanka': 'Sri Lanka',
     'afghanistan': 'Afghanistan', 'central-asia': 'Central Asia',
     'gulf': 'Middle East / Gulf', 'iran': 'Iran', 'turkey': 'Turkey', 'levant': 'Levant / Middle East',
     'egypt': 'Egypt', 'maghreb': 'North Africa / Maghreb',

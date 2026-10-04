@@ -390,7 +390,7 @@ export default function OnboardingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
               <div>
                 <label className="input-label" htmlFor="pref-location">Country / city / region</label>
-                <input id="pref-location" className="input-field" placeholder="e.g. Mumbai, India"
+                <input id="pref-location" className="input-field" placeholder="e.g. Srinagar, J&K"
                   value={profile.location || ''} onChange={(e) => update('location', e.target.value)} />
                 <p style={{ fontSize: '0.78rem', color: 'var(--color-faint)', marginTop: '0.4rem' }}>
                   Used only to personalize meal suggestions — never shared.
