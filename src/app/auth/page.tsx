@@ -3,8 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { getSession, signIn, signUp } from '@/lib/storage';
-import { SaladIcon, MailIcon, LockIcon, UserIcon, AlertIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon } from '@/components/icons';
+import { getSession, signIn, signUp, signInWithGoogle } from '@/lib/storage';
+import { SaladIcon, MailIcon, LockIcon, UserIcon, AlertIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, GoogleIcon } from '@/components/icons';
 
 function AuthForm() {
   const router = useRouter();
@@ -141,6 +141,19 @@ function AuthForm() {
     setForm((p) => ({ ...p, [key]: value }));
     setError('');
     setInfo('');
+  };
+
+  const handleGoogle = async () => {
+    setError('');
+    setInfo('');
+    setLoading(true);
+    const result = await signInWithGoogle();
+    // Success means the browser is leaving for Google — keep the spinner
+    // until navigation happens. Failure stays on this page with an error.
+    if (!result.success) {
+      setError(result.error || 'Google sign-in failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   const toggleMode = () => {
@@ -309,6 +322,19 @@ function AuthForm() {
             )}
           </button>
         </form>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0 0' }}>
+          <span style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+          <span style={{ fontSize: '0.78rem', color: 'var(--color-faint)', fontWeight: 600 }}>or</span>
+          <span style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+        </div>
+
+        <button
+          type="button" className="btn-secondary" onClick={handleGoogle} disabled={loading}
+          style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}
+        >
+          <GoogleIcon size={18} /> Continue with Google
+        </button>
 
         <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.88rem', color: 'var(--color-muted)' }}>
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}

@@ -33,6 +33,18 @@ const ic = (paths: ReactNode) => {
   return C;
 };
 
+/** Google "G" brand mark (multicolor fills — not part of the stroke set). */
+export function GoogleIcon({ size = 20, style }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={style} aria-hidden="true">
+      <path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.3-2.3H12v4.5h6.5c-.1 1.1-.8 2.7-2.4 3.8l-.1.1 3.5 2.7.2.1c2.2-2 3.8-5 3.8-8.9Z" />
+      <path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.8-2.9c-1 .7-2.4 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5l-.1.1-3.7 2.9v.1C3.5 21.3 7.4 24 12 24Z" />
+      <path fill="#FBBC05" d="M5.2 14.4c-.2-.7-.4-1.5-.4-2.4s.1-1.7.4-2.4l-.1-.1-3.7-2.9-.1.1C.5 8.3 0 10.1 0 12s.5 3.7 1.3 5.3l3.9-2.9Z" />
+      <path fill="#EA4335" d="M12 4.7c1.8 0 3 .8 3.7 1.4l3.3-3.2C17.9 1.1 15.2 0 12 0 7.4 0 3.5 2.7 1.3 6.6l3.9 3C6.2 6.8 8.9 4.7 12 4.7Z" />
+    </svg>
+  );
+}
+
 export const SaladIcon = ic(<><path d="M4 12h16" /><path d="M6 12a6 6 0 0 0 12 0" /><path d="M12 12c0-3.5 2.5-6 6-6-.5 3.5-2.5 6-6 6Z" /><path d="M9 21h6" /></>);
 export const CalculatorIcon = ic(<><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8" /><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01" /></>);
 export const MapPinIcon = ic(<><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>);

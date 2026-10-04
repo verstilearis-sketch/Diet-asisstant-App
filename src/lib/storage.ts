@@ -164,13 +164,38 @@ export async function signIn(email: string, password: string): Promise<AuthResul
   }
 }
 
+export async function signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const sb = getSupabase();
+    // PKCE flow: the browser leaves for Google, then returns to /auth/callback
+    // which exchanges the code for a session (see src/app/auth/callback/page.tsx).
+    const redirectTo = `${window.location.origin}/auth/callback`;
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    if (error) return { success: false, error: friendlyAuthError(error.message) };
+    // No error → the browser is navigating to Google; nothing more to do here.
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: configError(err) };
+  }
+}
+
 export async function getSession(): Promise<StoredSession | null> {
   try {
     const sb = getSupabase();
     const { data: { session } } = await sb.auth.getSession();
     const user = session?.user;
     if (!user) return null;
-    const metaName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name : '';
+    const meta = user.user_metadata || {};
+    // Google OAuth provides full_name; email signup stores name.
+    const metaName =
+      typeof meta.name === 'string' && meta.name
+        ? meta.name
+        : typeof meta.full_name === 'string'
+          ? meta.full_name
+          : '';
     const name = (await fetchProfileName(user.id)) || metaName;
     return { userId: user.id, email: user.email ?? '', name };
   } catch {
