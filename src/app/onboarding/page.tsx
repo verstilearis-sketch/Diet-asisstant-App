@@ -9,7 +9,7 @@ import type { UserProfile, Gender, ActivityLevel, Goal } from '@/lib/calculation
 import {
   UserIcon, TargetIcon, ActivityIcon, GlobeIcon, SparklesIcon,
   FlameIcon, DumbbellIcon, ScaleIcon, LeafIcon, TrophyIcon,
-  CheckIcon, ArrowRightIcon, ArrowLeftIcon, BrainIcon,
+  CheckIcon, ArrowRightIcon, ArrowLeftIcon, BrainIcon, AlertIcon,
 } from '@/components/icons';
 
 // ── Step definitions ──────────────────────────────────────────
@@ -124,6 +124,39 @@ export default function OnboardingPage() {
   const bmi = profile.weightKg && profile.heightCm
     ? calculateBMI(profile.weightKg, profile.heightCm) : null;
 
+  // ── Target-weight consultation ──
+  // Warns (with explanation) when the target is outside a healthy range
+  // or represents an extreme change. Advisory only — never blocks.
+  const targetConsult = (() => {
+    const { weightKg, targetWeightKg, heightCm } = profile;
+    if (!weightKg || !targetWeightKg || !heightCm || targetWeightKg <= 0) return null;
+    const targetBmi = calculateBMI(targetWeightKg, heightCm);
+    const lowKg = Math.round(18.5 * (heightCm / 100) ** 2);
+    const highKg = Math.round(24.9 * (heightCm / 100) ** 2);
+    if (targetBmi < 18.5) {
+      return {
+        level: 'danger' as const,
+        title: 'Let’s talk about this target',
+        body: `At ${targetWeightKg} kg and ${heightCm} cm, your BMI would be ${targetBmi.toFixed(1)} — below the healthy range of 18.5–24.9. Under 18.5 is classed as underweight, which is linked to nutrient deficiencies, loss of muscle and bone density, weakened immunity and hormonal disruption — and chasing it with a steep deficit can do real harm.`,
+        suggestion: `For your height, a healthy weight sits around ${lowKg}–${highKg} kg.`,
+        foot: 'If you have a medical reason for this target, please work with a doctor or dietitian. Your plan will still be paced safely.',
+      };
+    }
+    const changeKg = Math.abs(weightKg - targetWeightKg);
+    if ((changeKg / weightKg) * 100 >= 25 && changeKg >= 15) {
+      const weeks = Math.ceil(changeKg / 0.5);
+      const losing = targetWeightKg < weightKg;
+      return {
+        level: 'caution' as const,
+        title: 'A big journey — let’s pace it right',
+        body: `${changeKg} kg is a major ${losing ? 'weight loss' : 'weight gain'}. At a safe rate of about 0.5 kg per week, that’s roughly a ${weeks}-week path.`,
+        suggestion: `Your plan paces it so you ${losing ? 'lose fat, not muscle' : 'gain lean mass, not just weight'} — and keep the result.`,
+        foot: null as string | null,
+      };
+    }
+    return null;
+  })();
+
   const canProceed = (): boolean => {
     if (step === 1) return !!(profile.name && profile.age && profile.heightCm && profile.weightKg);
     if (step === 2) return !!profile.goal;
@@ -223,6 +256,36 @@ export default function OnboardingPage() {
                     placeholder="65" value={profile.targetWeightKg || ''} onChange={(e) => update('targetWeightKg', +e.target.value || undefined)} />
                 </div>
               </div>
+
+              {targetConsult && (
+                <div className="glass-card" style={{
+                  padding: '1.25rem 1.4rem',
+                  borderLeft: `4px solid ${targetConsult.level === 'danger' ? '#dc2626' : '#d97706'}`,
+                }}>
+                  <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center', marginBottom: '0.6rem' }}>
+                    <span style={{
+                      width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+                      background: targetConsult.level === 'danger' ? 'rgba(220,38,38,0.12)' : 'rgba(217,119,6,0.14)',
+                      color: targetConsult.level === 'danger' ? '#dc2626' : '#d97706',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <AlertIcon size={18} />
+                    </span>
+                    <div style={{ fontWeight: 750, fontSize: '0.98rem' }}>{targetConsult.title}</div>
+                  </div>
+                  <p style={{ fontSize: '0.87rem', color: 'var(--color-muted)', lineHeight: 1.7, marginBottom: '0.6rem' }}>
+                    {targetConsult.body}
+                  </p>
+                  <p style={{ fontSize: '0.87rem', lineHeight: 1.7, marginBottom: targetConsult.foot ? '0.6rem' : 0 }}>
+                    <strong style={{ color: 'var(--color-accent)' }}>{targetConsult.suggestion}</strong>
+                  </p>
+                  {targetConsult.foot && (
+                    <p style={{ fontSize: '0.82rem', color: 'var(--color-muted)', lineHeight: 1.65, fontStyle: 'italic' }}>
+                      {targetConsult.foot}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {bmi && (
                 <div className="glass-card" style={{ padding: '1.25rem 1.4rem' }}>
