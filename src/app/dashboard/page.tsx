@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, DailyLog, resetAllData } from '@/lib/storage';
+import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, DailyLog, resetAllData, updatePlan } from '@/lib/storage';
 import { computeAll } from '@/lib/calculations';
+import type { UserProfile } from '@/lib/calculations';
 import type { SavedPlan } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
+import { getMealAlternatives, type MealType } from '@/lib/ai-engine';
+import RecipeModal from '@/components/RecipeModal';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { HealthAgentChat } from '@/components/HealthAgentChat';
 import { ChatErrorBoundary } from '@/components/ChatErrorBoundary';
@@ -63,6 +66,7 @@ export default function DashboardPage() {
   const [savedAt, setSavedAt] = useState('');
   const [todayStr] = useState(getTodayString());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [recipeMeal, setRecipeMeal] = useState<Meal | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +121,26 @@ export default function DashboardPage() {
   };
 
   const handleSignOut = async () => { await signOut(); router.replace('/'); };
+
+  // Swap a meal for an alternative (from the "can't make this" picker).
+  const handleSwapMeal = async (
+    slotKey: 'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner',
+    newMeal: Meal,
+  ) => {
+    if (!savedPlan) return;
+    const dayPlan = { ...savedPlan.plan.weeklyPlan[activeDay], [slotKey]: newMeal };
+    const meals = [dayPlan.breakfast, dayPlan.morningSnack, dayPlan.lunch, dayPlan.afternoonSnack, dayPlan.dinner];
+    const updated = { ...dayPlan, totalCalories: meals.reduce((a, m) => a + m.calories, 0) };
+    const weeklyPlan = [...savedPlan.plan.weeklyPlan];
+    weeklyPlan[activeDay] = updated;
+    const newPlan = { ...savedPlan.plan, weeklyPlan };
+    setSavedPlan({ ...savedPlan, plan: newPlan });
+    try {
+      await updatePlan(savedPlan.id, newPlan);
+    } catch (e) {
+      console.error('Failed to persist meal swap:', e);
+    }
+  };
 
   const handleResetAll = async () => {
     await resetAllData();
@@ -400,7 +424,15 @@ export default function DashboardPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {MEAL_META.map((meta) => (
-                <MealCard key={meta.key} meta={meta} meal={selectedDayPlan[meta.key]} />
+                <MealCard
+                  key={meta.key}
+                  meta={meta}
+                  meal={selectedDayPlan[meta.key]}
+                  slotType={meta.key === 'morningSnack' || meta.key === 'afternoonSnack' ? 'snack' : meta.key}
+                  profile={profile}
+                  onShowRecipe={setRecipeMeal}
+                  onSwap={handleSwapMeal}
+                />
               ))}
             </div>
           </div>
@@ -554,6 +586,15 @@ export default function DashboardPage() {
         <HealthAgentChat plan={savedPlan} />
       </ChatErrorBoundary>
 
+      {recipeMeal && (
+        <RecipeModal
+          meal={recipeMeal}
+          region={(savedPlan.plan.region || 'global').replace(/-/g, ' ')}
+          restrictions={savedPlan.profile.dietaryRestrictions}
+          onClose={() => setRecipeMeal(null)}
+        />
+      )}
+
       {showResetConfirm && (
         <div className="modal-overlay" onClick={() => setShowResetConfirm(false)} role="dialog" aria-modal="true" aria-label="Confirm data reset">
           <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, padding: '1.5rem' }}>
@@ -587,9 +628,23 @@ export default function DashboardPage() {
   );
 }
 
-function MealCard({ meta, meal }: { meta: (typeof MEAL_META)[number]; meal: Meal }) {
+function MealCard({
+  meta, meal, slotType, profile, onShowRecipe, onSwap,
+}: {
+  meta: (typeof MEAL_META)[number];
+  meal: Meal;
+  slotType: MealType;
+  profile: UserProfile;
+  onShowRecipe: (meal: Meal) => void;
+  onSwap: (slotKey: 'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner', meal: Meal) => void;
+}) {
   const [open, setOpen] = useState(false);
+  const [showAlts, setShowAlts] = useState(false);
   const Icon = meta.icon;
+  const alternatives = useMemo(
+    () => (showAlts ? getMealAlternatives(meal, slotType, profile) : []),
+    [showAlts, meal, slotType, profile],
+  );
   return (
     <div className="meal-card">
       <button
@@ -629,6 +684,43 @@ function MealCard({ meta, meal }: { meta: (typeof MEAL_META)[number]; meal: Meal
           {meal.tags && meal.tags.length > 0 && (
             <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
               {meal.tags.map((t) => <span key={t} className="badge badge-grey">{t}</span>)}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.9rem', flexWrap: 'wrap' }}>
+            <button type="button" className="btn-secondary"
+              style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={() => onShowRecipe(meal)}>
+              <UtensilsIcon size={14} /> Recipe
+            </button>
+            <button type="button" className="btn-secondary"
+              style={{ padding: '0.55rem 1rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={() => setShowAlts((s) => !s)}>
+              <RefreshIcon size={14} /> {showAlts ? 'Hide alternatives' : 'Alternatives'}
+            </button>
+          </div>
+          {showAlts && (
+            <div className="fade-in-up" style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-faint)', fontWeight: 600 }}>
+                Can't make this? Similar swaps:
+              </div>
+              {alternatives.length === 0 && (
+                <div style={{ fontSize: '0.84rem', color: 'var(--color-muted)' }}>No alternatives found.</div>
+              )}
+              {alternatives.map((alt) => (
+                <div key={alt.name} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.6rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.7rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 650, fontSize: '0.86rem', color: 'var(--color-text)' }}>{alt.name}</div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                      {alt.calories} kcal · P {alt.protein}g · {alt.prepTime}
+                    </div>
+                  </div>
+                  <button type="button" className="btn-secondary"
+                    style={{ padding: '0.45rem 0.9rem', fontSize: '0.78rem', flexShrink: 0 }}
+                    onClick={() => { onSwap(meta.key, alt); setShowAlts(false); }}>
+                    Use this
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

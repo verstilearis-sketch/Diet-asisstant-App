@@ -128,7 +128,7 @@ export function detectRegion(location?: string): string {
 // FOOD DATABASE — Organized by region and meal type
 // ─────────────────────────────────────────────────────────────────────────────
 
-type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 interface FoodItem {
   name: string;
@@ -1953,6 +1953,45 @@ export async function generateDietPlan(profile: UserProfile, calculations: Calcu
   const summary = `Your ${budgetLabel[budget]} plan is ${mixLabel}. At ${calculations.dailyCalorieGoal} kcal/day with ${calculations.proteinG}g protein · ${calculations.carbsG}g carbs · ${calculations.fatG}g fat — you're on track to meet your ${goal.replace('_', ' ')} goal.`;
 
   return { summary, weeklyPlan, tips, hydrationPlan, supplementSuggestions, shoppingList, calorieEquivalences, progressMilestones, region };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEAL ALTERNATIVES — "I can't make this" swaps: dishes with similar calories
+// and protein from the same pools, respecting restrictions, allergies & budget.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function getMealAlternatives(
+  current: Meal,
+  slotType: MealType,
+  profile: UserProfile,
+  count = 3,
+): Meal[] {
+  const region = resolveRegion(detectRegion(profile.location));
+  const budget = profile.budget || 'moderate';
+  const pools = buildMealPools(region);
+  const seen = new Set<string>([current.name]);
+  const candidates: FoodItem[] = [];
+  // Regional first, then international — same priority as plan generation.
+  for (const source of ['regional', 'international'] as const) {
+    let pool = filterFoods(pools[slotType][source], profile)
+      .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
+    if (pool.length === 0) {
+      pool = filterFoods(pools[slotType][source], profile).filter((f) => !seen.has(f.name));
+    }
+    for (const f of pool) {
+      seen.add(f.name);
+      candidates.push(f);
+    }
+  }
+  // Closest macros to the current meal win — the swap shouldn't break the day.
+  const scored = candidates
+    .map((f) => {
+      const calErr = Math.abs(f.cal - current.calories) / Math.max(current.calories, 1);
+      const proErr = Math.abs(f.protein - current.protein) / Math.max(current.protein, 1);
+      return { f, s: calErr * 0.6 + proErr * 0.4 };
+    })
+    .sort((a, b) => a.s - b.s);
+  return scored.slice(0, count).map(({ f }) => toMeal(f));
 }
 
 function getTips(goal: string): string[] {

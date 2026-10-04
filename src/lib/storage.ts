@@ -222,6 +222,18 @@ export async function getLatestPlan(userId: string): Promise<SavedPlan | null> {
   };
 }
 
+/** Update an existing plan in place (e.g. after a meal swap) — no new version. */
+export async function updatePlan(planId: string, plan: DietPlan): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb
+    .from('plans')
+    .update({ plan })
+    .eq('id', planId);
+  if (error) {
+    throw new Error('Could not update your plan: ' + error.message);
+  }
+}
+
 // ── Daily logs ───────────────────────────────────────────────────────
 
 export async function getDailyLog(userId: string, date: string): Promise<DailyLog> {
