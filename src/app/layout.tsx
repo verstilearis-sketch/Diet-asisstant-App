@@ -1,5 +1,9 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
+
+export const viewport: Viewport = {
+  themeColor: '#177245',
+};
 
 export const metadata: Metadata = {
   title: 'Nutriq — AI-Powered Nutrition & Fitness Planner',
