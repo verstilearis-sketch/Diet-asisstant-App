@@ -251,7 +251,6 @@ export default function LandingPage() {
       <section id="how-it-works" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
         <div className="section-head">
           <div className="eyebrow">How it works</div>
-          <h2>Four steps, about two minutes</h2>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1rem' }}>
           {STEPS.map((s) => (
