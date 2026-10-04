@@ -39,7 +39,7 @@ export interface ExtraMeal {
   carbsG: number;
   fatG: number;
   /** How the meal was logged — photo estimates are more approximate. */
-  source?: 'text' | 'photo';
+  source?: 'text' | 'photo' | 'menu';
   /** True when estimated locally because AI providers were unreachable. */
   offline?: boolean;
 }

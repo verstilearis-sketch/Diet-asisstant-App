@@ -39,6 +39,13 @@ export interface DietPlan {
     adjustedAt: string; // ISO timestamp
     reason: string; // human-readable explanation shown on Home
   };
+  /** Festival/occasion mode: the plan adapts to feasts and fasts. */
+  festivalMode?: {
+    festivalId: string;
+    name: string;
+    date: string; // YYYY-MM-DD
+    type: 'feast' | 'fast';
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

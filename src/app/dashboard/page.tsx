@@ -9,6 +9,8 @@ import type { SavedPlan, ExtraMeal, ExerciseEntry } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
 import { getMealAlternatives, type MealType } from '@/lib/ai-engine';
 import { checkAdaptation, type AdaptationCheck } from '@/lib/adaptive';
+import { buildWeeklyReview } from '@/lib/weekly-review';
+import { FESTIVALS, getFestival, type FestivalFood } from '@/lib/festivals';
 import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
@@ -19,7 +21,7 @@ import {
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  FlameIcon, TrashIcon, PlusIcon, CameraIcon,
+  FlameIcon, TrashIcon, PlusIcon, CameraIcon, SparklesIcon,
 } from '@/components/icons';
 
 // ── Estimate caches: avoid repeat AI calls for the same text ──────
@@ -92,8 +94,16 @@ export default function DashboardPage() {
   const [exerciseText, setExerciseText] = useState('');
   const [exerciseBusy, setExerciseBusy] = useState(false);
   const [exerciseError, setExerciseError] = useState<string | null>(null);
+  const [menuPicks, setMenuPicks] = useState<{ name: string; calories: number; proteinG: number; why: string }[]>([]);
+  const [menuBusy, setMenuBusy] = useState(false);
+  const [menuError, setMenuError] = useState<string | null>(null);
+  const menuInputRef = useRef<HTMLInputElement | null>(null);
+  const [festivalOpen, setFestivalOpen] = useState(false);
+  const [festivalChoice, setFestivalChoice] = useState('diwali');
+  const [festivalDate, setFestivalDate] = useState(getFestival('diwali')?.defaultDate ?? '2026-11-08');
   const [adaptation, setAdaptation] = useState<AdaptationCheck | null>(null);
   const adaptCheckedFor = useRef<string | null>(null);
+  const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const newEntryId = (prefix: string) =>
@@ -354,6 +364,97 @@ export default function DashboardPage() {
     setSaveState('idle');
   };
 
+  // Menu rescue: photograph a restaurant menu, get the 3 smartest picks.
+  const handleMenuPhoto = async (file: File | undefined) => {
+    if (!file || menuBusy || !savedPlan) return;
+    setMenuBusy(true);
+    setMenuError(null);
+    setMenuPicks([]);
+    try {
+      const { base64, mimeType } = await processPhotoFile(file);
+      const res = await fetch('/api/menu-rescue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: base64,
+          mimeType,
+          goal: savedPlan.profile.goal,
+          calorieGoal: dailyGoal,
+          remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
+          restrictions: savedPlan.profile.dietaryRestrictions,
+          region: savedPlan.plan.region,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Could not read this menu');
+      setMenuPicks(data.picks as { name: string; calories: number; proteinG: number; why: string }[]);
+    } catch (e) {
+      setMenuError(e instanceof Error ? e.message : 'Could not read this menu');
+    } finally {
+      setMenuBusy(false);
+      if (menuInputRef.current) menuInputRef.current.value = '';
+    }
+  };
+
+  const logMenuPick = (pick: { name: string; calories: number; proteinG: number }) => {
+    const entry: ExtraMeal = {
+      id: newEntryId('em'),
+      name: pick.name,
+      text: 'Menu pick',
+      calories: pick.calories,
+      proteinG: pick.proteinG,
+      carbsG: 0,
+      fatG: 0,
+      source: 'menu',
+    };
+    setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
+    setSaveState('idle');
+  };
+
+  // Festival mode: adapt the plan to feasts and fasts.
+  const activateFestival = async () => {
+    if (!savedPlan) return;
+    const f = getFestival(festivalChoice);
+    if (!f) return;
+    const updated = {
+      ...savedPlan.plan,
+      festivalMode: { festivalId: f.id, name: f.name, date: festivalDate, type: f.type },
+    };
+    setSavedPlan({ ...savedPlan, plan: updated });
+    setFestivalOpen(false);
+    try {
+      await updatePlan(savedPlan.id, updated);
+    } catch (e) {
+      console.error('Failed to save festival mode:', e);
+    }
+  };
+
+  const clearFestival = async () => {
+    if (!savedPlan) return;
+    const updated = { ...savedPlan.plan, festivalMode: undefined };
+    setSavedPlan({ ...savedPlan, plan: updated });
+    try {
+      await updatePlan(savedPlan.id, updated);
+    } catch (e) {
+      console.error('Failed to clear festival mode:', e);
+    }
+  };
+
+  const logFestivalFood = (food: FestivalFood) => {
+    const entry: ExtraMeal = {
+      id: newEntryId('em'),
+      name: `${food.name} (${food.portion})`,
+      text: 'Festival food',
+      calories: food.calories,
+      proteinG: food.proteinG,
+      carbsG: 0,
+      fatG: 0,
+      source: 'text',
+    };
+    setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
+    setSaveState('idle');
+  };
+
   const handleSignOut = async () => { await signOut(); router.replace('/'); };
 
   // Swap a meal for an alternative (from the "can't make this" picker).
@@ -414,6 +515,7 @@ export default function DashboardPage() {
         });
         if (cancelled) return;
         setAdaptation(result);
+        setRecentLogs(logs);
         if (result.status === 'adapted' && result.newTarget && result.reason) {
           const updated = {
             ...plan,
@@ -459,6 +561,14 @@ export default function DashboardPage() {
   const calcs = plan.adaptiveTarget
     ? { ...baseCalcs, dailyCalorieGoal: dailyGoal, ...calculateMacros(dailyGoal, profile.goal, profile.weightKg) }
     : baseCalcs;
+  const weeklyReview = buildWeeklyReview({
+    logs: recentLogs,
+    plan,
+    profile,
+    dailyGoal,
+    proteinTargetG: calcs.proteinG,
+    waterTargetL: calcs.waterLiters,
+  });
   const selectedDayPlan = plan.weeklyPlan[activeDay];
 
   const mealsList = MEAL_META.map((m) => selectedDayPlan[m.key]);
@@ -658,6 +768,148 @@ export default function DashboardPage() {
             <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem', marginBottom: '1rem' }}>
               <MiniCalendar userId={savedPlan.userId} />
             </div>
+
+            {/* ── Weekly review ──────────────────────────────── */}
+            <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '0.3rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <h3 style={{ fontSize: '0.98rem' }}>Your week, decoded</h3>
+                <span style={{ fontSize: '0.76rem', color: 'var(--color-faint)' }}>Last 7 days</span>
+              </div>
+              {!weeklyReview.enoughData ? (
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.65, margin: '0.5rem 0 0' }}>
+                  {weeklyReview.tweak}
+                </p>
+              ) : (
+                <>
+                  <p style={{ fontSize: '0.92rem', fontWeight: 700, margin: '0.4rem 0 1rem' }}>{weeklyReview.headline}</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.9rem', marginBottom: '1.1rem' }}>
+                    <div>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{weeklyReview.adherencePct}%</div>
+                      <div className="metric-label" style={{ marginTop: '0.15rem' }}>On plan</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{weeklyReview.avgIntake.toLocaleString('en-IN')}</div>
+                      <div className="metric-label" style={{ marginTop: '0.15rem' }}>Avg kcal / day</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{weeklyReview.avgProteinG}g</div>
+                      <div className="metric-label" style={{ marginTop: '0.15rem' }}>Avg protein</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+                        {weeklyReview.weightChangeKg === null ? '—' : `${weeklyReview.weightChangeKg > 0 ? '+' : ''}${weeklyReview.weightChangeKg} kg`}
+                      </div>
+                      <div className="metric-label" style={{ marginTop: '0.15rem' }}>Weight change</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{weeklyReview.exerciseDays}</div>
+                      <div className="metric-label" style={{ marginTop: '0.15rem' }}>Active days</div>
+                    </div>
+                    {weeklyReview.bestDay && (
+                      <div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800 }}>{weeklyReview.bestDay.label}</div>
+                        <div className="metric-label" style={{ marginTop: '0.15rem' }}>Best day</div>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ background: 'var(--color-accent-soft)', borderRadius: '0.8rem', padding: '0.9rem 1.1rem', display: 'flex', gap: '0.7rem', alignItems: 'flex-start' }}>
+                    <span style={{ color: 'var(--color-accent)', marginTop: '0.1rem', flexShrink: 0 }}><BulbIcon size={17} /></span>
+                    <p style={{ fontSize: '0.85rem', lineHeight: 1.65, margin: 0 }}>
+                      <strong>One tweak for next week: </strong>{weeklyReview.tweak}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* ── Festival mode ──────────────────────────────── */}
+            {(() => {
+              const fm = plan.festivalMode;
+              const fest = fm ? getFestival(fm.festivalId) : undefined;
+              if (fm && fest) {
+                return (
+                  <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem', marginBottom: '1rem', borderLeft: '4px solid var(--color-accent)' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+                      <h3 style={{ fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ color: 'var(--color-accent)' }}><SparklesIcon size={17} /></span>
+                        {fm.name} mode
+                      </h3>
+                      <button type="button" className="btn-ghost" onClick={clearFestival} style={{ padding: '0.3rem 0.8rem', fontSize: '0.78rem' }}>
+                        End
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.65, margin: '0.4rem 0 0.9rem' }}>
+                      {fest.blurb}
+                      <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--color-faint)', marginTop: '0.25rem' }}>
+                        {new Date(fm.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        {fm.type === 'fast' ? ' · fasting' : ' · feasting'}
+                      </span>
+                    </p>
+                    <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: '0 0 0.5rem' }}>How to enjoy it</p>
+                    <ul style={{ margin: '0 0 1rem', paddingLeft: '1.1rem', fontSize: '0.84rem', color: 'var(--color-muted)', lineHeight: 1.7 }}>
+                      {fest.tips.map((t, i) => <li key={i}>{t}</li>)}
+                    </ul>
+                    <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: '0 0 0.6rem' }}>Festive picks — log as you eat</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                      {fest.foods.map((food, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.8rem', background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.6rem 0.85rem' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.86rem', fontWeight: 650 }}>{food.name}</div>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                              {food.portion} · {food.calories} kcal · {food.proteinG}g protein
+                              {food.tip && <span style={{ display: 'block', fontStyle: 'italic' }}>{food.tip}</span>}
+                            </div>
+                          </div>
+                          <button type="button" className="btn-primary" onClick={() => logFestivalFood(food)} style={{ padding: '0.4rem 0.9rem', fontSize: '0.78rem', flexShrink: 0 }}>
+                            Log
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div className="glass-card fade-in-up delay-100" style={{ padding: '1rem 1.4rem', marginBottom: '1rem' }}>
+                  <button
+                    type="button" className="btn-ghost"
+                    onClick={() => setFestivalOpen((v) => !v)}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.88rem', fontWeight: 650, padding: '0.5rem' }}
+                  >
+                    <span style={{ color: 'var(--color-accent)' }}><SparklesIcon size={16} /></span>
+                    Celebrating something? Turn on festival mode
+                  </button>
+                  {festivalOpen && (
+                    <div style={{ marginTop: '0.9rem', paddingTop: '0.9rem', borderTop: '1px solid var(--color-border)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.7rem', alignItems: 'end' }}>
+                        <div>
+                          <label className="input-label" htmlFor="festival-select">Occasion</label>
+                          <select
+                            id="festival-select" className="input" value={festivalChoice}
+                            onChange={(e) => {
+                              setFestivalChoice(e.target.value);
+                              const d = getFestival(e.target.value)?.defaultDate;
+                              if (d) setFestivalDate(d);
+                            }}
+                          >
+                            {FESTIVALS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="input-label" htmlFor="festival-date">Date</label>
+                          <input id="festival-date" type="date" className="input" value={festivalDate} onChange={(e) => setFestivalDate(e.target.value)} />
+                        </div>
+                        <div>
+                          <button type="button" className="btn-primary" onClick={activateFestival} style={{ width: '100%', padding: '0.6rem' }}>
+                            Activate
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
             <div className="glass-card" style={{ padding: '1.4rem' }}>
@@ -885,6 +1137,11 @@ export default function DashboardPage() {
                               photo · estimate
                             </span>
                           )}
+                          {m.source === 'menu' && (
+                            <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Picked from a restaurant menu">
+                              menu pick
+                            </span>
+                          )}
                           {m.offline && (
                             <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Estimated on your device — the AI service was unreachable">
                               offline estimate
@@ -905,6 +1162,51 @@ export default function DashboardPage() {
               ) : (
                 <p style={{ fontSize: '0.8rem', color: 'var(--color-faint)' }}>Nothing extra logged today.</p>
               )}
+
+              {/* ── Menu rescue ─────────────────────────────── */}
+              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
+                <input
+                  ref={menuInputRef} type="file" accept="image/*" capture="environment"
+                  style={{ display: 'none' }} aria-label="Photograph the restaurant menu"
+                  onChange={(e) => handleMenuPhoto(e.target.files?.[0])}
+                />
+                <button
+                  type="button" className="btn-ghost" onClick={() => menuInputRef.current?.click()}
+                  disabled={menuBusy}
+                  style={{ width: '100%', padding: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.86rem', fontWeight: 650 }}
+                >
+                  {menuBusy
+                    ? <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                    : <CameraIcon size={16} />}
+                  {menuBusy ? 'Reading the menu…' : 'Eating out? Scan the menu'}
+                </button>
+                {menuError && (
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-danger)', marginTop: '0.6rem', marginBottom: 0 }}>
+                    {menuError} — <button type="button" className="btn-ghost" style={{ padding: '0.15rem 0.5rem', fontSize: '0.8rem' }} onClick={() => menuInputRef.current?.click()}>Try again</button>
+                  </p>
+                )}
+                {menuPicks.length > 0 && (
+                  <div style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: 0 }}>Smartest picks for your goal:</p>
+                    {menuPicks.map((p, i) => (
+                      <div key={i} style={{ background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.7rem 0.85rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.6rem' }}>
+                          <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{i + 1}. {p.name}</span>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--color-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+                            {p.calories} kcal · {p.proteinG}g protein
+                          </span>
+                        </div>
+                        {p.why && (
+                          <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: '0.3rem 0 0.55rem', lineHeight: 1.5 }}>{p.why}</p>
+                        )}
+                        <button type="button" className="btn-primary" onClick={() => logMenuPick(p)} style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}>
+                          Log this
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="glass-card" style={{ padding: '1.4rem' }}>

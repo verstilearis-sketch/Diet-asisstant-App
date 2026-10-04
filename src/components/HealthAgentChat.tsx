@@ -56,6 +56,7 @@ export function HealthAgentChat({ plan }: { plan: SavedPlan }) {
             region: plan.plan.region,
             hydrationPlan: plan.plan.hydrationPlan,
             calorieGoal: calcs.dailyCalorieGoal,
+            festival: plan.plan.festivalMode ?? null,
           },
         }),
       });

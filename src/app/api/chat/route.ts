@@ -133,7 +133,12 @@ USER PROFILE:
 PLAN:
 - Daily calorie target: ${kcal} kcal
 - Hydration goal: ${planContext?.hydrationPlan ?? '2–3 liters/day'}
-- Cuisine focus: ${planContext?.region ?? 'global'}
+- Cuisine focus: ${planContext?.region ?? 'global'}${(() => {
+    const f = planContext?.festival as { name?: string; date?: string; type?: string } | null | undefined;
+    return f?.name
+      ? `\n- Occasion mode: ${f.name} on ${f.date ?? 'upcoming'} (${f.type === 'fast' ? 'fasting' : 'feasting'}). Adapt advice to the occasion: for feasts, fit festive foods into the day instead of forbidding them; for fasts, focus on sehri/iftari timing, hydration windows, and protein-rich vrat foods.`
+      : '';
+  })()}
 If a question is completely off-topic (coding, politics, etc.), briefly redirect to health topics.`;
 
   const order = rotatedOrder(PRIMARY);
