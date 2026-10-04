@@ -32,7 +32,7 @@ const MEAL_META = [
 ] as const;
 
 const TABS = [
-  { id: 'overview', label: 'Overview', icon: DashboardIcon },
+  { id: 'home', label: 'Home', icon: DashboardIcon },
   { id: 'meals', label: 'Meal plan', icon: UtensilsIcon },
   { id: 'tracker', label: 'Daily tracker', icon: ClipboardIcon },
   { id: 'shopping', label: 'Shopping', icon: CartIcon },
@@ -54,10 +54,13 @@ export default function DashboardPage() {
   const router = useRouter();
   const [savedPlan, setSavedPlan] = useState<SavedPlan | null>(null);
   const [activeDay, setActiveDay] = useState((new Date().getDay() + 6) % 7);
-  const [activeTab, setActiveTab] = useState<'overview' | 'meals' | 'tracker' | 'shopping'>('overview');
+  const [activeTab, setActiveTab] = useState<'home' | 'meals' | 'tracker' | 'shopping'>('home');
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
+  const [draftLog, setDraftLog] = useState<DailyLog | null>(null);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [savedAt, setSavedAt] = useState('');
   const [todayStr] = useState(getTodayString());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -72,26 +75,45 @@ export default function DashboardPage() {
       if (!plan) { router.replace('/onboarding'); return; }
       if (cancelled) return;
       setSavedPlan(plan);
-      setDailyLog(await getDailyLog(session.userId, todayStr));
+      const log = await getDailyLog(session.userId, todayStr);
+      if (cancelled) return;
+      setDailyLog(log);
+      setDraftLog(log);
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [router, todayStr]);
 
-  const updateLog = (updates: Partial<DailyLog>) => {
-    if (!dailyLog || !savedPlan) return;
-    const newLog = { ...dailyLog, ...updates };
-    setDailyLog(newLog);
-    saveDailyLog(savedPlan.userId, newLog).catch((e) =>
-      console.error('Failed to save daily log:', e)
-    );
+  // Tracker edits go to a draft; the explicit Save button persists them.
+  const updateDraft = (updates: Partial<DailyLog>) => {
+    setDraftLog((d) => (d ? { ...d, ...updates } : d));
+    setSaveState('idle');
   };
 
-  const toggleMeal = (index: number) => {
-    if (!dailyLog) return;
-    const meals = [...dailyLog.mealsCompleted];
-    meals[index] = !meals[index];
-    updateLog({ mealsCompleted: meals });
+  const toggleMealDraft = (index: number) => {
+    setDraftLog((d) => {
+      if (!d) return d;
+      const meals = [...d.mealsCompleted];
+      meals[index] = !meals[index];
+      return { ...d, mealsCompleted: meals };
+    });
+    setSaveState('idle');
+  };
+
+  const hasUnsaved = !!draftLog && !!dailyLog && JSON.stringify(draftLog) !== JSON.stringify(dailyLog);
+
+  const handleSaveProgress = async () => {
+    if (!draftLog || !savedPlan || saveState === 'saving') return;
+    setSaveState('saving');
+    try {
+      await saveDailyLog(savedPlan.userId, draftLog);
+      setDailyLog(draftLog);
+      setSaveState('saved');
+      setSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (e) {
+      console.error('Failed to save daily log:', e);
+      setSaveState('error');
+    }
   };
 
   const handleSignOut = async () => { await signOut(); router.replace('/'); };
@@ -110,7 +132,7 @@ export default function DashboardPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [showResetConfirm]);
 
-  if (loading || !savedPlan || !dailyLog) {
+  if (loading || !savedPlan || !dailyLog || !draftLog) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
@@ -128,6 +150,27 @@ export default function DashboardPage() {
 
   const mealsList = MEAL_META.map((m) => selectedDayPlan[m.key]);
   const calsConsumed = mealsList.reduce((acc, meal, i) => acc + (dailyLog.mealsCompleted[i] ? meal.calories : 0), 0);
+  const draftCalsConsumed = mealsList.reduce((acc, meal, i) => acc + (draftLog.mealsCompleted[i] ? meal.calories : 0), 0);
+  const draftCaloriePct = Math.min(100, Math.round((draftCalsConsumed / calcs.dailyCalorieGoal) * 100));
+  const mealsDoneCount = dailyLog.mealsCompleted.filter(Boolean).length;
+
+  const hour = new Date().getHours();
+  const dayGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const todayLabel = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  const activityLabel = (profile.activityLevel || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Weight journey (start → current → target)
+  const currentW = dailyLog.weight || profile.weightKg;
+  const targetW = profile.targetWeightKg;
+  let journeyPct = 0;
+  let journeyLabel = '';
+  if (targetW && targetW !== profile.weightKg) {
+    const total = Math.abs(profile.weightKg - targetW);
+    const done = targetW < profile.weightKg ? profile.weightKg - currentW : currentW - profile.weightKg;
+    journeyPct = Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+    const toGo = Math.abs(currentW - targetW);
+    journeyLabel = toGo < 0.5 ? 'Target reached — now maintain it' : `${toGo.toFixed(1)} kg to go`;
+  }
 
   const macroData = [
     { name: 'Protein', value: calcs.proteinG, color: MACRO_COLORS.protein },
@@ -196,9 +239,79 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ── OVERVIEW ──────────────────────────────────── */}
-        {activeTab === 'overview' && (
-          <div className="fade-in-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+        {/* ── HOME ──────────────────────────────────────── */}
+        {activeTab === 'home' && (
+          <div className="fade-in-up" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <h2 style={{ fontSize: 'clamp(1.3rem, 2.6vw, 1.7rem)', marginBottom: '0.2rem' }}>
+                {dayGreeting}{firstName ? `, ${firstName}` : ''}
+              </h2>
+              <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>{todayLabel} · {GOAL_LABELS[profile.goal] || 'Your nutrition'} plan</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+              <div className="glass-card" style={{ padding: '1.4rem' }}>
+                <h3 style={{ marginBottom: '1.1rem', fontSize: '0.98rem' }}>Your profile</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem' }}>
+                  {[
+                    { l: 'Age', v: profile.age ? `${profile.age} yrs` : '—' },
+                    { l: 'Height', v: profile.heightCm ? `${profile.heightCm} cm` : '—' },
+                    { l: 'Weight', v: `${currentW} kg` },
+                    { l: 'BMI', v: `${calcs.bmi} · ${calcs.bmiCategory}` },
+                    { l: 'Goal', v: GOAL_LABELS[profile.goal] || '—' },
+                    { l: 'Activity', v: activityLabel || '—' },
+                  ].map((f) => (
+                    <div key={f.l}>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 750 }}>{f.v}</div>
+                      <div className="metric-label" style={{ marginTop: '0.15rem' }}>{f.l}</div>
+                    </div>
+                  ))}
+                </div>
+                {targetW && targetW !== profile.weightKg && (
+                  <div style={{ marginTop: '1.2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 650 }}>Target: {targetW} kg</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--color-muted)' }}>{journeyLabel}</span>
+                    </div>
+                    <div className="progress-bar-track" style={{ height: 8 }}>
+                      <div className="progress-bar-fill" style={{ width: `${journeyPct}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="glass-card" style={{ padding: '1.4rem' }}>
+                <h3 style={{ marginBottom: '1.1rem', fontSize: '0.98rem' }}>Today's progress</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', marginBottom: '1.2rem' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Calories</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{calsConsumed} / {calcs.dailyCalorieGoal} kcal</span>
+                    </div>
+                    <div className="progress-bar-track" style={{ height: 7 }}>
+                      <div className="progress-bar-fill" style={{ width: `${caloriePct}%` }} />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Water</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{dailyLog.waterLiters}L / {calcs.waterLiters}L</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Exercise</span>
+                    <span className={`badge ${dailyLog.exerciseDone ? 'badge-green' : 'badge-grey'}`}>{dailyLog.exerciseDone ? 'Done' : 'Not yet'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-muted)' }}>Meals logged</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{mealsDoneCount} / 5</span>
+                  </div>
+                </div>
+                <button className="btn-primary" onClick={() => setActiveTab('tracker')} style={{ width: '100%' }}>
+                  Update today's progress
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
             <div className="glass-card" style={{ padding: '1.4rem' }}>
               <h3 style={{ marginBottom: '1rem', fontSize: '0.98rem' }}>Macro breakdown</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
@@ -260,6 +373,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
+            </div>
           </div>
         )}
 
@@ -299,15 +413,15 @@ export default function DashboardPage() {
               <h3 style={{ marginBottom: '0.25rem', fontSize: '0.98rem' }}>Today's calories</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '1rem' }}>Based on meals you've logged</p>
               <div style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
-                {calsConsumed}
+                {draftCalsConsumed}
                 <span style={{ fontSize: '0.95rem', color: 'var(--color-muted)', fontWeight: 500 }}> / {calcs.dailyCalorieGoal} kcal</span>
               </div>
               <div className="progress-bar-track" style={{ marginTop: '1rem', height: 10 }}>
-                <div className="progress-bar-fill" style={{ width: `${caloriePct}%` }} />
+                <div className="progress-bar-fill" style={{ width: `${draftCaloriePct}%` }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.4rem', fontSize: '0.78rem', color: 'var(--color-muted)' }}>
-                <span>{caloriePct}% of target</span>
-                <span>{calcs.dailyCalorieGoal - calsConsumed} kcal remaining</span>
+                <span>{draftCaloriePct}% of target</span>
+                <span>{calcs.dailyCalorieGoal - draftCalsConsumed} kcal remaining</span>
               </div>
             </div>
 
@@ -315,9 +429,9 @@ export default function DashboardPage() {
               <h3 style={{ marginBottom: '1rem', fontSize: '0.98rem' }}>Log meals</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {MEAL_META.map((meta, i) => {
-                  const done = dailyLog.mealsCompleted[i];
+                  const done = draftLog.mealsCompleted[i];
                   return (
-                    <button key={meta.key} onClick={() => toggleMeal(i)}
+                    <button key={meta.key} onClick={() => toggleMealDraft(i)}
                       className={`option-card ${done ? 'selected' : ''}`}
                       style={{ padding: '0.7rem 0.9rem', alignItems: 'center' }}>
                       <span style={{
@@ -346,34 +460,34 @@ export default function DashboardPage() {
               <div style={{ marginBottom: '1.3rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
                   <label className="input-label" style={{ marginBottom: 0 }}>Water intake</label>
-                  <span style={{ fontWeight: 750, color: 'var(--color-accent)', fontVariantNumeric: 'tabular-nums' }}>{dailyLog.waterLiters}L</span>
+                  <span style={{ fontWeight: 750, color: 'var(--color-accent)', fontVariantNumeric: 'tabular-nums' }}>{draftLog.waterLiters}L</span>
                 </div>
-                <input type="range" min={0} max={6} step={0.25} value={dailyLog.waterLiters}
-                  onChange={(e) => updateLog({ waterLiters: +e.target.value })} />
+                <input type="range" min={0} max={6} step={0.25} value={draftLog.waterLiters}
+                  onChange={(e) => updateDraft({ waterLiters: +e.target.value })} />
                 <div style={{ fontSize: '0.74rem', color: 'var(--color-faint)', marginTop: '0.3rem', textAlign: 'right' }}>Target: {calcs.waterLiters}L</div>
               </div>
 
-              <button onClick={() => updateLog({ exerciseDone: !dailyLog.exerciseDone })}
-                className={`option-card ${dailyLog.exerciseDone ? 'selected' : ''}`}
+              <button onClick={() => updateDraft({ exerciseDone: !draftLog.exerciseDone })}
+                className={`option-card ${draftLog.exerciseDone ? 'selected' : ''}`}
                 style={{ padding: '0.85rem 1rem', alignItems: 'center', marginBottom: '1.3rem' }}>
                 <span style={{
                   width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                  background: dailyLog.exerciseDone ? 'var(--color-accent)' : 'var(--color-surface2)',
-                  color: dailyLog.exerciseDone ? '#fff' : 'var(--color-muted)',
+                  background: draftLog.exerciseDone ? 'var(--color-accent)' : 'var(--color-surface2)',
+                  color: draftLog.exerciseDone ? '#fff' : 'var(--color-muted)',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <DumbbellIcon size={18} />
                 </span>
                 <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9rem' }}>Exercise completed</span>
-                <span className={`badge ${dailyLog.exerciseDone ? 'badge-green' : 'badge-grey'}`}>
-                  {dailyLog.exerciseDone ? 'Done' : 'Not yet'}
+                <span className={`badge ${draftLog.exerciseDone ? 'badge-green' : 'badge-grey'}`}>
+                  {draftLog.exerciseDone ? 'Done' : 'Not yet'}
                 </span>
               </button>
 
               <div style={{ marginBottom: '1.3rem' }}>
                 <label className="input-label" htmlFor="log-weight">Today's weight (kg)</label>
                 <input id="log-weight" type="number" className="input-field"
-                  value={dailyLog.weight || ''} onChange={(e) => updateLog({ weight: +e.target.value })}
+                  value={draftLog.weight || ''} onChange={(e) => updateDraft({ weight: +e.target.value })}
                   placeholder={`${profile.weightKg}`} />
               </div>
 
@@ -381,8 +495,8 @@ export default function DashboardPage() {
                 <span className="input-label">How do you feel today?</span>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   {MOODS.map((m) => (
-                    <button key={m.v} type="button" onClick={() => updateLog({ mood: m.v as DailyLog['mood'] })}
-                      className={`option-card ${dailyLog.mood === m.v ? 'selected' : ''}`}
+                    <button key={m.v} type="button" onClick={() => updateDraft({ mood: m.v as DailyLog['mood'] })}
+                      className={`option-card ${draftLog.mood === m.v ? 'selected' : ''}`}
                       style={{ flex: 1, padding: '0.65rem 0', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: '0.25rem' }}
                       title={m.label}>
                       <m.icon size={20} />
@@ -391,6 +505,26 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '1.1rem 1.4rem', gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                {saveState === 'saved' ? (
+                  <span style={{ fontSize: '0.88rem', color: 'var(--color-accent)', fontWeight: 650, display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckIcon size={16} /> Day progress saved{savedAt ? ` · ${savedAt}` : ''}
+                  </span>
+                ) : saveState === 'error' ? (
+                  <span style={{ fontSize: '0.88rem', color: 'var(--color-danger)', fontWeight: 650 }}>Couldn't save — check your connection and try again.</span>
+                ) : hasUnsaved ? (
+                  <span className="badge badge-amber">Unsaved changes</span>
+                ) : (
+                  <span style={{ fontSize: '0.88rem', color: 'var(--color-muted)' }}>Today's progress is up to date.</span>
+                )}
+              </div>
+              <button className="btn-primary" onClick={handleSaveProgress} disabled={!hasUnsaved || saveState === 'saving'}
+                style={{ padding: '0.7rem 1.6rem' }}>
+                {saveState === 'saving' ? 'Saving…' : 'Save day progress'}
+              </button>
             </div>
           </div>
         )}
