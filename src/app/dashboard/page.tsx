@@ -7,10 +7,12 @@ import { computeAll, calculateMacros } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
 import type { SavedPlan, ExtraMeal, ExerciseEntry } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
-import { getMealAlternatives, type MealType } from '@/lib/ai-engine';
+import { getMealAlternatives, generateDietPlan, type MealType } from '@/lib/ai-engine';
 import { checkAdaptation, type AdaptationCheck } from '@/lib/adaptive';
 import { buildWeeklyReview } from '@/lib/weekly-review';
 import { FESTIVALS, getFestival, type FestivalFood } from '@/lib/festivals';
+import type { TasteProfile } from '@/lib/taste';
+import { buildTasteConstraints, hasTasteSignal, recordSwap } from '@/lib/taste';
 import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
@@ -101,6 +103,8 @@ export default function DashboardPage() {
   const [festivalOpen, setFestivalOpen] = useState(false);
   const [festivalChoice, setFestivalChoice] = useState('diwali');
   const [festivalDate, setFestivalDate] = useState(getFestival('diwali')?.defaultDate ?? '2026-11-08');
+  const [learnBusy, setLearnBusy] = useState(false);
+  const [learnings, setLearnings] = useState<string[] | null>(null);
   const [adaptation, setAdaptation] = useState<AdaptationCheck | null>(null);
   const adaptCheckedFor = useRef<string | null>(null);
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
@@ -455,6 +459,41 @@ export default function DashboardPage() {
     setSaveState('idle');
   };
 
+  // Taste learning: rebuild next week around what the user actually eats.
+  const handleSmartWeek = async () => {
+    if (!savedPlan || learnBusy) return;
+    setLearnBusy(true);
+    try {
+      const taste = buildTasteConstraints({
+        plan: savedPlan.plan,
+        profile: savedPlan.profile,
+        logs: recentLogs,
+        dailyGoal,
+        proteinTargetG: calcs.proteinG,
+        waterTargetL: calcs.waterLiters,
+      });
+      const fresh = await generateDietPlan(
+        savedPlan.profile,
+        { ...baseCalcs, dailyCalorieGoal: dailyGoal },
+        taste,
+      );
+      const updated = {
+        ...fresh,
+        adaptiveTarget: savedPlan.plan.adaptiveTarget,
+        festivalMode: savedPlan.plan.festivalMode,
+        swapHistory: savedPlan.plan.swapHistory,
+      };
+      setSavedPlan({ ...savedPlan, plan: updated });
+      await updatePlan(savedPlan.id, updated);
+      setLearnings(taste.learnings.length ? taste.learnings : ['Not enough pattern yet — your current habits are already solid.']);
+      setActiveTab('meals');
+    } catch (e) {
+      console.error('Smart week generation failed:', e);
+    } finally {
+      setLearnBusy(false);
+    }
+  };
+
   const handleSignOut = async () => { await signOut(); router.replace('/'); };
 
   // Swap a meal for an alternative (from the "can't make this" picker).
@@ -463,12 +502,15 @@ export default function DashboardPage() {
     newMeal: Meal,
   ) => {
     if (!savedPlan) return;
+    const oldMeal = savedPlan.plan.weeklyPlan[activeDay][slotKey];
     const dayPlan = { ...savedPlan.plan.weeklyPlan[activeDay], [slotKey]: newMeal };
     const meals = [dayPlan.breakfast, dayPlan.morningSnack, dayPlan.lunch, dayPlan.afternoonSnack, dayPlan.dinner];
     const updated = { ...dayPlan, totalCalories: meals.reduce((a, m) => a + m.calories, 0) };
     const weeklyPlan = [...savedPlan.plan.weeklyPlan];
     weeklyPlan[activeDay] = updated;
-    const newPlan = { ...savedPlan.plan, weeklyPlan };
+    // Taste learning: remember what was swapped out and what replaced it.
+    const swapHistory = recordSwap(savedPlan.plan.swapHistory, oldMeal, newMeal, slotKey);
+    const newPlan = { ...savedPlan.plan, weeklyPlan, swapHistory };
     setSavedPlan({ ...savedPlan, plan: newPlan });
     try {
       await updatePlan(savedPlan.id, newPlan);
@@ -569,6 +611,13 @@ export default function DashboardPage() {
     proteinTargetG: calcs.proteinG,
     waterTargetL: calcs.waterLiters,
   });
+  // Lightweight taste for the alternatives UI: never re-suggest rejected meals.
+  const altTaste: TasteProfile = (() => {
+    const counts = new Map<string, number>();
+    for (const s of plan.swapHistory || []) counts.set(s.from, (counts.get(s.from) || 0) + 1);
+    const dislikes = [...counts.entries()].filter(([, n]) => n >= 2).map(([name]) => name);
+    return { dislikes, likes: [], proteinBoostSlots: [], learnings: [], updatedAt: '' };
+  })();
   const selectedDayPlan = plan.weeklyPlan[activeDay];
 
   const mealsList = MEAL_META.map((m) => selectedDayPlan[m.key]);
@@ -818,6 +867,34 @@ export default function DashboardPage() {
                       <strong>One tweak for next week: </strong>{weeklyReview.tweak}
                     </p>
                   </div>
+                  {hasTasteSignal(plan, recentLogs) && (
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
+                      {learnings ? (
+                        <>
+                          <p style={{ fontSize: '0.86rem', fontWeight: 700, margin: '0 0 0.6rem' }}>Here's what I learned about your taste:</p>
+                          <ul style={{ margin: '0 0 0.8rem', paddingLeft: '1.1rem', fontSize: '0.84rem', color: 'var(--color-muted)', lineHeight: 1.7 }}>
+                            {learnings.map((l, i) => <li key={i}>{l}</li>)}
+                          </ul>
+                          <button type="button" className="btn-ghost" onClick={() => setLearnings(null)} style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}>
+                            Got it
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p style={{ fontSize: '0.84rem', color: 'var(--color-muted)', lineHeight: 1.65, margin: '0 0 0.7rem' }}>
+                            I've been watching what you swap and skip. Ready for a week built around what you actually like?
+                          </p>
+                          <button
+                            type="button" className="btn-primary" onClick={handleSmartWeek} disabled={learnBusy}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', fontSize: '0.86rem' }}
+                          >
+                            {learnBusy && <div className="spinner" style={{ width: 15, height: 15, borderWidth: 2 }} />}
+                            {learnBusy ? 'Learning your taste…' : 'Start next week smarter'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1407,12 +1484,13 @@ export default function DashboardPage() {
 }
 
 function MealCard({
-  meta, meal, slotType, profile, onShowRecipe, onSwap,
+  meta, meal, slotType, profile, taste, onShowRecipe, onSwap,
 }: {
   meta: (typeof MEAL_META)[number];
   meal: Meal;
   slotType: MealType;
   profile: UserProfile;
+  taste?: TasteProfile;
   onShowRecipe: (meal: Meal) => void;
   onSwap: (slotKey: 'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner', meal: Meal) => void;
 }) {
@@ -1420,8 +1498,8 @@ function MealCard({
   const [showAlts, setShowAlts] = useState(false);
   const Icon = meta.icon;
   const alternatives = useMemo(
-    () => (showAlts ? getMealAlternatives(meal, slotType, profile) : []),
-    [showAlts, meal, slotType, profile],
+    () => (showAlts ? getMealAlternatives(meal, slotType, profile, 3, taste) : []),
+    [showAlts, meal, slotType, profile, taste],
   );
   return (
     <div className="meal-card">

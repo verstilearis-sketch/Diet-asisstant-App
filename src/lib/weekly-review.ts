@@ -31,6 +31,8 @@ export interface WeeklyReview {
   headline: string;
   tweak: string;
   enoughData: boolean;
+  /** Machine-readable version of the winning tweak, for taste learning. */
+  directive?: { kind: 'protein' | 'adherence' | 'water' | 'exercise' | 'intake'; slot: string };
 }
 
 function weekdayIndex(date: string): number {
@@ -146,25 +148,33 @@ export function buildWeeklyReview(opts: {
   // Exactly one tweak: highest-priority issue wins.
   const goal = profile.goal;
   let tweak: string;
+  let directive: WeeklyReview['directive'];
   if (avgProteinG < proteinTargetG * 0.7) {
     tweak = `Protein averaged ${avgProteinG}g vs your ${proteinTargetG}g target. Add one palm-sized protein portion (eggs, paneer, chicken, dal) to lunch — it's the single biggest lever right now.`;
+    directive = { kind: 'protein', slot: 'lunch' };
   } else if (adherencePct < 60) {
     tweak = `You completed ${adherencePct}% of planned meals. Try prepping tomorrow's breakfast tonight — mornings are where most plans slip.`;
+    directive = { kind: 'adherence', slot: 'any' };
   } else if (waterDays < 4) {
     tweak = `Water hit the mark only ${waterDays} of ${days.length} days. Keep a 1L bottle at your desk and finish it by lunch, then refill.`;
+    directive = { kind: 'water', slot: 'any' };
   } else if (exerciseDays < 3) {
     tweak = `Only ${exerciseDays} active ${exerciseDays === 1 ? 'day' : 'days'} this week. Two 30-minute walks would already change next week's numbers.`;
+    directive = { kind: 'exercise', slot: 'any' };
   } else if (
     weightChangeKg !== null &&
     ((goal === 'lose_weight' && weightChangeKg >= 0) ||
       (goal === 'gain_weight' && weightChangeKg <= 0))
   ) {
     tweak = `Weight ${weightChangeKg > 0 ? 'rose' : 'held steady'} despite ${adherencePct}% adherence — your target may need recalibrating. Give it one more consistent week, then check the adaptive target on Home.`;
+    directive = { kind: 'intake', slot: 'any' };
   } else if (Math.abs(avgIntake - dailyGoal) > dailyGoal * 0.15) {
     const dir = avgIntake > dailyGoal ? 'over' : 'under';
     tweak = `You averaged ${avgIntake.toLocaleString('en-IN')} kcal — ${dir} your ${dailyGoal.toLocaleString('en-IN')} target by ${Math.abs(avgIntake - dailyGoal).toLocaleString('en-IN')}. Tighten portion sizes at dinner, where most of the drift happens.`;
+    directive = { kind: 'intake', slot: 'any' };
   } else {
     tweak = `Everything is trending the right way — ${adherencePct}% adherence and intake near target. Protect the routine: same breakfast, same walk, same bedtime.`;
+    directive = undefined;
   }
 
   return {
@@ -180,5 +190,6 @@ export function buildWeeklyReview(opts: {
     headline,
     tweak,
     enoughData: true,
+    directive,
   };
 }

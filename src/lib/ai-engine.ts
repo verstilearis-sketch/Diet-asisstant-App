@@ -1,5 +1,6 @@
 // ── Smart AI Diet Plan Engine — Enhanced Regional Food Database ──────────────
 import type { UserProfile, Calculations, BudgetTier, CuisineMix } from './calculations';
+import type { TasteProfile } from './taste';
 
 export interface Meal {
   name: string;
@@ -46,6 +47,8 @@ export interface DietPlan {
     date: string; // YYYY-MM-DD
     type: 'feast' | 'fast';
   };
+  /** Meal swap history — the raw signal for taste learning. Capped at 60. */
+  swapHistory?: { from: string; to: string; slot: string; at: string }[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1773,6 +1776,23 @@ const FALLBACK_FOOD: FoodItem = {
   tags: ['vegetarian'],
 };
 
+// ── Taste learning helpers (kept local to avoid module cycles) ──
+function tasteNorm(name: string): string {
+  return name.toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function tasteNameMatches(foodName: string, remembered: string): boolean {
+  const f = tasteNorm(foodName);
+  const r = tasteNorm(remembered);
+  if (!f || !r) return false;
+  if (f === r) return true;
+  const shorter = f.length < r.length ? f : r;
+  const longer = f.length < r.length ? r : f;
+  return longer.includes(shorter) && shorter.length >= 4;
+}
+function tasteMatchesAny(foodName: string, list: string[]): boolean {
+  return list.some((r) => tasteNameMatches(foodName, r));
+}
+
 function pickSmart(
   type: MealType,
   target: SlotTarget,
@@ -1782,6 +1802,7 @@ function pickSmart(
   budget: BudgetTier,
   cuisineMix: CuisineMix,
   proteinWeight: number,
+  taste?: TasteProfile,
 ): FoodItem {
   const primary = rollSource(cuisineMix);
   const secondary = primary === 'regional' ? 'international' : 'regional';
@@ -1800,7 +1821,14 @@ function pickSmart(
       if (seen.has(f.name)) continue;
       if (freshOnly && recent[type].includes(f.name)) continue;
       seen.add(f.name);
-      scored.push({ f, s: scoreCandidate(f, target, proteinWeight, budget) - penalty });
+      let s = scoreCandidate(f, target, proteinWeight, budget) - penalty;
+      // Taste learning: dislikes are heavily penalized (effectively excluded),
+      // likes get a nudge — the plan learns what the user actually eats.
+      if (taste) {
+        if (tasteMatchesAny(f.name, taste.dislikes)) s -= 2;
+        else if (tasteMatchesAny(f.name, taste.likes)) s += 0.25;
+      }
+      scored.push({ f, s });
     }
   };
 
@@ -1831,7 +1859,11 @@ function toMeal(f: FoodItem): Meal {
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-export async function generateDietPlan(profile: UserProfile, calculations: Calculations): Promise<DietPlan> {
+export async function generateDietPlan(
+  profile: UserProfile,
+  calculations: Calculations,
+  taste?: TasteProfile,
+): Promise<DietPlan> {
   await new Promise(r => setTimeout(r, 1800));
 
   const rawRegion = detectRegion(profile.location);
@@ -1858,13 +1890,15 @@ export async function generateDietPlan(profile: UserProfile, calculations: Calcu
       // ceiling): keeps targets achievable so the scorer can discriminate between
       // candidates instead of rating everything as a failure.
       const slotProteinCap = 0.4 * profile.weightKg;
+      // Taste learning: slots flagged by the weekly review get a protein boost.
+      const proteinBoost = taste?.proteinBoostSlots.includes(slot.key) ? 1.5 : 1;
       const target: SlotTarget = {
         cal: remCal * share,
-        protein: Math.min(remP * share, slotProteinCap),
+        protein: Math.min(remP * share * proteinBoost, slotProteinCap),
         carbs: remC * share,
         fat: remF * share,
       };
-      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight);
+      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight, taste);
       const meal = toMeal(food);
       // Portion-scale (up to 2×) so the slot actually meets its calorie target —
       // pools have fixed serving sizes, and real dietetics adjusts portions, not wishes.
@@ -1978,6 +2012,7 @@ export function getMealAlternatives(
   slotType: MealType,
   profile: UserProfile,
   count = 3,
+  taste?: TasteProfile,
 ): Meal[] {
   const region = resolveRegion(detectRegion(profile.location));
   const budget = profile.budget || 'moderate';
@@ -1990,6 +2025,11 @@ export function getMealAlternatives(
       .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
     if (pool.length === 0) {
       pool = filterFoods(pools[slotType][source], profile).filter((f) => !seen.has(f.name));
+    }
+    // Taste learning: never suggest something the user keeps rejecting.
+    if (taste?.dislikes.length) {
+      const filtered = pool.filter((f) => !tasteMatchesAny(f.name, taste.dislikes));
+      if (filtered.length >= count) pool = filtered;
     }
     for (const f of pool) {
       seen.add(f.name);
