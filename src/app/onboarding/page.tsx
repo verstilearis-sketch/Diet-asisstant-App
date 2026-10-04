@@ -531,7 +531,7 @@ export default function OnboardingPage() {
               <BrainIcon size={36} />
             </div>
             <h2 style={{ fontSize: '1.6rem', marginBottom: '0.6rem' }}>
-              Building your personalized plan
+              {profile.name ? `Building ${profile.name.split(' ')[0]}'s personalized plan` : 'Building your personalized plan'}
             </h2>
             <p style={{ color: 'var(--color-muted)', marginBottom: '2.25rem', fontSize: '0.98rem' }}>
               Analyzing your profile and crafting your 7-day meal plan.

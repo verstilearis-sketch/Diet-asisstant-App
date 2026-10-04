@@ -122,6 +122,7 @@ export default function DashboardPage() {
   }
 
   const { profile, plan } = savedPlan;
+  const firstName = (userName || profile.name || '').split(' ')[0];
   const calcs = computeAll(profile);
   const selectedDayPlan = plan.weeklyPlan[activeDay];
 
@@ -169,7 +170,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.9rem' }}>
             <div>
               <h1 style={{ fontSize: 'clamp(1.4rem, 2.8vw, 1.9rem)', marginBottom: '0.3rem' }}>
-                Your {GOAL_LABELS[profile.goal] || 'nutrition'} plan
+                {firstName ? `${firstName}'s ${GOAL_LABELS[profile.goal] || 'nutrition'} plan` : `Your ${GOAL_LABELS[profile.goal] || 'nutrition'} plan`}
               </h1>
               <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', maxWidth: 640 }}>{plan.summary.split('\n')[0]}</p>
             </div>
