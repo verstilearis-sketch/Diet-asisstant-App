@@ -14,7 +14,7 @@ import {
 const FORMULAS = [
   {
     name: 'BMI',
-    formula: 'weight(kg) ÷ height(m)²',
+    formula: 'weight(kg) / height(m)²',
     note: 'Body-composition baseline — where you start from',
     science: 'The WHO’s standard screening measure (Quetelet, 1832). A screening tool, not a diagnosis — it doesn’t distinguish muscle from fat.',
   },
