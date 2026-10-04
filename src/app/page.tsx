@@ -12,10 +12,30 @@ import {
 // ── The math the app actually uses (src/lib/calculations.ts) ──
 
 const FORMULAS = [
-  { name: 'BMI', formula: 'weight(kg) ÷ height(m)²', note: 'Body-composition baseline' },
-  { name: 'BMR', formula: '10·w + 6.25·h − 5·a + 5 (men) / −161 (women)', note: 'Mifflin–St Jeor · calories at rest' },
-  { name: 'TDEE', formula: 'BMR × activity factor (1.2 – 1.9)', note: 'Calories burned per day' },
-  { name: 'Target', formula: 'TDEE − 500 (lose) · +400 (gain) · TDEE (maintain)', note: 'Your daily calorie budget' },
+  {
+    name: 'BMI',
+    formula: 'weight(kg) ÷ height(m)²',
+    note: 'Body-composition baseline — where you start from',
+    science: 'The WHO’s standard screening measure (Quetelet, 1832). A screening tool, not a diagnosis — it doesn’t distinguish muscle from fat.',
+  },
+  {
+    name: 'BMR',
+    formula: '10·w + 6.25·h − 5·a + 5 (men) / −161 (women)',
+    note: 'Calories your body burns at complete rest',
+    science: 'Mifflin–St Jeor equation (Mifflin et al., 1990, Am. J. Clin. Nutr.) — validated as the most accurate BMR predictor, usually within 10% of lab-measured values.',
+  },
+  {
+    name: 'TDEE',
+    formula: 'BMR × activity factor (1.2 – 1.9)',
+    note: 'Your real daily burn, activity included',
+    science: 'Harris–Benedict activity framework (1919, rev. 1984): 1.2 = sedentary … 1.9 = very active. The clinical standard for scaling resting calories to real life.',
+  },
+  {
+    name: 'Target',
+    formula: 'TDEE − 500 (lose) · +400 (gain) · TDEE (maintain)',
+    note: 'Your daily calorie budget for the goal',
+    science: '≈7,700 kcal per kg of body fat (Wishnofsky, 1958) → a 500 kcal daily deficit ≈ 0.5 kg/week — the rate clinical guidelines call safe and sustainable.',
+  },
 ];
 
 const CUISINES = [
@@ -186,6 +206,9 @@ export default function LandingPage() {
                   <div>
                     <div className="mono formula-scroll" style={{ fontSize: '0.9rem', marginBottom: '0.15rem' }}>{f.formula}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{f.note}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--color-muted)', marginTop: '0.45rem', paddingTop: '0.45rem', borderTop: '1px dashed var(--color-border)', lineHeight: 1.6 }}>
+                      <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>The science: </span>{f.science}
+                    </div>
                   </div>
                 </div>
               ))}
