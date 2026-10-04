@@ -30,9 +30,20 @@ function CallbackHandler() {
         return;
       }
       if (!code) {
+        // No code: the user may already have a session (e.g. the browser
+        // auto-detected tokens from the URL, or they are already signed in).
+        try {
+          const { data } = await getSupabase().auth.getSession();
+          if (data.session) {
+            if (!cancelled) router.replace('/dashboard');
+            return;
+          }
+        } catch {
+          /* fall through to the error below */
+        }
         if (!cancelled) {
           setError('Sign-in was interrupted. Please try again.');
-          // Temporary diagnostic: shows what the callback actually received.
+          // Diagnostic: shows what the callback actually received.
           const q = typeof window !== 'undefined' ? window.location.search : '';
           const h = typeof window !== 'undefined' ? window.location.hash : '';
           setDebug(`query: ${q.slice(0, 160) || '(empty)'} | hash: ${h.slice(0, 80) || '(empty)'}`);

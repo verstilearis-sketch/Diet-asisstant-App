@@ -17,6 +17,12 @@ export function getSupabase(): SupabaseClient {
         'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to .env.local and restart the dev server.'
     );
   }
-  client = createClient(url, key);
+  client = createClient(url, key, {
+    // PKCE is the modern, secure OAuth flow: Google returns ?code=… and the
+    // callback exchanges it. Without this, the client falls back to the
+    // legacy implicit flow (#access_token in the URL hash), which the
+    // callback page is not built to handle.
+    auth: { flowType: 'pkce' },
+  });
   return client;
 }
