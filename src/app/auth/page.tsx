@@ -39,7 +39,7 @@ function AuthForm() {
       <div className="glass-card auth-card fade-in-up">
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <Link href="/" style={{ display: 'inline-block' }} aria-label="Nutriq home">
-            <span className="auth-logo" style={{ marginBottom: 0 }}><NutriqIcon size={26} /></span>
+            <span className="auth-logo" style={{ marginBottom: 0 }}><NutriqIcon size={33} /></span>
           </Link>
           <h1 style={{ fontSize: '1.5rem', margin: '1rem 0 0.4rem' }}>
             Welcome to Nutriq

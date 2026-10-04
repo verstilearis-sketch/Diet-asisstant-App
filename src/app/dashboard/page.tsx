@@ -687,7 +687,7 @@ export default function DashboardPage() {
       <nav className="site-nav">
         <div className="site-nav-inner">
           <span className="brand">
-            <span className="brand-mark"><NutriqIcon size={23} /></span>
+            <span className="brand-mark"><NutriqIcon size={29} /></span>
             Nutriq
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>

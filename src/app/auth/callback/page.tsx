@@ -50,7 +50,7 @@ function CallbackHandler() {
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
       <div className="glass-card auth-card fade-in-up" style={{ textAlign: 'center' }}>
-        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><NutriqIcon size={26} /></span>
+        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><NutriqIcon size={33} /></span>
         {error ? (
           <>
             <div className="error-box" style={{ textAlign: 'left', marginBottom: '1.25rem' }}>

@@ -369,13 +369,13 @@ input[type="range"]::-moz-range-thumb {
   border-bottom: 1px solid var(--color-border);
 }
 .site-nav-inner {
-  max-width: 1120px; margin: 0 auto; padding: 0.85rem 1.5rem;
+  max-width: 1120px; margin: 0 auto; padding: 1rem 1.5rem;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
 }
-.brand { display: inline-flex; align-items: center; gap: 0.65rem; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.03em; color: var(--color-text); }
+.brand { display: inline-flex; align-items: center; gap: 0.7rem; font-weight: 800; font-size: 1.7rem; letter-spacing: -0.03em; color: var(--color-text); }
 .brand:hover { text-decoration: none; }
 .brand-mark {
-  width: 40px; height: 40px; border-radius: 12px;
+  width: 50px; height: 50px; border-radius: 15px;
   background: var(--color-accent); color: #fff;
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0;
@@ -401,7 +401,7 @@ input[type="range"]::-moz-range-thumb {
 }
 .auth-card { width: 100%; max-width: 440px; padding: 2.25rem; position: relative; z-index: 1; }
 .auth-logo {
-  width: 52px; height: 52px; border-radius: 14px;
+  width: 64px; height: 64px; border-radius: 18px;
   background: var(--color-accent); color: #fff;
   display: inline-flex; align-items: center; justify-content: center;
   margin-bottom: 1.25rem;

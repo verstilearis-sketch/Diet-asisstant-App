@@ -46,16 +46,18 @@ export function GoogleIcon({ size = 20, style }: IconProps) {
 }
 
 export const SaladIcon = ic(<><path d="M4 12h16" /><path d="M6 12a6 6 0 0 0 12 0" /><path d="M12 12c0-3.5 2.5-6 6-6-.5 3.5-2.5 6-6 6Z" /><path d="M9 21h6" /></>);
-/** Nutriq brand mark — circuit leaf: smart nutrition. */
+/** Nutriq brand mark — solid circuit leaf: smart nutrition. */
 export const NutriqIcon = ic(<>
-  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-  <path d="M12 19v-4" />
-  <path d="M12 15l-3.2-3.2" />
-  <path d="M12 15l3.2-3.2" />
-  <path d="M12 15V9" />
-  <circle cx="12" cy="7.8" r="1.15" fill="currentColor" stroke="none" />
-  <circle cx="8.8" cy="11.8" r="1.15" fill="currentColor" stroke="none" />
-  <circle cx="15.2" cy="11.8" r="1.15" fill="currentColor" stroke="none" />
+  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" fill="currentColor" stroke="none" />
+  <g style={{ stroke: 'var(--color-accent)' }} strokeWidth={1.7} fill="none">
+    <path d="M12 18.6v-5.2" />
+    <path d="M12 15.8 9.4 13" />
+    <path d="M12 15.8l2.6-2.8" />
+    <path d="M12 13.4V10.2" />
+  </g>
+  <circle cx="12" cy="9" r="1.25" style={{ fill: 'var(--color-accent)' }} stroke="none" />
+  <circle cx="9.4" cy="13" r="1.25" style={{ fill: 'var(--color-accent)' }} stroke="none" />
+  <circle cx="14.6" cy="13" r="1.25" style={{ fill: 'var(--color-accent)' }} stroke="none" />
 </>);
 export const CalculatorIcon = ic(<><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8" /><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h.01M16 19h.01" /></>);
 export const MapPinIcon = ic(<><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>);
