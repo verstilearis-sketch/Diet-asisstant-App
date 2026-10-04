@@ -309,8 +309,8 @@ export default function LandingPage() {
           <span style={{ width: 44, height: 1, background: 'var(--color-border-strong)' }} />
         </div>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.92rem', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
-          Designed &amp; engineered by <strong style={{ color: 'var(--color-text)' }}>Salik Lone</strong>
-          <br />real math, real food, and an unreasonable attention to detail.
+          Designed &amp; Engineered by <strong style={{ color: 'var(--color-text)' }}>Salik Lone</strong>
+          <br />Real math, Real food, and an unreasonable attention to detail.
         </p>
       </section>
 
