@@ -147,9 +147,6 @@ export default function LandingPage() {
               <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.1rem' }}>
                 Get started <ArrowRightIcon size={17} />
               </Link>
-              <a href="#what-you-get" className="btn-secondary">
-                See what’s inside
-              </a>
             </div>
             <p style={{ fontSize: '0.82rem', color: 'var(--color-faint)' }}>
               Free · 2-minute setup · No credit card
