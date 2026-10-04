@@ -109,6 +109,11 @@ export default function DashboardPage() {
   const adaptCheckedFor = useRef<string | null>(null);
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const [photoVerdict, setPhotoVerdict] = useState<{
+    meal: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number };
+    verdict: 'yes' | 'okay' | 'skip';
+    verdictWhy: string;
+  } | null>(null);
 
   const newEntryId = (prefix: string) =>
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -277,34 +282,52 @@ export default function DashboardPage() {
     if (!file || extraBusy || !savedPlan) return;
     setExtraBusy(true);
     setExtraError(null);
+    setPhotoVerdict(null);
     try {
       const { base64, mimeType } = await processPhotoFile(file);
       const res = await fetch('/api/parse-meal-photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, mimeType }),
+        body: JSON.stringify({
+          imageBase64: base64,
+          mimeType,
+          goal: savedPlan.profile.goal,
+          remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
+          restrictions: savedPlan.profile.dietaryRestrictions,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Could not read this photo');
-      const m = data.meal as { name: string; calories: number; proteinG: number; carbsG: number; fatG: number };
-      const entry: ExtraMeal = {
-        id: newEntryId('em'),
-        name: m.name,
-        text: 'Photo estimate',
-        calories: m.calories,
-        proteinG: m.proteinG,
-        carbsG: m.carbsG,
-        fatG: m.fatG,
-        source: 'photo',
+      const m = data.meal as {
+        name: string; calories: number; proteinG: number; carbsG: number; fatG: number;
+        verdict: 'yes' | 'okay' | 'skip'; verdictWhy: string;
       };
-      setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
-      setSaveState('idle');
+      // Show the verdict first — the user decides whether to log it.
+      setPhotoVerdict({ meal: m, verdict: m.verdict || 'okay', verdictWhy: m.verdictWhy || '' });
     } catch (e) {
       setExtraError(e instanceof Error ? e.message : 'Could not read this photo');
     } finally {
       setExtraBusy(false);
       if (photoInputRef.current) photoInputRef.current.value = '';
     }
+  };
+
+  const confirmPhotoMeal = () => {
+    if (!photoVerdict) return;
+    const m = photoVerdict.meal;
+    const entry: ExtraMeal = {
+      id: newEntryId('em'),
+      name: m.name,
+      text: 'Photo estimate',
+      calories: m.calories,
+      proteinG: m.proteinG,
+      carbsG: m.carbsG,
+      fatG: m.fatG,
+      source: 'photo',
+    };
+    setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
+    setPhotoVerdict(null);
+    setSaveState('idle');
   };
 
   // Exercise logging: estimate burn via AI, add to the draft day log.
@@ -1199,6 +1222,39 @@ export default function DashboardPage() {
                   {extraError} — <button type="button" className="btn-ghost" style={{ padding: '0.15rem 0.5rem', fontSize: '0.8rem' }} onClick={handleEstimateMeal}>Try again</button>
                 </p>
               )}
+              {photoVerdict && (() => {
+                const styles = {
+                  yes: { label: 'Go for it', color: 'var(--color-accent)', bg: 'var(--color-accent-soft)', border: 'var(--color-accent)' },
+                  okay: { label: 'Fine in a small portion', color: 'var(--color-warning)', bg: 'rgba(180,83,9,0.08)', border: 'var(--color-warning)' },
+                  skip: { label: 'Better skip this one', color: 'var(--color-danger)', bg: 'rgba(180,35,24,0.06)', border: 'var(--color-danger)' },
+                }[photoVerdict.verdict];
+                const m = photoVerdict.meal;
+                return (
+                  <div style={{ background: styles.bg, border: `1px solid ${styles.border}`, borderRadius: '0.8rem', padding: '0.9rem 1rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <span style={{ width: 10, height: 10, borderRadius: '50%', background: styles.color, flexShrink: 0 }} />
+                      <span style={{ fontWeight: 750, fontSize: '0.9rem', color: styles.color }}>{styles.label}</span>
+                    </div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 650, marginBottom: '0.15rem' }}>{m.name}</div>
+                    <div style={{ fontSize: '0.76rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums', marginBottom: photoVerdict.verdictWhy ? '0.45rem' : '0.6rem' }}>
+                      ~{m.calories} kcal · P {m.proteinG}g · C {m.carbsG}g · F {m.fatG}g · photo estimate
+                    </div>
+                    {photoVerdict.verdictWhy && (
+                      <p style={{ fontSize: '0.83rem', lineHeight: 1.6, color: 'var(--color-text)', margin: '0 0 0.7rem' }}>
+                        {photoVerdict.verdictWhy}
+                      </p>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="btn-primary" onClick={confirmPhotoMeal} style={{ padding: '0.5rem 1.1rem', fontSize: '0.84rem' }}>
+                        Log it
+                      </button>
+                      <button type="button" className="btn-ghost" onClick={() => setPhotoVerdict(null)} style={{ padding: '0.5rem 1rem', fontSize: '0.84rem' }}>
+                        Skip
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
               {(draftLog.extraMeals || []).length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {draftLog.extraMeals.map((m) => (
