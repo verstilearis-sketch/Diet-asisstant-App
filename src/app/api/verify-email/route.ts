@@ -130,8 +130,8 @@ async function sendVerificationEmail(email: string, code: string): Promise<boole
   // IMPORTANT: Resend's shared test sender (onboarding@resend.dev) can ONLY
   // deliver to your own Resend account email. To send codes to real users,
   // verify your own domain at resend.com/domains and set:
-  //   RESEND_FROM="DietAI <noreply@yourdomain.com>"
-  const from = process.env.RESEND_FROM || 'DietAI <onboarding@resend.dev>';
+  //   RESEND_FROM="Nutriq <noreply@yourdomain.com>"
+  const from = process.env.RESEND_FROM || 'Nutriq <onboarding@resend.dev>';
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -143,9 +143,9 @@ async function sendVerificationEmail(email: string, code: string): Promise<boole
       body: JSON.stringify({
         from,
         to: email,
-        subject: 'Your DietAI verification code',
+        subject: 'Your Nutriq verification code',
         html: verificationEmailHtml(code),
-        text: `Your DietAI verification code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
+        text: `Your Nutriq verification code is ${code}. It expires in 10 minutes. If you didn't request this, you can ignore this email.`,
       }),
     });
 
@@ -170,7 +170,7 @@ function verificationEmailHtml(code: string): string {
     <tr><td align="center">
       <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;padding:40px 32px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
         <tr><td align="center" style="padding-bottom:24px;">
-          <div style="font-size:20px;font-weight:700;color:#111827;">DietAI</div>
+          <div style="font-size:20px;font-weight:700;color:#111827;">Nutriq</div>
           <div style="font-size:13px;color:#6b7280;margin-top:4px;">Verify your email address</div>
         </td></tr>
         <tr><td style="font-size:14px;color:#374151;line-height:1.6;padding-bottom:24px;">
@@ -183,7 +183,7 @@ function verificationEmailHtml(code: string): string {
           If you didn't request this code, you can safely ignore this email.
         </td></tr>
       </table>
-      <div style="font-size:11px;color:#9ca3af;margin-top:16px;">DietAI · Diet Planning Assistant</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:16px;">Nutriq · Diet Planning Assistant</div>
     </td></tr>
   </table>
 </body>

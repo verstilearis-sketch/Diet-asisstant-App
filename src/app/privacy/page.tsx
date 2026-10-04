@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { SaladIcon } from '@/components/icons';
 
 export const metadata = {
-  title: 'Privacy Policy — DietAI',
-  description: 'How DietAI collects, uses, and protects your data.',
+  title: 'Privacy Policy — Nutriq',
+  description: 'How Nutriq collects, uses, and protects your data.',
 };
 
 const SECTIONS: { title: string; body: string[] }[] = [
@@ -18,7 +18,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'How we use it',
     body: [
-      'Your data is used only to operate DietAI for you: generating your meal plans, tracking your progress, and powering the health coach.',
+      'Your data is used only to operate Nutriq for you: generating your meal plans, tracking your progress, and powering the health coach.',
       'We never sell your personal information and never share it with advertisers.',
     ],
   },
@@ -33,7 +33,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: 'Your control',
     body: [
       'You can delete your account and all associated data at any time from the dashboard (Reset data), or by contacting us at the email below.',
-      'Google sign-in users can also revoke DietAI\'s access at any time from their Google Account security settings.',
+      'Google sign-in users can also revoke Nutriq\'s access at any time from their Google Account security settings.',
     ],
   },
   {
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
       <div className="glass-card fade-in-up" style={{ maxWidth: 720, width: '100%', padding: '2.5rem' }}>
-        <Link href="/" style={{ display: 'inline-block', marginBottom: '1.5rem' }} aria-label="DietAI home">
+        <Link href="/" style={{ display: 'inline-block', marginBottom: '1.5rem' }} aria-label="Nutriq home">
           <span className="auth-logo" style={{ marginBottom: 0 }}><SaladIcon size={24} /></span>
         </Link>
         <h1 style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>Privacy Policy</h1>

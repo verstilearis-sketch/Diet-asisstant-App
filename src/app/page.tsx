@@ -48,7 +48,7 @@ const STEPS = [
 const FAQS = [
   {
     q: 'Is this medical advice?',
-    a: 'No. DietAI is an informational tool: it computes calorie and macro targets from standard nutrition equations and suggests meals around them. If you have a medical condition, are pregnant, or have a history of eating disorders, talk to a clinician or registered dietitian first.',
+    a: 'No. Nutriq is an informational tool: it computes calorie and macro targets from standard nutrition equations and suggests meals around them. If you have a medical condition, are pregnant, or have a history of eating disorders, talk to a clinician or registered dietitian first.',
   },
   {
     q: 'Do I need to create an account?',
@@ -89,8 +89,8 @@ export default function LandingPage() {
       <nav className="site-nav">
         <div className="site-nav-inner">
           <Link href="/" className="brand">
-            <span className="brand-mark"><SaladIcon size={19} /></span>
-            DietAI
+            <span className="brand-mark"><SaladIcon size={23} /></span>
+            Nutriq
           </Link>
           <div className="nav-links">
             <a href="#math" className="nav-link">The math</a>
@@ -115,7 +115,7 @@ export default function LandingPage() {
               A diet plan computed from your body, not copied from a template.
             </h1>
             <p style={{ fontSize: '1.06rem', color: 'var(--color-muted)', lineHeight: 1.75, maxWidth: 520, marginBottom: '2rem' }}>
-              Answer a short set of questions about your body, goals and lifestyle. DietAI
+              Answer a short set of questions about your body, goals and lifestyle. Nutriq
               computes your calorie target with the Mifflin–St Jeor equation, matches meals
               to your local cuisine, and builds a 7-day plan — macros, milestones,
               hydration and all.
@@ -319,10 +319,10 @@ export default function LandingPage() {
         <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link href="/" className="brand" style={{ fontSize: '0.95rem' }}>
             <span className="brand-mark" style={{ width: 28, height: 28 }}><SaladIcon size={16} /></span>
-            DietAI
+            Nutriq
           </Link>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
-            For informational purposes only — not medical advice. © 2026 DietAI.
+            For informational purposes only — not medical advice. © 2026 Nutriq.
           </p>
         </div>
       </footer>

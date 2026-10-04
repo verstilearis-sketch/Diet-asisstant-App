@@ -38,11 +38,11 @@ function AuthForm() {
       <div className="bg-orb bg-orb-2" />
       <div className="glass-card auth-card fade-in-up">
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-          <Link href="/" style={{ display: 'inline-block' }} aria-label="DietAI home">
+          <Link href="/" style={{ display: 'inline-block' }} aria-label="Nutriq home">
             <span className="auth-logo" style={{ marginBottom: 0 }}><SaladIcon size={24} /></span>
           </Link>
           <h1 style={{ fontSize: '1.5rem', margin: '1rem 0 0.4rem' }}>
-            Welcome to DietAI
+            Welcome to Nutriq
           </h1>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
             Sign in to get your personalized nutrition plan.

@@ -687,8 +687,8 @@ export default function DashboardPage() {
       <nav className="site-nav">
         <div className="site-nav-inner">
           <span className="brand">
-            <span className="brand-mark"><SaladIcon size={18} /></span>
-            DietAI
+            <span className="brand-mark"><SaladIcon size={23} /></span>
+            Nutriq
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <span style={{ fontSize: '0.86rem', color: 'var(--color-muted)', marginRight: '0.5rem' }}>
