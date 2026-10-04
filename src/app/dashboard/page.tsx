@@ -9,6 +9,7 @@ import type { SavedPlan } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
 import { getMealAlternatives, type MealType } from '@/lib/ai-engine';
 import RecipeModal from '@/components/RecipeModal';
+import MiniCalendar from '@/components/MiniCalendar';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { HealthAgentChat } from '@/components/HealthAgentChat';
 import { ChatErrorBoundary } from '@/components/ChatErrorBoundary';
@@ -328,6 +329,10 @@ export default function DashboardPage() {
                   Update today's progress
                 </button>
               </div>
+            </div>
+
+            <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem', marginBottom: '1rem' }}>
+              <MiniCalendar userId={savedPlan.userId} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>

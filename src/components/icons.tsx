@@ -60,6 +60,8 @@ export const XIcon = ic(<><path d="M18 6 6 18M6 6l12 12" /></>);
 export const CheckIcon = ic(<><path d="M20 6 9 17l-5-5" /></>);
 export const CheckCircleIcon = ic(<><circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.5 2.5 5-5" /></>);
 export const ChevronDownIcon = ic(<><path d="m6 9 6 6 6-6" /></>);
+export const ChevronLeftIcon = ic(<><path d="m15 18-6-6 6-6" /></>);
+export const ChevronRightIcon = ic(<><path d="m9 18 6-6-6-6" /></>);
 export const SendIcon = ic(<><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></>);
 export const ChatIcon = ic(<><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" /></>);
 export const LogoutIcon = ic(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></>);

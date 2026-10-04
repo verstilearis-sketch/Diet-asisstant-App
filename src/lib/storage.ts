@@ -264,3 +264,29 @@ export async function saveDailyLog(userId: string, log: DailyLog): Promise<void>
     throw new Error('Could not save daily log: ' + error.message);
   }
 }
+
+/** Dates (YYYY-MM-DD) that have a saved log — powers the tracking calendar. */
+export async function getLoggedDates(userId: string, from: string, to: string): Promise<string[]> {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('daily_logs')
+    .select('date')
+    .eq('user_id', userId)
+    .gte('date', from)
+    .lte('date', to);
+  return ((data as { date: string }[] | null) ?? []).map((r) => r.date);
+}
+
+/** A day's log, or null when the day was never tracked. */
+export async function fetchDailyLog(userId: string, date: string): Promise<DailyLog | null> {
+  const sb = getSupabase();
+  const { data } = await sb
+    .from('daily_logs')
+    .select('log')
+    .eq('user_id', userId)
+    .eq('date', date)
+    .maybeSingle();
+  const stored = (data as { log?: Partial<DailyLog> } | null)?.log;
+  if (!stored) return null;
+  return { ...defaultLog(date), ...stored, date };
+}
