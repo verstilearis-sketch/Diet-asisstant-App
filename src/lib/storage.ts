@@ -40,6 +40,8 @@ export interface ExtraMeal {
   fatG: number;
   /** How the meal was logged — photo estimates are more approximate. */
   source?: 'text' | 'photo';
+  /** True when estimated locally because AI providers were unreachable. */
+  offline?: boolean;
 }
 
 export interface ExerciseEntry {
@@ -48,6 +50,8 @@ export interface ExerciseEntry {
   description: string;
   caloriesBurned: number;
   durationMin?: number;
+  /** True when estimated locally because AI providers were unreachable. */
+  offline?: boolean;
 }
 
 export interface DailyLog {

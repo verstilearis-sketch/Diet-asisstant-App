@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
+import { estimateExerciseOffline } from '@/lib/offline-estimate';
 
 // ── Exercise estimation ─────────────────────────────────────────
 // POST /api/parse-exercise  { text, weightKg? }
 // Returns { exercise: { name, caloriesBurned, durationMin? }, provider }
-// Estimates calorie burn for a described workout. Conservative on purpose.
+// Estimates calorie burn for a described workout. AI first (Groq → Gemini
+// with 429 backoff); MET-formula fallback keeps logging working offline.
 
 function parseExerciseJson(raw: string): {
   name: string; caloriesBurned: number; durationMin?: number;
@@ -57,6 +59,12 @@ Rules: caloriesBurned as a whole number; be realistic and slightly conservative,
     console.error('Parse-exercise API: provider returned bad JSON');
   } else {
     console.error('Parse-exercise API: all providers failed —', result.failures.join('; '));
+  }
+
+  // Offline fallback: MET-formula estimate keeps logging working.
+  const offline = estimateExerciseOffline(text, typeof weightKg === 'number' ? weightKg : 70);
+  if (offline) {
+    return NextResponse.json({ exercise: offline, provider: 'offline' });
   }
 
   return NextResponse.json(

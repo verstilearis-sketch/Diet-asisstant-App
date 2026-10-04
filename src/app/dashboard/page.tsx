@@ -22,6 +22,27 @@ import {
   FlameIcon, TrashIcon, PlusIcon, CameraIcon,
 } from '@/components/icons';
 
+// ── Estimate caches: avoid repeat AI calls for the same text ──────
+const ESTIMATE_CACHE_LIMIT = 50;
+function readEstimateCache(key: string): Record<string, any> {
+  try {
+    return JSON.parse(localStorage.getItem(key) || '{}');
+  } catch {
+    return {};
+  }
+}
+function writeEstimateCache(key: string, text: string, value: unknown) {
+  try {
+    const cache = readEstimateCache(key);
+    cache[text.trim().toLowerCase()] = value;
+    const keys = Object.keys(cache);
+    for (const k of keys.slice(0, Math.max(0, keys.length - ESTIMATE_CACHE_LIMIT))) delete cache[k];
+    localStorage.setItem(key, JSON.stringify(cache));
+  } catch {
+    // best-effort only
+  }
+}
+
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Weight Loss', gain_weight: 'Muscle Gain', maintain: 'Maintenance',
   improve_health: 'Health', athletic: 'Athletic Performance',
@@ -148,9 +169,38 @@ export default function DashboardPage() {
   };
 
   // Free-text meal logging: estimate nutrition via AI, add to the draft day log.
+  const addExtraMealEntry = (
+    m: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number },
+    provider: string,
+    text: string,
+  ) => {
+    const entry: ExtraMeal = {
+      id: newEntryId('em'),
+      name: m.name,
+      text,
+      calories: m.calories,
+      proteinG: m.proteinG,
+      carbsG: m.carbsG,
+      fatG: m.fatG,
+      source: 'text',
+      ...(provider === 'offline' ? { offline: true } : {}),
+    };
+    setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
+    setSaveState('idle');
+  };
+
   const handleEstimateMeal = async () => {
     const text = extraText.trim();
     if (!text || extraBusy || !savedPlan) return;
+    // Serve repeat descriptions from the on-device cache — no API call.
+    const cached = readEstimateCache('dpa_meal_estimate_cache')[text.toLowerCase()] as
+      | { meal: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number }; provider: string }
+      | undefined;
+    if (cached?.meal) {
+      addExtraMealEntry(cached.meal, cached.provider, text);
+      setExtraText('');
+      return;
+    }
     setExtraBusy(true);
     setExtraError(null);
     try {
@@ -166,19 +216,9 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Could not estimate this meal');
       const m = data.meal as { name: string; calories: number; proteinG: number; carbsG: number; fatG: number };
-      const entry: ExtraMeal = {
-        id: newEntryId('em'),
-        name: m.name,
-        text,
-        calories: m.calories,
-        proteinG: m.proteinG,
-        carbsG: m.carbsG,
-        fatG: m.fatG,
-        source: 'text',
-      };
-      setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
+      writeEstimateCache('dpa_meal_estimate_cache', text, { meal: m, provider: data.provider });
+      addExtraMealEntry(m, data.provider, text);
       setExtraText('');
-      setSaveState('idle');
     } catch (e) {
       setExtraError(e instanceof Error ? e.message : 'Could not estimate this meal');
     } finally {
@@ -254,9 +294,36 @@ export default function DashboardPage() {
   };
 
   // Exercise logging: estimate burn via AI, add to the draft day log.
+  const addExerciseEntry = (
+    e: { name: string; caloriesBurned: number; durationMin?: number },
+    provider: string,
+    text: string,
+  ) => {
+    const entry: ExerciseEntry = {
+      id: newEntryId('ex'),
+      name: e.name,
+      description: text,
+      caloriesBurned: e.caloriesBurned,
+      ...(typeof e.durationMin === 'number' ? { durationMin: e.durationMin } : {}),
+      ...(provider === 'offline' ? { offline: true } : {}),
+    };
+    setDraftLog((d) =>
+      d ? { ...d, exercises: [...(d.exercises || []), entry], exerciseDone: true } : d,
+    );
+    setSaveState('idle');
+  };
+
   const handleEstimateExercise = async () => {
     const text = exerciseText.trim();
     if (!text || exerciseBusy || !savedPlan) return;
+    const cached = readEstimateCache('dpa_exercise_estimate_cache')[text.toLowerCase()] as
+      | { exercise: { name: string; caloriesBurned: number; durationMin?: number }; provider: string }
+      | undefined;
+    if (cached?.exercise) {
+      addExerciseEntry(cached.exercise, cached.provider, text);
+      setExerciseText('');
+      return;
+    }
     setExerciseBusy(true);
     setExerciseError(null);
     try {
@@ -268,18 +335,9 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Could not estimate this workout');
       const e = data.exercise as { name: string; caloriesBurned: number; durationMin?: number };
-      const entry: ExerciseEntry = {
-        id: newEntryId('ex'),
-        name: e.name,
-        description: text,
-        caloriesBurned: e.caloriesBurned,
-        ...(typeof e.durationMin === 'number' ? { durationMin: e.durationMin } : {}),
-      };
-      setDraftLog((d) =>
-        d ? { ...d, exercises: [...(d.exercises || []), entry], exerciseDone: true } : d,
-      );
+      writeEstimateCache('dpa_exercise_estimate_cache', text, { exercise: e, provider: data.provider });
+      addExerciseEntry(e, data.provider, text);
       setExerciseText('');
-      setSaveState('idle');
     } catch (e) {
       setExerciseError(e instanceof Error ? e.message : 'Could not estimate this workout');
     } finally {
@@ -827,6 +885,11 @@ export default function DashboardPage() {
                               photo · estimate
                             </span>
                           )}
+                          {m.offline && (
+                            <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Estimated on your device — the AI service was unreachable">
+                              offline estimate
+                            </span>
+                          )}
                         </div>
                         <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
                           {m.calories} kcal · {m.proteinG}g protein
@@ -905,7 +968,14 @@ export default function DashboardPage() {
                           <DumbbellIcon size={16} />
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 650, fontSize: '0.86rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                            <span style={{ fontWeight: 650, fontSize: '0.86rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                            {e.offline && (
+                              <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Estimated on your device — the AI service was unreachable">
+                                offline estimate
+                              </span>
+                            )}
+                          </div>
                           <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
                             {e.durationMin ? `${e.durationMin} min · ` : ''}−{e.caloriesBurned} kcal
                           </div>

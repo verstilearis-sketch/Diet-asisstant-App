@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
+import { estimateMealOffline } from '@/lib/offline-estimate';
 
 // ── Free-text meal logging ────────────────────────────────────
 // POST /api/parse-meal  { text, restrictions?, region? }
 // Returns { meal: { name, calories, proteinG, carbsG, fatG }, provider }
 // Estimates nutrition for anything the user actually ate, in plain words.
-// Tries Groq, then Gemini; 503 with a retry message if both fail.
+// Tries Groq, then Gemini (both with 429 backoff); if both are down it falls
+// back to a local food-unit estimate so logging keeps working offline.
 
 function parseMealJson(raw: string): {
   name: string; calories: number; proteinG: number; carbsG: number; fatG: number;
@@ -62,6 +64,12 @@ ${region ? `Regional context: ${region}.` : ''}`;
     console.error('Parse-meal API: provider returned bad JSON');
   } else {
     console.error('Parse-meal API: all providers failed —', result.failures.join('; '));
+  }
+
+  // Offline fallback: local unit-food estimate keeps logging working.
+  const offline = estimateMealOffline(text);
+  if (offline) {
+    return NextResponse.json({ meal: offline, provider: 'offline' });
   }
 
   return NextResponse.json(

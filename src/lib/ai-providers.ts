@@ -17,11 +17,33 @@ export type Attempt = { ok: true; reply: string } | { ok: false; reason: string 
 
 let cachedGroqModel: string | null = null;
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function isRateLimitError(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (status === 429) return true;
+  return /429|rate.?limit|quota|resource.?exhausted/i.test(String(err).slice(0, 300));
+}
+
+/** fetch() that rides through 429s with backoff (honors Retry-After). */
+async function fetchWithBackoff(url: string, init: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, init);
+    if (res.status !== 429 || attempt >= maxRetries) return res;
+    const retryAfter = Number(res.headers.get('retry-after'));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? Math.min(30000, retryAfter * 1000)
+      : Math.min(8000, 1000 * 2 ** attempt);
+    await res.arrayBuffer().catch(() => {});
+    await sleep(waitMs);
+  }
+}
+
 async function pickGroqModel(apiKey: string): Promise<string> {
   if (cachedGroqModel) return cachedGroqModel;
   let available: Set<string> | null = null;
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/models', {
+    const res = await fetchWithBackoff('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (res.ok) {
@@ -53,7 +75,7 @@ export async function tryGroq(
       const model = await pickGroqModel(apiKey);
       if (attempted.has(model)) break;
       attempted.add(model);
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const res = await fetchWithBackoff('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
@@ -95,15 +117,17 @@ export async function tryGemini(
   if (!apiKey) return { ok: false, reason: 'GEMINI_API_KEY not set' };
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: opts.temperature ?? 0.3,
-        maxOutputTokens: opts.maxTokens ?? 1000,
-      },
-    });
+    const response = await withSdkBackoff(() =>
+      ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        config: {
+          systemInstruction: systemPrompt,
+          temperature: opts.temperature ?? 0.3,
+          maxOutputTokens: opts.maxTokens ?? 1000,
+        },
+      }),
+    );
     const reply = response.text?.trim();
     if (!reply) return { ok: false, reason: 'empty response body' };
     return { ok: true, reply };
@@ -127,6 +151,18 @@ export async function runAiChain(
   return { ok: false, failures };
 }
 
+/** Wrap a Gemini SDK call with 429 backoff. */
+async function withSdkBackoff<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (!isRateLimitError(err) || attempt >= maxRetries) throw err;
+      await sleep(Math.min(8000, 1000 * 2 ** attempt));
+    }
+  }
+}
+
 /** Vision via Gemini: describe/estimate what's in a photo. Groq's vision
  *  models keep retiring, so photos go straight to Gemini. */
 export async function tryGeminiVision(
@@ -139,19 +175,21 @@ export async function tryGeminiVision(
   if (!apiKey) return { ok: false, reason: 'GEMINI_API_KEY not set' };
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBase64 } }],
+    const response = await withSdkBackoff(() =>
+      ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBase64 } }],
+          },
+        ],
+        config: {
+          temperature: opts.temperature ?? 0.2,
+          maxOutputTokens: opts.maxTokens ?? 400,
         },
-      ],
-      config: {
-        temperature: opts.temperature ?? 0.2,
-        maxOutputTokens: opts.maxTokens ?? 400,
-      },
-    });
+      }),
+    );
     const reply = response.text?.trim();
     if (!reply) return { ok: false, reason: 'empty response body' };
     return { ok: true, reply };
