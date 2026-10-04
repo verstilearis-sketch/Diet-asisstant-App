@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getSession, signInWithGoogle } from '@/lib/storage';
-import { SaladIcon, AlertIcon, GoogleIcon } from '@/components/icons';
+import { NutriqIcon, AlertIcon, GoogleIcon } from '@/components/icons';
 
 function AuthForm() {
   const router = useRouter();
@@ -39,7 +39,7 @@ function AuthForm() {
       <div className="glass-card auth-card fade-in-up">
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <Link href="/" style={{ display: 'inline-block' }} aria-label="Nutriq home">
-            <span className="auth-logo" style={{ marginBottom: 0 }}><SaladIcon size={24} /></span>
+            <span className="auth-logo" style={{ marginBottom: 0 }}><NutriqIcon size={26} /></span>
           </Link>
           <h1 style={{ fontSize: '1.5rem', margin: '1rem 0 0.4rem' }}>
             Welcome to Nutriq

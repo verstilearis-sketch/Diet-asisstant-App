@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSession } from '@/lib/storage';
 import Link from 'next/link';
 import {
-  SaladIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
+  NutriqIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
   WheatIcon,
 } from '@/components/icons';
 
@@ -89,7 +89,7 @@ export default function LandingPage() {
       <nav className="site-nav">
         <div className="site-nav-inner">
           <Link href="/" className="brand">
-            <span className="brand-mark"><SaladIcon size={23} /></span>
+            <span className="brand-mark"><NutriqIcon size={23} /></span>
             Nutriq
           </Link>
           <div className="nav-links">
@@ -305,7 +305,7 @@ export default function LandingPage() {
       <section className="container" style={{ paddingBottom: '4rem', textAlign: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
           <span style={{ width: 44, height: 1, background: 'var(--color-border-strong)' }} />
-          <span className="brand-mark" style={{ width: 30, height: 30 }}><SaladIcon size={16} /></span>
+          <span className="brand-mark" style={{ width: 30, height: 30 }}><NutriqIcon size={17} /></span>
           <span style={{ width: 44, height: 1, background: 'var(--color-border-strong)' }} />
         </div>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.92rem', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
@@ -318,7 +318,7 @@ export default function LandingPage() {
       <footer style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
         <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link href="/" className="brand" style={{ fontSize: '0.95rem' }}>
-            <span className="brand-mark" style={{ width: 28, height: 28 }}><SaladIcon size={16} /></span>
+            <span className="brand-mark" style={{ width: 28, height: 28 }}><NutriqIcon size={16} /></span>
             Nutriq
           </Link>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>

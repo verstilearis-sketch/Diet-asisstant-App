@@ -19,7 +19,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { HealthAgentChat } from '@/components/HealthAgentChat';
 import { ChatErrorBoundary } from '@/components/ChatErrorBoundary';
 import {
-  SaladIcon, DashboardIcon, UtensilsIcon, ClipboardIcon, CartIcon,
+  NutriqIcon, DashboardIcon, UtensilsIcon, ClipboardIcon, CartIcon,
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
@@ -687,7 +687,7 @@ export default function DashboardPage() {
       <nav className="site-nav">
         <div className="site-nav-inner">
           <span className="brand">
-            <span className="brand-mark"><SaladIcon size={23} /></span>
+            <span className="brand-mark"><NutriqIcon size={23} /></span>
             Nutriq
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>

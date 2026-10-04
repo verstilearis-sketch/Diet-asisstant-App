@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabase } from '@/lib/supabase';
-import { SaladIcon, AlertIcon } from '@/components/icons';
+import { NutriqIcon, AlertIcon } from '@/components/icons';
 
 // ── OAuth callback ──────────────────────────────────────────────
 // Google (and any future OAuth provider) redirects here with ?code=….
@@ -50,7 +50,7 @@ function CallbackHandler() {
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
       <div className="glass-card auth-card fade-in-up" style={{ textAlign: 'center' }}>
-        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><SaladIcon size={24} /></span>
+        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><NutriqIcon size={26} /></span>
         {error ? (
           <>
             <div className="error-box" style={{ textAlign: 'left', marginBottom: '1.25rem' }}>

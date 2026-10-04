@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SaladIcon } from '@/components/icons';
+import { NutriqIcon } from '@/components/icons';
 
 export const metadata = {
   title: 'Privacy Policy — Nutriq',
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
       <div className="bg-orb bg-orb-2" />
       <div className="glass-card fade-in-up" style={{ maxWidth: 720, width: '100%', padding: '2.5rem' }}>
         <Link href="/" style={{ display: 'inline-block', marginBottom: '1.5rem' }} aria-label="Nutriq home">
-          <span className="auth-logo" style={{ marginBottom: 0 }}><SaladIcon size={24} /></span>
+          <span className="auth-logo" style={{ marginBottom: 0 }}><NutriqIcon size={26} /></span>
         </Link>
         <h1 style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>Privacy Policy</h1>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.88rem', marginBottom: '2rem' }}>
