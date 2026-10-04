@@ -5,18 +5,22 @@ import { GoogleGenAI } from '@google/genai';
 // The coach tries each provider in order until one answers:
 //   1. Primary   — Groq by default; set AI_PROVIDER=gemini to prefer Gemini.
 //   2. Secondary — the other provider, tried automatically if primary fails.
-//   3. Offline   — keyword-based replies, so the coach never goes silent.
+//   3. Tertiary  — OpenRouter (free models, separate quota pool).
+//   4. Offline   — keyword-based replies, so the coach never goes silent.
 //
 // Groq retires model IDs regularly, so the route asks Groq which models
 // currently exist (/v1/models) and picks the first from the preference list
 // below. Set GROQ_MODEL to pin a specific model — it is preferred when
 // available, otherwise the route falls through to the next working one.
+// OpenRouter works the same way via OPENROUTER_MODEL.
 //
 // Put keys in .env.local (project root, next to package.json):
-//   GROQ_API_KEY=...    (fresh key from console.groq.com)
-//   GEMINI_API_KEY=...  (optional backup, from Google AI Studio)
-//   GROQ_MODEL=...      (optional; default auto-selected)
-//   GEMINI_MODEL=...    (optional; default gemini-3.8-flash)
+//   GROQ_API_KEY=...        (fresh key from console.groq.com)
+//   GEMINI_API_KEY=...      (optional backup, from Google AI Studio)
+//   OPENROUTER_API_KEY=...  (optional backup, free key from openrouter.ai/keys)
+//   GROQ_MODEL=...          (optional; default auto-selected)
+//   GEMINI_MODEL=...        (optional; default gemini-3.8-flash)
+//   OPENROUTER_MODEL=...    (optional; default auto-selected free model)
 
 const GROQ_MODEL_PREFERENCE = [
   process.env.GROQ_MODEL,
@@ -26,6 +30,13 @@ const GROQ_MODEL_PREFERENCE = [
   'openai/gpt-oss-20b',
 ].filter((m): m is string => !!m);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const OPENROUTER_MODEL_PREFERENCE = [
+  process.env.OPENROUTER_MODEL,
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'google/gemma-2-9b-it:free',
+  'mistralai/mistral-7b-instruct:free',
+  'qwen/qwen-2.5-7b-instruct:free',
+].filter((m): m is string => !!m);
 
 const PRIMARY: 'groq' | 'gemini' =
   process.env.AI_PROVIDER?.toLowerCase() === 'gemini' ? 'gemini' : 'groq';
@@ -76,15 +87,17 @@ PLAN:
 - Cuisine focus: ${planContext?.region ?? 'global'}
 If a question is completely off-topic (coding, politics, etc.), briefly redirect to health topics.`;
 
-  const order: ('groq' | 'gemini')[] =
-    PRIMARY === 'groq' ? ['groq', 'gemini'] : ['gemini', 'groq'];
+  const order: ('groq' | 'gemini' | 'openrouter')[] =
+    PRIMARY === 'groq' ? ['groq', 'gemini', 'openrouter'] : ['gemini', 'groq', 'openrouter'];
 
   const failures: string[] = [];
   for (const provider of order) {
     const attempt =
       provider === 'groq'
         ? await tryGroq(typedMessages, systemPrompt)
-        : await tryGemini(typedMessages, systemPrompt);
+        : provider === 'gemini'
+          ? await tryGemini(typedMessages, systemPrompt)
+          : await tryOpenRouter(typedMessages, systemPrompt);
     if (attempt.ok) {
       return NextResponse.json({ reply: attempt.reply });
     }
@@ -219,6 +232,108 @@ async function tryGemini(
       return { ok: false, reason: 'empty response body' };
     }
     return { ok: true, reply };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
+}
+
+// ── OpenRouter ────────────────────────────────────────────────
+// Third link: free models with their own quota pool. Same discovery pattern
+// as Groq — the free-model lineup changes, so we pick what actually exists.
+
+let cachedOpenRouterModel: string | null = null;
+
+function openRouterHeaders(apiKey: string): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${apiKey}`,
+    'HTTP-Referer': process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://diet-asisstant-app.vercel.app',
+    'X-Title': 'Diet Assistant',
+  };
+}
+
+async function pickOpenRouterModel(apiKey: string): Promise<string> {
+  if (cachedOpenRouterModel) return cachedOpenRouterModel;
+  let available: Set<string> | null = null;
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: openRouterHeaders(apiKey),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      available = new Set(((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[]);
+    }
+  } catch {
+    // Discovery failed — fall back to the preference order blind.
+  }
+  const pick =
+    (available && OPENROUTER_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
+    OPENROUTER_MODEL_PREFERENCE[0];
+  cachedOpenRouterModel = pick;
+  return pick;
+}
+
+async function tryOpenRouter(
+  messages: IncomingMessage[],
+  systemPrompt: string
+): Promise<Attempt> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return { ok: false, reason: 'OPENROUTER_API_KEY not set' };
+  }
+
+  try {
+    const chatMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map((m) => ({
+        role: m.role === 'agent' ? 'assistant' : 'user',
+        content: String(m.content ?? ''),
+      })),
+    ];
+
+    const attempted = new Set<string>();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const model = await pickOpenRouterModel(apiKey);
+      if (!model || attempted.has(model)) break;
+      attempted.add(model);
+
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: openRouterHeaders(apiKey),
+        body: JSON.stringify({
+          model,
+          messages: chatMessages,
+          temperature: 0.7,
+          max_tokens: 600,
+          stream: false,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (!reply) {
+          return { ok: false, reason: 'empty response body' };
+        }
+        return { ok: true, reply };
+      }
+
+      const errText = (await res.text()).slice(0, 200);
+      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+        cachedOpenRouterModel = null;
+        continue;
+      }
+      // 429s: OpenRouter sends Retry-After; wait once, then let the chain move on.
+      if (res.status === 429) {
+        const waitMs = Math.min(10000, (Number(res.headers.get('retry-after')) || 3) * 1000);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      return { ok: false, reason: `HTTP ${res.status} — ${errText}` };
+    }
+    return { ok: false, reason: 'no working OpenRouter model found' };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }

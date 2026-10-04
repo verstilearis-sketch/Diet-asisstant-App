@@ -12,6 +12,23 @@ const GROQ_MODEL_PREFERENCE = [
   'openai/gpt-oss-20b',
 ].filter((m): m is string => !!m);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+// OpenRouter: third link in the chain — separate free-model quota pool.
+const OPENROUTER_MODEL_PREFERENCE = [
+  process.env.OPENROUTER_MODEL,
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'google/gemma-2-9b-it:free',
+  'mistralai/mistral-7b-instruct:free',
+  'qwen/qwen-2.5-7b-instruct:free',
+].filter((m): m is string => !!m);
+const OPENROUTER_VISION_PREFERENCE = [
+  process.env.OPENROUTER_VISION_MODEL,
+  'qwen/qwen2.5-vl-72b-instruct:free',
+].filter((m): m is string => !!m);
+const OPENROUTER_REFERER = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : 'https://diet-asisstant-app.vercel.app';
+
+export type ProviderName = 'groq' | 'gemini' | 'openrouter';
 
 export type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
 
@@ -136,19 +153,163 @@ export async function tryGemini(
   }
 }
 
-/** Run the Groq → Gemini chain, returning the first successful reply. */
+/** Run the Groq → Gemini → OpenRouter chain, returning the first successful reply. */
 export async function runAiChain(
   systemPrompt: string,
   userPrompt: string,
   opts: { maxTokens?: number; temperature?: number } = {},
-): Promise<{ ok: true; reply: string; provider: 'groq' | 'gemini' } | { ok: false; failures: string[] }> {
+): Promise<{ ok: true; reply: string; provider: ProviderName } | { ok: false; failures: string[] }> {
   const failures: string[] = [];
-  for (const provider of ['groq', 'gemini'] as const) {
-    const attempt = provider === 'groq' ? await tryGroq(systemPrompt, userPrompt, opts) : await tryGemini(systemPrompt, userPrompt, opts);
+  for (const provider of ['groq', 'gemini', 'openrouter'] as const) {
+    const attempt =
+      provider === 'groq'
+        ? await tryGroq(systemPrompt, userPrompt, opts)
+        : provider === 'gemini'
+          ? await tryGemini(systemPrompt, userPrompt, opts)
+          : await tryOpenRouter(systemPrompt, userPrompt, opts);
     if (attempt.ok) return { ok: true, reply: attempt.reply, provider };
     failures.push(`${provider} (${attempt.reason})`);
   }
   return { ok: false, failures };
+}
+
+// ── OpenRouter (third link — separate free-model quota pool) ────
+
+function openRouterHeaders(apiKey: string): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${apiKey}`,
+    'HTTP-Referer': OPENROUTER_REFERER,
+    'X-Title': 'Diet Assistant',
+  };
+}
+
+async function pickOpenRouterModel(
+  apiKey: string,
+  preference: string[],
+  cache: { model: string | null },
+): Promise<string> {
+  if (cache.model) return cache.model;
+  let available: Set<string> | null = null;
+  try {
+    const res = await fetchWithBackoff('https://openrouter.ai/api/v1/models', {
+      headers: openRouterHeaders(apiKey),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      available = new Set(
+        ((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[],
+      );
+    }
+  } catch {
+    // fall through to preference order
+  }
+  const pick =
+    (available && preference.find((m) => available!.has(m))) || preference[0];
+  cache.model = pick;
+  return pick;
+}
+
+const openRouterTextCache = { model: null as string | null };
+const openRouterVisionCache = { model: null as string | null };
+
+export async function tryOpenRouter(
+  systemPrompt: string,
+  userPrompt: string,
+  opts: { maxTokens?: number; temperature?: number } = {},
+): Promise<Attempt> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'OPENROUTER_API_KEY not set' };
+  try {
+    const attempted = new Set<string>();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const model = await pickOpenRouterModel(apiKey, OPENROUTER_MODEL_PREFERENCE, openRouterTextCache);
+      if (!model || attempted.has(model)) break;
+      attempted.add(model);
+      const res = await fetchWithBackoff('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: openRouterHeaders(apiKey),
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: opts.temperature ?? 0.3,
+          max_tokens: opts.maxTokens ?? 1000,
+          stream: false,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (!reply) return { ok: false, reason: 'empty response body' };
+        return { ok: true, reply };
+      }
+      const errText = (await res.text()).slice(0, 200);
+      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+        openRouterTextCache.model = null;
+        continue;
+      }
+      return { ok: false, reason: `HTTP ${res.status}` };
+    }
+    return { ok: false, reason: 'no working OpenRouter model found' };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
+}
+
+/** Vision via OpenRouter (fallback when Gemini vision is down). */
+export async function tryOpenRouterVision(
+  imageBase64: string,
+  mimeType: string,
+  prompt: string,
+  opts: { maxTokens?: number; temperature?: number } = {},
+): Promise<Attempt> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'OPENROUTER_API_KEY not set' };
+  try {
+    const attempted = new Set<string>();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const model = await pickOpenRouterModel(apiKey, OPENROUTER_VISION_PREFERENCE, openRouterVisionCache);
+      if (!model || attempted.has(model)) break;
+      attempted.add(model);
+      const res = await fetchWithBackoff('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: openRouterHeaders(apiKey),
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+              ],
+            },
+          ],
+          temperature: opts.temperature ?? 0.2,
+          max_tokens: opts.maxTokens ?? 400,
+          stream: false,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (!reply) return { ok: false, reason: 'empty response body' };
+        return { ok: true, reply };
+      }
+      const errText = (await res.text()).slice(0, 200);
+      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+        openRouterVisionCache.model = null;
+        continue;
+      }
+      return { ok: false, reason: `HTTP ${res.status}` };
+    }
+    return { ok: false, reason: 'no working OpenRouter vision model found' };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
 }
 
 /** Wrap a Gemini SDK call with 429 backoff. */

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { tryGeminiVision, extractJsonObject } from '@/lib/ai-providers';
+import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Photo meal logging ──────────────────────────────────────────
 // POST /api/parse-meal-photo  { imageBase64, mimeType? }
 // Returns { meal: { name, calories, proteinG, carbsG, fatG }, provider }
-// Identifies the meal in a photo and estimates nutrition. Vision goes
-// straight to Gemini (Groq's vision models keep retiring). Estimates are
-// approximate — the UI labels them as such.
+// Identifies the meal in a photo and estimates nutrition. Vision goes to
+// Gemini first, then OpenRouter (Groq's vision models keep retiring).
+// Estimates are approximate — the UI labels them as such.
 
 const MAX_BASE64_LEN = 4_000_000; // ~3MB image; client downscales to ~1024px first
 
@@ -59,13 +59,20 @@ Always respond with STRICT JSON only — no markdown, no code fences, no comment
 {"name": "short meal name", "calories": 420, "proteinG": 25, "carbsG": 45, "fatG": 12}
 Rules: calories as a whole number; macros in grams with one decimal at most; estimate realistic portions from what you see (plate size is a guide); include likely hidden items (cooking oil, ghee, sauces) in the totals; if several distinct items are visible, roll them into one meal total; name should be 2–6 words.`;
 
-  const attempt = await tryGeminiVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 });
-  if (attempt.ok) {
-    const meal = parseMealJson(attempt.reply);
-    if (meal) return NextResponse.json({ meal, provider: 'gemini' });
+  const geminiAttempt = await tryGeminiVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 });
+  const vision = geminiAttempt.ok
+    ? geminiAttempt
+    : await tryOpenRouterVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 });
+  if (vision.ok) {
+    const meal = parseMealJson(vision.reply);
+    if (meal) return NextResponse.json({ meal, provider: geminiAttempt.ok ? 'gemini' : 'openrouter' });
     console.error('Parse-meal-photo API: vision returned bad JSON');
   } else {
-    console.error('Parse-meal-photo API: vision failed —', attempt.reason);
+    const reasons = [
+      !geminiAttempt.ok ? `gemini (${geminiAttempt.reason})` : null,
+      `openrouter (${vision.reason})`,
+    ].filter(Boolean).join('; ');
+    console.error('Parse-meal-photo API: vision failed —', reasons);
   }
 
   return NextResponse.json(

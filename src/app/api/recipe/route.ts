@@ -4,8 +4,8 @@ import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
 // ── Recipe generation ─────────────────────────────────────────
 // POST /api/recipe  { name, description, calories, protein, prepTime, servings?, restrictions?, region? }
 // Returns { ingredients: string[], steps: string[], servings: number, prepTime: string }
-// Tries Groq, then Gemini. If both fail it returns 503 — the UI shows a retry
-// instead of a made-up recipe.
+// Tries Groq → Gemini → OpenRouter. If all fail it returns 503 — the UI shows
+// a retry instead of a made-up recipe.
 
 function parseRecipeJson(raw: string): {
   ingredients: string[]; steps: string[]; servings: number; prepTime: string;
