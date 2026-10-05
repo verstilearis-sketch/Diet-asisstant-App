@@ -8,7 +8,7 @@ import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/a
 // Gemini first, then OpenRouter (Groq's vision models keep retiring).
 // Estimates are approximate — the UI labels them as such.
 
-const MAX_BASE64_LEN = 4_000_000; // ~3MB image; client downscales to ~1024px first
+const MAX_BASE64_LEN = 4_000_000; // ~3MB image; client downscales to ~768px first
 
 function parseMealJson(raw: string): {
   name: string; calories: number; proteinG: number; carbsG: number; fatG: number;

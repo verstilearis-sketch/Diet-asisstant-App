@@ -92,6 +92,7 @@ export default function DashboardPage() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [extraText, setExtraText] = useState('');
   const [extraBusy, setExtraBusy] = useState(false);
+  const [photoStatus, setPhotoStatus] = useState<string | null>(null);
   const [extraError, setExtraError] = useState<string | null>(null);
   const [exerciseText, setExerciseText] = useState('');
   const [exerciseBusy, setExerciseBusy] = useState(false);
@@ -257,14 +258,16 @@ export default function DashboardPage() {
       const img = new Image();
       img.onload = () => {
         try {
-          const maxDim = 1024;
+          // Keep photos small: 768px is plenty for food recognition, and the
+          // smaller payload uploads faster and gets read faster by vision models.
+          const maxDim = 768;
           const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
           const canvas = document.createElement('canvas');
           canvas.width = Math.max(1, Math.round(img.width * scale));
           canvas.height = Math.max(1, Math.round(img.height * scale));
           canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
           URL.revokeObjectURL(url);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
           resolve({ base64: dataUrl.slice(dataUrl.indexOf(',') + 1), mimeType: 'image/jpeg' });
         } catch (e) {
           URL.revokeObjectURL(url);
@@ -283,33 +286,57 @@ export default function DashboardPage() {
     setExtraBusy(true);
     setExtraError(null);
     setPhotoVerdict(null);
+    const statusTimers: number[] = [];
     try {
       const { base64, mimeType } = await processPhotoFile(file);
+      // Staged status text — a long silent spinner feels broken; narrate the wait.
+      setPhotoStatus('Analyzing your meal…');
+      statusTimers.push(
+        window.setTimeout(() => setPhotoStatus('Still working — reading the details…'), 9000),
+        window.setTimeout(() => setPhotoStatus('Almost there…'), 22000),
+      );
+      // Abort if the round-trip hangs — fail gracefully before the serverless
+      // function itself gets killed, which would surface as a cryptic error.
       const analyzePhoto = async () => {
-        const res = await fetch('/api/parse-meal-photo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageBase64: base64,
-            mimeType,
-            goal: savedPlan.profile.goal,
-            remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
-            restrictions: savedPlan.profile.dietaryRestrictions,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || 'Could not read this photo');
-        return data;
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 55000);
+        try {
+          const res = await fetch('/api/parse-meal-photo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              imageBase64: base64,
+              mimeType,
+              goal: savedPlan.profile.goal,
+              remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
+              restrictions: savedPlan.profile.dietaryRestrictions,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || 'Could not read this photo');
+          return data;
+        } finally {
+          window.clearTimeout(timer);
+        }
       };
+      const isTimeout = (e: unknown) => e instanceof DOMException && e.name === 'AbortError';
+      const timeoutError = () => new Error('Photo analysis is taking too long — please try again');
       let data: Awaited<ReturnType<typeof analyzePhoto>>;
       try {
         data = await analyzePhoto();
-      } catch {
+      } catch (e) {
+        if (isTimeout(e)) throw timeoutError();
         // One silent retry — vision providers blip under load; don't make the
-        // user re-upload for a transient failure.
+        // user re-upload for a transient failure. (Timeouts don't retry.)
         await new Promise((r) => setTimeout(r, 2500));
-        data = await analyzePhoto();
+        try {
+          data = await analyzePhoto();
+        } catch (e2) {
+          throw isTimeout(e2) ? timeoutError() : e2;
+        }
       }
+      statusTimers.forEach((t) => window.clearTimeout(t));
       const m = data.meal as {
         name: string; calories: number; proteinG: number; carbsG: number; fatG: number;
         verdict: 'yes' | 'okay' | 'skip'; verdictWhy: string;
@@ -319,6 +346,8 @@ export default function DashboardPage() {
     } catch (e) {
       setExtraError(e instanceof Error ? e.message : 'Could not read this photo');
     } finally {
+      statusTimers.forEach((t) => window.clearTimeout(t));
+      setPhotoStatus(null);
       setExtraBusy(false);
       if (photoInputRef.current) photoInputRef.current.value = '';
     }
@@ -1226,7 +1255,7 @@ export default function DashboardPage() {
               </div>
               {extraBusy && (
                 <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '0.6rem' }}>
-                  Analyzing your meal…
+                  {photoStatus ?? 'Analyzing your meal…'}
                 </p>
               )}
               {extraError && (
