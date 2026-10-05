@@ -720,16 +720,11 @@ export default function DashboardPage() {
     journeyLabel = toGo < 0.5 ? 'Target reached — now maintain it' : `${toGo.toFixed(1)} kg to go`;
   }
 
-  // Stable reference — the memoized donut only re-renders when macros change,
-  // not on every keystroke elsewhere on the page.
-  const macroData: MacroDatum[] = useMemo(
-    () => [
-      { name: 'Protein', value: calcs.proteinG, color: MACRO_COLORS.protein },
-      { name: 'Carbs', value: calcs.carbsG, color: MACRO_COLORS.carbs },
-      { name: 'Fat', value: calcs.fatG, color: MACRO_COLORS.fat },
-    ],
-    [calcs.proteinG, calcs.carbsG, calcs.fatG],
-  );
+  const macroData: MacroDatum[] = [
+    { name: 'Protein', value: calcs.proteinG, color: MACRO_COLORS.protein },
+    { name: 'Carbs', value: calcs.carbsG, color: MACRO_COLORS.carbs },
+    { name: 'Fat', value: calcs.fatG, color: MACRO_COLORS.fat },
+  ];
 
   const bmiColor = calcs.bmi < 18.5 ? '#4f46e5' : calcs.bmi < 25 ? '#177245' : calcs.bmi < 30 ? '#d97706' : '#dc2626';
   const caloriePct = Math.min(100, Math.round((calsConsumed / calcs.dailyCalorieGoal) * 100));

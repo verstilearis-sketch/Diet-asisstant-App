@@ -7,9 +7,14 @@ export type MacroDatum = { name: string; value: number; color: string };
 
 /**
  * Memoized macro donut. Recharts is heavy to re-render, so this component only
- * updates when `data` actually changes (the parent memoizes the array).
+ * updates when the data values actually change — the parent passes a fresh
+ * array each render, so a deep comparison on values (not identity) is used.
  * Loaded via next/dynamic in the dashboard so the chart library doesn't block
  * the initial page render.
+ *
+ * Note: intentionally NOT using useMemo in the parent for the data array,
+ * because the dashboard has an early return for the loading state and hooks
+ * must not come after it (React error #310).
  */
 function MacroDonutInner({ data }: { data: MacroDatum[] }) {
   return (
@@ -26,7 +31,14 @@ function MacroDonutInner({ data }: { data: MacroDatum[] }) {
   );
 }
 
-export const MacroDonut = memo(MacroDonutInner);
+function macroDataEqual(prev: readonly MacroDatum[], next: readonly MacroDatum[]): boolean {
+  return (
+    prev.length === next.length &&
+    prev.every((d, i) => d.value === next[i].value && d.color === next[i].color && d.name === next[i].name)
+  );
+}
+
+export const MacroDonut = memo(MacroDonutInner, (prev, next) => macroDataEqual(prev.data, next.data));
 
 /** Lightweight placeholder shown while the chart chunk loads — no layout shift. */
 export function MacroDonutPlaceholder() {
