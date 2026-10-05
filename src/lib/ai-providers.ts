@@ -36,6 +36,12 @@ const GITHUB_MODELS_MODEL_PREFERENCE = [
   'openai/gpt-4o',
   'meta/Llama-3.3-70B-Instruct',
 ].filter((m): m is string => !!m);
+// Vision-capable subset — Llama-3.3-70B-Instruct can't see images.
+const GITHUB_MODELS_VISION_PREFERENCE = [
+  process.env.GITHUB_MODELS_VISION_MODEL,
+  'openai/gpt-4o-mini',
+  'openai/gpt-4o',
+].filter((m): m is string => !!m);
 
 export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'github-models';
 
@@ -390,6 +396,82 @@ export async function tryGitHubModels(
   }
 }
 
+/** Vision via GitHub Models (GPT-4o-mini sees images). 45s cap, one retry —
+ *  then fail over instead of stalling. */
+let cachedGitHubModelsVisionModel: string | null = null;
+
+export async function tryGitHubModelsVision(
+  imageBase64: string,
+  mimeType: string,
+  prompt: string,
+  opts: { maxTokens?: number; temperature?: number } = {},
+): Promise<Attempt> {
+  const apiKey = process.env.GITHUB_MODELS_TOKEN;
+  if (!apiKey) return { ok: false, reason: 'GITHUB_MODELS_TOKEN not set' };
+  try {
+    if (!cachedGitHubModelsVisionModel) {
+      let available: Set<string> | null = null;
+      try {
+        const res = await fetchWithBackoff('https://models.github.ai/inference/models', {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          available = new Set(
+            ((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[],
+          );
+        }
+      } catch {
+        // fall through to preference order
+      }
+      cachedGitHubModelsVisionModel =
+        (available && GITHUB_MODELS_VISION_PREFERENCE.find((m) => available!.has(m))) ||
+        GITHUB_MODELS_VISION_PREFERENCE[0];
+    }
+    const attempted = new Set<string>();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const model = cachedGitHubModelsVisionModel;
+      if (!model || attempted.has(model)) break;
+      attempted.add(model);
+      const res = await fetchWithBackoff('https://models.github.ai/inference/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+              ],
+            },
+          ],
+          temperature: opts.temperature ?? 0.2,
+          max_tokens: opts.maxTokens ?? 400,
+          stream: false,
+        }),
+        signal: AbortSignal.timeout(45000),
+      }, 1);
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (!reply) return { ok: false, reason: 'empty response body' };
+        return { ok: true, reply };
+      }
+      const errText = (await res.text()).slice(0, 200);
+      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+        cachedGitHubModelsVisionModel = null;
+        continue;
+      }
+      return { ok: false, reason: `HTTP ${res.status}` };
+    }
+    return { ok: false, reason: 'no working GitHub Models vision model found' };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
+}
+
 /** Vision via OpenRouter (fallback when Gemini vision is down). */
 export async function tryOpenRouterVision(
   imageBase64: string,
@@ -423,7 +505,8 @@ export async function tryOpenRouterVision(
           max_tokens: opts.maxTokens ?? 400,
           stream: false,
         }),
-      });
+        signal: AbortSignal.timeout(45000),
+      }, 1);
       if (res.ok) {
         const data = await res.json();
         const reply = data?.choices?.[0]?.message?.content?.trim();
@@ -444,16 +527,16 @@ export async function tryOpenRouterVision(
 }
 
 /** Wrap a Gemini SDK call with backoff for 429s and transient 5xx. */
-async function withSdkBackoff<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+async function withSdkBackoff<T>(fn: () => Promise<T>, maxRetries = 3, timeoutMs = 25000): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
-      // Cap each SDK call at 25s so a hanging provider fails fast.
+      // Cap each SDK call so a hanging provider fails fast.
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         return await Promise.race([
           fn(),
           new Promise<never>((_, reject) => {
-            timer = setTimeout(() => reject(new Error('SDK call timed out after 25000ms')), 25000);
+            timer = setTimeout(() => reject(new Error(`SDK call timed out after ${timeoutMs}ms`)), timeoutMs);
           }),
         ]);
       } finally {
@@ -478,6 +561,8 @@ export async function tryGeminiVision(
   if (!apiKey) return { ok: false, reason: 'GEMINI_API_KEY not set' };
   try {
     const ai = new GoogleGenAI({ apiKey });
+    // Vision gets a roomier timeout (40s) but only one retry — fail over to
+    // the next provider instead of burning minutes on a struggling one.
     const response = await withSdkBackoff(() =>
       ai.models.generateContent({
         model: GEMINI_MODEL,
@@ -491,7 +576,7 @@ export async function tryGeminiVision(
           temperature: opts.temperature ?? 0.2,
           maxOutputTokens: opts.maxTokens ?? 400,
         },
-      }),
+      }), 1, 40000,
     );
     const reply = response.text?.trim();
     if (!reply) return { ok: false, reason: 'empty response body' };

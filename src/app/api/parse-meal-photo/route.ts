@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
+import { tryGeminiVision, tryGitHubModelsVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Photo meal logging ──────────────────────────────────────────
 // POST /api/parse-meal-photo  { imageBase64, mimeType? }
 // Returns { meal: { name, calories, proteinG, carbsG, fatG }, provider }
 // Identifies the meal in a photo and estimates nutrition. Vision goes to
-// Gemini first, then OpenRouter (Groq's vision models keep retiring).
+// Gemini, then GitHub Models, then OpenRouter (Groq's vision models keep
+// retiring). Each gets a tight budget — fail over fast instead of stalling.
 // Estimates are approximate — the UI labels them as such.
 
 const MAX_BASE64_LEN = 4_000_000; // ~3MB image; client downscales to ~768px first
@@ -73,20 +74,29 @@ Also judge whether this fits the diner's day. Diner's goal: ${goalLabel}.${typeo
 "verdict": "yes" if it fits their goal well, "okay" if it's fine in a small portion or occasionally, "skip" if it works against their goal or breaks a restriction.
 "verdictWhy": 1–2 sentences, specific and friendly, never lecturing. Name the key trade-off (e.g. "deep-fried — tasty, but this alone eats half your remaining calories" or "solid protein, fits your day easily").`;
 
-  const geminiAttempt = await tryGeminiVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 });
-  const vision = geminiAttempt.ok
-    ? geminiAttempt
-    : await tryOpenRouterVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 });
-  if (vision.ok) {
+  const attempts = [
+    { name: 'gemini', run: () => tryGeminiVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 }) },
+    { name: 'github-models', run: () => tryGitHubModelsVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 }) },
+    { name: 'openrouter', run: () => tryOpenRouterVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 }) },
+  ];
+  let vision: { ok: boolean; reply?: string; reason?: string } = { ok: false, reason: 'no attempt made' };
+  let provider = 'gemini';
+  const failures: string[] = [];
+  for (const a of attempts) {
+    const result = await a.run();
+    if (result.ok) {
+      vision = result;
+      provider = a.name;
+      break;
+    }
+    failures.push(`${a.name} (${result.reason})`);
+  }
+  if (vision.ok && vision.reply) {
     const meal = parseMealJson(vision.reply);
-    if (meal) return NextResponse.json({ meal, provider: geminiAttempt.ok ? 'gemini' : 'openrouter' });
+    if (meal) return NextResponse.json({ meal, provider });
     console.error('Parse-meal-photo API: vision returned bad JSON');
   } else {
-    const reasons = [
-      !geminiAttempt.ok ? `gemini (${geminiAttempt.reason})` : null,
-      `openrouter (${vision.reason})`,
-    ].filter(Boolean).join('; ');
-    console.error('Parse-meal-photo API: vision failed —', reasons);
+    console.error('Parse-meal-photo API: vision failed —', failures.join('; '));
   }
 
   return NextResponse.json(
