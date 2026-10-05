@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, getDailyLogsRange, DailyLog, resetAllData, updatePlan } from '@/lib/storage';
 import { computeAll, calculateMacros } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
@@ -15,7 +16,13 @@ import type { TasteProfile } from '@/lib/taste';
 import { buildTasteConstraints, hasTasteSignal, recordSwap } from '@/lib/taste';
 import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { MacroDonutPlaceholder, type MacroDatum } from '@/components/MacroDonut';
+// Recharts is heavy — load it lazily so it never blocks the initial dashboard
+// render. The memoized donut only re-renders when its data actually changes.
+const MacroDonut = dynamic(
+  () => import('@/components/MacroDonut').then((m) => m.MacroDonut),
+  { ssr: false, loading: () => <MacroDonutPlaceholder /> },
+);
 import { HealthAgentChat } from '@/components/HealthAgentChat';
 import { ChatErrorBoundary } from '@/components/ChatErrorBoundary';
 import {
@@ -713,11 +720,16 @@ export default function DashboardPage() {
     journeyLabel = toGo < 0.5 ? 'Target reached — now maintain it' : `${toGo.toFixed(1)} kg to go`;
   }
 
-  const macroData = [
-    { name: 'Protein', value: calcs.proteinG, color: MACRO_COLORS.protein },
-    { name: 'Carbs', value: calcs.carbsG, color: MACRO_COLORS.carbs },
-    { name: 'Fat', value: calcs.fatG, color: MACRO_COLORS.fat },
-  ];
+  // Stable reference — the memoized donut only re-renders when macros change,
+  // not on every keystroke elsewhere on the page.
+  const macroData: MacroDatum[] = useMemo(
+    () => [
+      { name: 'Protein', value: calcs.proteinG, color: MACRO_COLORS.protein },
+      { name: 'Carbs', value: calcs.carbsG, color: MACRO_COLORS.carbs },
+      { name: 'Fat', value: calcs.fatG, color: MACRO_COLORS.fat },
+    ],
+    [calcs.proteinG, calcs.carbsG, calcs.fatG],
+  );
 
   const bmiColor = calcs.bmi < 18.5 ? '#4f46e5' : calcs.bmi < 25 ? '#177245' : calcs.bmi < 30 ? '#d97706' : '#dc2626';
   const caloriePct = Math.min(100, Math.round((calsConsumed / calcs.dailyCalorieGoal) * 100));
@@ -1056,16 +1068,7 @@ export default function DashboardPage() {
             <div className="glass-card" style={{ padding: '1.4rem' }}>
               <h3 style={{ marginBottom: '1rem', fontSize: '0.98rem' }}>Macro breakdown</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                <ResponsiveContainer width={140} height={140}>
-                  <PieChart>
-                    <Pie data={macroData} cx={65} cy={65} innerRadius={42} outerRadius={64} dataKey="value" paddingAngle={3} strokeWidth={0}>
-                      {macroData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ background: '#fff', border: '1px solid #e6e5e0', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 14px rgba(0,0,0,0.08)' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <MacroDonut data={macroData} />
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                   {macroData.map((m) => (
                     <div key={m.name}>

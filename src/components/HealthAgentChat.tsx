@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { SavedPlan } from '@/lib/storage';
 import { computeAll } from '@/lib/calculations';
@@ -26,7 +26,9 @@ function prettyGoal(goal: string): string {
   return (goal || 'health').replace(/_/g, ' ');
 }
 
-export function HealthAgentChat({ plan }: { plan: SavedPlan }) {
+// Memoized: the parent dashboard re-renders on every keystroke, but the chat
+// (and its react-markdown parsing) only needs to update when the plan changes.
+export const HealthAgentChat = memo(function HealthAgentChat({ plan }: { plan: SavedPlan }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -166,4 +168,4 @@ export function HealthAgentChat({ plan }: { plan: SavedPlan }) {
       </form>
     </div>
   );
-}
+});
