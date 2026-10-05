@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { tryGeminiVision, tryGitHubModelsVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
+import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Photo meal logging ──────────────────────────────────────────
 // POST /api/parse-meal-photo  { imageBase64, mimeType? }
@@ -76,7 +76,6 @@ Also judge whether this fits the diner's day. Diner's goal: ${goalLabel}.${typeo
 
   const attempts = [
     { name: 'gemini', run: () => tryGeminiVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 }) },
-    { name: 'github-models', run: () => tryGitHubModelsVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 }) },
     { name: 'openrouter', run: () => tryOpenRouterVision(clean, type, prompt, { maxTokens: 400, temperature: 0.2 }) },
   ];
   let vision: { ok: boolean; reply?: string; reason?: string } = { ok: false, reason: 'no attempt made' };

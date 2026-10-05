@@ -26,7 +26,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: 'Where it is stored',
     body: [
       'Your account and app data are stored securely with our database provider (Supabase), protected by industry-standard encryption in transit and at rest.',
-      'When you use AI features (meal analysis, the health coach, photo estimates), the text or image you submit is processed by our AI providers solely to generate your result. We do not use your inputs to train models.',
+      'When you use AI features (meal analysis, the health coach, photo estimates), the text or image you submit is sent to our AI processing providers solely to generate your result. We never use your inputs to train models ourselves, and we never sell your data. Note that AI providers process this data under their own privacy policies, and some may use it to improve their services — so please avoid including highly sensitive personal details in health coach messages.',
     ],
   },
   {
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
         </Link>
         <h1 style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>Privacy Policy</h1>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.88rem', marginBottom: '2rem' }}>
-          Last updated: October 4, 2026
+          Last updated: October 6, 2026
         </p>
         {SECTIONS.map((s) => (
           <section key={s.title} style={{ marginBottom: '1.75rem' }}>

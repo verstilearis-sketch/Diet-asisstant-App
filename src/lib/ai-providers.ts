@@ -27,23 +27,10 @@ const OPENROUTER_VISION_PREFERENCE = [
 const OPENROUTER_REFERER = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : 'https://diet-asisstant-app.vercel.app';
-// GitHub Models: 150 req/day free on GPT-4o-mini, no card — just a GitHub
-// PAT with `models: read` permission. OpenAI-compatible at
-// https://models.github.ai/inference.
-const GITHUB_MODELS_MODEL_PREFERENCE = [
-  process.env.GITHUB_MODELS_MODEL,
-  'openai/gpt-4o-mini',
-  'openai/gpt-4o',
-  'meta/Llama-3.3-70B-Instruct',
-].filter((m): m is string => !!m);
-// Vision-capable subset — Llama-3.3-70B-Instruct can't see images.
-const GITHUB_MODELS_VISION_PREFERENCE = [
-  process.env.GITHUB_MODELS_VISION_MODEL,
-  'openai/gpt-4o-mini',
-  'openai/gpt-4o',
-].filter((m): m is string => !!m);
+// NOTE: GitHub Models was retired by GitHub on July 30, 2026 — removed from
+// all chains. Chain is now: Groq → Gemini → OpenRouter → Pollinations.
 
-export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'github-models' | 'pollinations';
+export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'pollinations';
 
 export type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
 
@@ -194,11 +181,9 @@ export async function runAiChain(
         ? await tryGroq(systemPrompt, userPrompt, opts)
         : provider === 'gemini'
           ? await tryGemini(systemPrompt, userPrompt, opts)
-          : provider === 'github-models'
-            ? await tryGitHubModels(systemPrompt, userPrompt, opts)
-            : provider === 'pollinations'
-              ? await tryPollinations(systemPrompt, userPrompt, opts)
-              : await tryOpenRouter(systemPrompt, userPrompt, opts);
+          : provider === 'pollinations'
+            ? await tryPollinations(systemPrompt, userPrompt, opts)
+            : await tryOpenRouter(systemPrompt, userPrompt, opts);
     if (attempt.ok) {
       // A reply that isn't usable (e.g. bad JSON) fails over to the next
       // provider instead of killing the whole chain.
@@ -235,7 +220,7 @@ function rotatedOrder(): ProviderName[] {
   const now = Date.now();
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
-  for (const p of ['groq', 'gemini', 'github-models', 'openrouter'] as ProviderName[]) {
+  for (const p of ['groq', 'gemini', 'openrouter'] as ProviderName[]) {
     ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
   }
   // Pollinations is keyless and weakest — always absolute last, never rotated
@@ -365,156 +350,6 @@ export async function tryPollinations(
     const reply = data?.choices?.[0]?.message?.content?.trim();
     if (!reply) return { ok: false, reason: 'empty response body' };
     return { ok: true, reply };
-  } catch (err) {
-    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
-  }
-}
-
-/** GitHub Models: 150 req/day free on GPT-4o-mini, no card.
- *  OpenAI-compatible — same shape as Groq. Auth is a GitHub PAT with
- *  `models: read` permission. */
-let cachedGitHubModelsModel: string | null = null;
-
-async function pickGitHubModelsModel(apiKey: string): Promise<string> {
-  if (cachedGitHubModelsModel) return cachedGitHubModelsModel;
-  let available: Set<string> | null = null;
-  try {
-    const res = await fetchWithBackoff('https://models.github.ai/inference/models', {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      available = new Set(
-        ((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[],
-      );
-    }
-  } catch {
-    // fall through to preference order
-  }
-  const pick =
-    (available && GITHUB_MODELS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    GITHUB_MODELS_MODEL_PREFERENCE[0];
-  cachedGitHubModelsModel = pick;
-  return pick;
-}
-
-export async function tryGitHubModels(
-  systemPrompt: string,
-  userPrompt: string,
-  opts: { maxTokens?: number; temperature?: number } = {},
-): Promise<Attempt> {
-  const apiKey = process.env.GITHUB_MODELS_TOKEN;
-  if (!apiKey) return { ok: false, reason: 'GITHUB_MODELS_TOKEN not set' };
-  try {
-    const attempted = new Set<string>();
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const model = await pickGitHubModelsModel(apiKey);
-      if (attempted.has(model)) break;
-      attempted.add(model);
-      const res = await fetchWithBackoff('https://models.github.ai/inference/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: opts.temperature ?? 0.3,
-          max_tokens: opts.maxTokens ?? 1000,
-          stream: false,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const reply = data?.choices?.[0]?.message?.content?.trim();
-        if (!reply) return { ok: false, reason: 'empty response body' };
-        return { ok: true, reply };
-      }
-      const errText = (await res.text()).slice(0, 200);
-      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
-        cachedGitHubModelsModel = null;
-        continue;
-      }
-      return { ok: false, reason: `HTTP ${res.status}` };
-    }
-    return { ok: false, reason: 'no working GitHub Models model found' };
-  } catch (err) {
-    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
-  }
-}
-
-/** Vision via GitHub Models (GPT-4o-mini sees images). 45s cap, one retry —
- *  then fail over instead of stalling. */
-let cachedGitHubModelsVisionModel: string | null = null;
-
-export async function tryGitHubModelsVision(
-  imageBase64: string,
-  mimeType: string,
-  prompt: string,
-  opts: { maxTokens?: number; temperature?: number } = {},
-): Promise<Attempt> {
-  const apiKey = process.env.GITHUB_MODELS_TOKEN;
-  if (!apiKey) return { ok: false, reason: 'GITHUB_MODELS_TOKEN not set' };
-  try {
-    if (!cachedGitHubModelsVisionModel) {
-      let available: Set<string> | null = null;
-      try {
-        const res = await fetchWithBackoff('https://models.github.ai/inference/models', {
-          headers: { Authorization: `Bearer ${apiKey}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          available = new Set(
-            ((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[],
-          );
-        }
-      } catch {
-        // fall through to preference order
-      }
-      cachedGitHubModelsVisionModel =
-        (available && GITHUB_MODELS_VISION_PREFERENCE.find((m) => available!.has(m))) ||
-        GITHUB_MODELS_VISION_PREFERENCE[0];
-    }
-    const attempted = new Set<string>();
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const model = cachedGitHubModelsVisionModel;
-      if (!model || attempted.has(model)) break;
-      attempted.add(model);
-      const res = await fetchWithBackoff('https://models.github.ai/inference/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: prompt },
-                { type: 'image_url', image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
-              ],
-            },
-          ],
-          temperature: opts.temperature ?? 0.2,
-          max_tokens: opts.maxTokens ?? 400,
-          stream: false,
-        }),
-        signal: AbortSignal.timeout(45000),
-      }, 1);
-      if (res.ok) {
-        const data = await res.json();
-        const reply = data?.choices?.[0]?.message?.content?.trim();
-        if (!reply) return { ok: false, reason: 'empty response body' };
-        return { ok: true, reply };
-      }
-      const errText = (await res.text()).slice(0, 200);
-      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
-        cachedGitHubModelsVisionModel = null;
-        continue;
-      }
-      return { ok: false, reason: `HTTP ${res.status}` };
-    }
-    return { ok: false, reason: 'no working GitHub Models vision model found' };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }

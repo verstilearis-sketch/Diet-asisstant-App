@@ -38,15 +38,8 @@ const OPENROUTER_MODEL_PREFERENCE = [
   'mistralai/mistral-7b-instruct:free',
   'qwen/qwen-2.5-7b-instruct:free',
 ].filter((m): m is string => !!m);
-// GitHub Models: 150 req/day free on GPT-4o-mini, no card — just a GitHub
-// PAT with `models: read` permission. OpenAI-compatible at
-// https://models.github.ai/inference.
-const GITHUB_MODELS_MODEL_PREFERENCE = [
-  process.env.GITHUB_MODELS_MODEL,
-  'openai/gpt-4o-mini',
-  'openai/gpt-4o',
-  'meta/Llama-3.3-70B-Instruct',
-].filter((m): m is string => !!m);
+// NOTE: GitHub Models was retired by GitHub on July 30, 2026 — removed from
+// the chat chain. Chain is now: Groq → Gemini → OpenRouter.
 
 const PRIMARY: 'groq' | 'gemini' =
   process.env.AI_PROVIDER?.toLowerCase() === 'gemini' ? 'gemini' : 'groq';
@@ -56,7 +49,7 @@ interface IncomingMessage {
   content: string;
 }
 
-type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'github-models';
+type ProviderName = 'groq' | 'gemini' | 'openrouter';
 
 // ── Rotation + cooldown ─────────────────────────────────────────
 // Requests start at the provider that succeeded most recently (it is
@@ -74,8 +67,8 @@ function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
 function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
   const now = Date.now();
   const base: ProviderName[] = primary === 'groq'
-    ? ['groq', 'gemini', 'github-models', 'openrouter']
-    : ['gemini', 'groq', 'github-models', 'openrouter'];
+    ? ['groq', 'gemini', 'openrouter']
+    : ['gemini', 'groq', 'openrouter'];
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
   for (const p of base) {
@@ -150,9 +143,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
           ? await streamGroq(typedMessages, systemPrompt)
           : provider === 'gemini'
             ? await streamGemini(typedMessages, systemPrompt)
-            : provider === 'github-models'
-              ? await streamGitHubModels(typedMessages, systemPrompt)
-              : await streamOpenRouter(typedMessages, systemPrompt);
+            : await streamOpenRouter(typedMessages, systemPrompt);
       // Never hand the client an empty stream — fail over instead.
       const stream = await ensureFirstToken(rawStream, provider);
       lastGoodProvider = provider;
@@ -520,75 +511,6 @@ async function streamOpenRouter(
     throw new Error(`HTTP ${res.status} — ${errText}`);
   }
   throw new Error('no working OpenRouter model found');
-}
-
-// ── GitHub Models ─────────────────────────────────────────────
-// 150 req/day free on GPT-4o-mini, no card. OpenAI-compatible, so the
-// same SSE streaming shape as Groq works. Auth is a GitHub PAT with
-// `models: read` permission.
-
-let cachedGitHubModelsModel: string | null = null;
-
-async function pickGitHubModelsModel(apiKey: string): Promise<string> {
-  if (cachedGitHubModelsModel) return cachedGitHubModelsModel;
-  let available: Set<string> | null = null;
-  try {
-    const res = await fetch('https://models.github.ai/inference/models', {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      available = new Set(((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[]);
-    }
-  } catch {
-    // Discovery failed — fall back to the preference order blind.
-  }
-  const pick =
-    (available && GITHUB_MODELS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    GITHUB_MODELS_MODEL_PREFERENCE[0];
-  cachedGitHubModelsModel = pick;
-  return pick;
-}
-
-async function streamGitHubModels(
-  messages: IncomingMessage[],
-  systemPrompt: string,
-): Promise<ReadableStream<Uint8Array>> {
-  const apiKey = process.env.GITHUB_MODELS_TOKEN;
-  if (!apiKey) throw new Error('GITHUB_MODELS_TOKEN not set');
-
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const model = await withTimeout(pickGitHubModelsModel(apiKey), 12000, 'GitHub Models discovery');
-    const res = await fetch('https://models.github.ai/inference/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: chatMessagesFor(messages, systemPrompt),
-        temperature: 0.7,
-        max_tokens: 600,
-        stream: true,
-      }),
-      signal: AbortSignal.timeout(FIRST_TOKEN_TIMEOUT_MS + 10000),
-    });
-
-    if (res.ok) {
-      if (!res.body) throw new Error('empty response body');
-      return sseToTextStream(res.body);
-    }
-
-    const errText = (await res.text()).slice(0, 200);
-    if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
-      cachedGitHubModelsModel = null;
-      continue;
-    }
-    throw new Error(`HTTP ${res.status} — ${errText}`);
-  }
-  throw new Error('no working GitHub Models model found');
 }
 
 /** Keyword-based offline replies for when no provider answers. */

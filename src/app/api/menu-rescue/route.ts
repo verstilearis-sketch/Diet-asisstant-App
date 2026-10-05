@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { tryGeminiVision, tryGitHubModelsVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
+import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Menu rescue ───────────────────────────────────────────────
 // POST /api/menu-rescue  { imageBase64, mimeType?, goal?, calorieGoal?, remainingKcal?, restrictions?, region? }
@@ -74,7 +74,6 @@ Rules: prefer high-protein, moderate-calorie options suited to the goal; estimat
 
   const attempts = [
     { name: 'gemini', run: () => tryGeminiVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 }) },
-    { name: 'github-models', run: () => tryGitHubModelsVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 }) },
     { name: 'openrouter', run: () => tryOpenRouterVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 }) },
   ];
   const failures: string[] = [];
