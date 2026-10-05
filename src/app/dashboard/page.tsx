@@ -1239,13 +1239,8 @@ export default function DashboardPage() {
             <div className="glass-card" style={{ padding: '1.4rem' }}>
               <h3 style={{ marginBottom: '0.25rem', fontSize: '0.98rem' }}>Log what you ate</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '1rem' }}>
-                Anything off-plan — describe it or snap a photo, and we'll estimate the nutrition
+                Anything off-plan — describe it and we'll estimate the nutrition
               </p>
-              <input
-                ref={photoInputRef} type="file" accept="image/*" capture="environment"
-                style={{ display: 'none' }} aria-label="Take a photo of your meal"
-                onChange={(e) => handlePhotoMeal(e.target.files?.[0])}
-              />
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <input
                   type="text" className="input-field" style={{ marginBottom: 0, flex: 1 }}
@@ -1256,13 +1251,6 @@ export default function DashboardPage() {
                   maxLength={500}
                   aria-label="Describe what you ate"
                 />
-                <button
-                  type="button" className="btn-ghost" onClick={() => photoInputRef.current?.click()}
-                  disabled={extraBusy} title="Snap a photo of your meal" aria-label="Snap a photo of your meal"
-                  style={{ flexShrink: 0, padding: '0 0.75rem', display: 'inline-flex', alignItems: 'center' }}
-                >
-                  <CameraIcon size={18} />
-                </button>
                 <button
                   type="button" className="btn-primary" onClick={handleEstimateMeal}
                   disabled={!extraText.trim() || extraBusy}

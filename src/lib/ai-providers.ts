@@ -340,7 +340,7 @@ export async function tryOpenRouter(
 export async function tryPollinations(
   systemPrompt: string,
   userPrompt: string,
-  opts: { maxTokens?: number; temperature?: number } = {},
+  opts: { maxTokens?: number; temperature?: number; timeoutMs?: number } = {},
 ): Promise<Attempt> {
   try {
     const res = await fetchWithBackoff('https://text.pollinations.ai/openai', {
@@ -358,7 +358,7 @@ export async function tryPollinations(
         stream: false,
       }),
       // Roomy timeout: long generations (recipes) can take 45s+.
-      signal: AbortSignal.timeout(60000),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? 60000),
     }, 1);
     if (!res.ok) return { ok: false, reason: `HTTP ${res.status}` };
     const data = await res.json();

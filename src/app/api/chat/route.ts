@@ -178,7 +178,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
     const flatPrompt = typedMessages
       .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
       .join('\n\n');
-    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600 });
+    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 40000 });
     if (attempt.ok) {
       return new Response(attempt.reply, {
         headers: {
@@ -202,7 +202,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 // A tight timeout on the first token keeps a hanging provider from
 // stalling the whole conversation.
 
-const FIRST_TOKEN_TIMEOUT_MS = 15000;
+const FIRST_TOKEN_TIMEOUT_MS = 10000;
 
 async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
