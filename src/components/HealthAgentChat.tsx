@@ -45,29 +45,69 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan }: { plan: S
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
-  const fetchReply = async (history: Message[]): Promise<string> => {
-    try {
-      const calcs = computeAll(plan.profile);
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: history,
-          userProfile: plan.profile,
-          planContext: {
-            region: plan.plan.region,
-            hydrationPlan: plan.plan.hydrationPlan,
-            calorieGoal: calcs.dailyCalorieGoal,
-            festival: plan.plan.festivalMode ?? null,
-          },
-        }),
-      });
-      const data = await res.json();
-      if (data.error) return `Something went wrong: ${data.error}`;
-      return data.reply || "I couldn't generate a response — please try again.";
-    } catch {
-      return "I couldn't reach the server. Check your connection and try again.";
+  // Provider/model names must never reach users. The API streams raw text,
+  // so this client-side pass is the backstop (the system prompt is the
+  // first line of defense). Applied once the full reply has arrived.
+  const sanitizeStreamed = (reply: string): string => {
+    let out = reply;
+    for (const token of [
+      'groq', 'gemini', 'openrouter', 'open-router',
+      'llama', 'qwen', 'kimi', 'gpt-oss', 'deepseek', 'mistral', 'gemma',
+      'meta ai', 'created by meta', 'anthropic', 'Muse', 'openai', 'chatgpt',
+    ]) {
+      const pattern = token
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/-/g, '[-_]')
+        .replace(/ /g, '\\s+');
+      out = out.replace(new RegExp(`\\b${pattern}\\b`, 'gi'), 'Nutriq');
     }
+    return out;
+  };
+
+  const fetchReply = async (
+    history: Message[],
+    onFirstChunk: () => void,
+    onChunk: (partial: string) => void,
+  ): Promise<string> => {
+    const calcs = computeAll(plan.profile);
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: history,
+        userProfile: plan.profile,
+        planContext: {
+          region: plan.plan.region,
+          hydrationPlan: plan.plan.hydrationPlan,
+          calorieGoal: calcs.dailyCalorieGoal,
+          festival: plan.plan.festivalMode ?? null,
+        },
+      }),
+    });
+    const contentType = res.headers.get('content-type') || '';
+    // Offline fallback arrives as JSON; live replies stream as plain text.
+    if (contentType.includes('application/json')) {
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      onFirstChunk();
+      return data.reply || "I couldn't generate a response — please try again.";
+    }
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    let first = true;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      full += decoder.decode(value, { stream: true });
+      if (first) {
+        first = false;
+        onFirstChunk();
+      }
+      onChunk(full);
+    }
+    return full;
   };
 
   const sendText = async (text: string) => {
@@ -75,12 +115,36 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan }: { plan: S
     if (!trimmed || isTyping) return;
     const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: trimmed };
     const history = [...messages, userMsg];
-    setMessages(history);
+    const agentId = `a-${Date.now()}`;
+    // Placeholder agent message — fills in live as the stream arrives.
+    setMessages([...history, { id: agentId, role: 'agent', content: '' }]);
     setInput('');
     setIsTyping(true);
-    const reply = await fetchReply(history);
-    setMessages((prev) => [...prev, { id: `a-${Date.now()}`, role: 'agent', content: reply }]);
-    setIsTyping(false);
+    try {
+      const reply = await fetchReply(
+        history,
+        () => setIsTyping(false),
+        (partial) => {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === agentId ? { ...m, content: partial } : m)),
+          );
+        },
+      );
+      const clean = sanitizeStreamed(reply);
+      setMessages((prev) =>
+        prev.map((m) => (m.id === agentId ? { ...m, content: clean } : m)),
+      );
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === agentId
+            ? { ...m, content: "I couldn't reach the server. Check your connection and try again." }
+            : m,
+        ),
+      );
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {

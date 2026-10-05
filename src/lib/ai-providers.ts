@@ -45,10 +45,15 @@ function isTransientError(err: unknown): boolean {
   );
 }
 
-/** fetch() that rides through 429s and transient 5xx with backoff (honors Retry-After). */
+/** fetch() that rides through 429s and transient 5xx with backoff (honors Retry-After).
+ *  Each attempt is capped at 20s so a hanging provider fails fast instead of
+ *  stalling the whole chain. */
 async function fetchWithBackoff(url: string, init: RequestInit, maxRetries = 3): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, init);
+    const res = await fetch(url, {
+      ...init,
+      signal: init.signal ?? AbortSignal.timeout(20000),
+    });
     const retryable = res.status === 429 || (res.status >= 500 && res.status <= 504);
     if (!retryable || attempt >= maxRetries) return res;
     const retryAfter = Number(res.headers.get('retry-after'));
@@ -348,7 +353,18 @@ export async function tryOpenRouterVision(
 async function withSdkBackoff<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await fn();
+      // Cap each SDK call at 25s so a hanging provider fails fast.
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return await Promise.race([
+          fn(),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(new Error('SDK call timed out after 25000ms')), 25000);
+          }),
+        ]);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
     } catch (err) {
       if (!isTransientError(err) || attempt >= maxRetries) throw err;
       await sleep(Math.min(8000, 1000 * 2 ** attempt));

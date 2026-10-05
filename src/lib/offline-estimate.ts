@@ -42,6 +42,7 @@ const UNIT_FOODS: UnitFood[] = [
   { keys: ['biryani', 'biriyani'], label: 'Biryani', cal: 550, protein: 20, carbs: 62, fat: 20 },
   { keys: ['pulao', 'pulav'], label: 'Pulao', cal: 400, protein: 10, carbs: 60, fat: 10 },
   { keys: ['rice', 'chawal'], label: 'Cooked rice (1 cup)', cal: 205, protein: 4, carbs: 45, fat: 0.5 },
+  { keys: ['fried rice', 'schezwan rice', 'veg fried rice', 'egg fried rice', 'chicken fried rice'], label: 'Fried rice (1 cup)', cal: 350, protein: 8, carbs: 55, fat: 12 },
   { keys: ['khichdi'], label: 'Khichdi', cal: 220, protein: 9, carbs: 36, fat: 5 },
   { keys: ['poha'], label: 'Poha', cal: 180, protein: 4, carbs: 32, fat: 4 },
   { keys: ['upma'], label: 'Upma', cal: 200, protein: 5, carbs: 34, fat: 5 },

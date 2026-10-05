@@ -46,7 +46,6 @@ interface IncomingMessage {
   content: string;
 }
 
-type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
 type ProviderName = 'groq' | 'gemini' | 'openrouter';
 
 // ── Rotation + cooldown ─────────────────────────────────────────
@@ -74,27 +73,7 @@ function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
   return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
 }
 
-// ── Reply hygiene ───────────────────────────────────────────────
-// Provider/model names must never reach users. The system prompt instructs
-// the model to stay silent about them; this is the backstop in case a
-// provider's model volunteers its identity anyway.
-const HIDDEN_TOKENS = [
-  'groq', 'gemini', 'openrouter', 'open-router',
-  'llama', 'qwen', 'kimi', 'gpt-oss', 'deepseek', 'mistral', 'gemma',
-  'meta ai', 'created by meta', 'anthropic', 'Muse', 'openai', 'chatgpt',
-];
-
-function sanitizeReply(reply: string): string {
-  let out = reply;
-  for (const token of HIDDEN_TOKENS) {
-    const pattern = token
-      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      .replace(/-/g, '[-_]')
-      .replace(/ /g, '\\s+');
-    out = out.replace(new RegExp(`\\b${pattern}\\b`, 'gi'), 'Nutriq');
-  }
-  return out;
-}
+// ── POST handler ────────────────────────────────────────────
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -143,25 +122,110 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 
   const order = rotatedOrder(PRIMARY);
 
+  // Stream the first working provider's response straight to the client, so
+  // the user sees words appearing instead of staring at a spinner. If every
+  // provider fails, fall through to the offline JSON reply.
   const failures: string[] = [];
   for (const provider of order) {
-    const attempt =
-      provider === 'groq'
-        ? await tryGroq(typedMessages, systemPrompt)
-        : provider === 'gemini'
-          ? await tryGemini(typedMessages, systemPrompt)
-          : await tryOpenRouter(typedMessages, systemPrompt);
-    if (attempt.ok) {
-      return NextResponse.json({ reply: sanitizeReply(attempt.reply) });
-    }
-    failures.push(`${provider} (${attempt.reason})`);
-    if (/429|rate.?limit|quota|resource.?exhausted/i.test(attempt.reason)) {
-      markCooldown(provider);
+    try {
+      const stream =
+        provider === 'groq'
+          ? await streamGroq(typedMessages, systemPrompt)
+          : provider === 'gemini'
+            ? await streamGemini(typedMessages, systemPrompt)
+            : await streamOpenRouter(typedMessages, systemPrompt);
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+        },
+      });
+    } catch (err) {
+      const reason = String(err && typeof err === 'object' && 'message' in err ? (err as Error).message : err).slice(0, 120);
+      failures.push(`${provider} (${reason})`);
+      if (/429|rate.?limit|quota|resource.?exhausted/i.test(reason)) {
+        markCooldown(provider);
+      }
     }
   }
 
   console.error('Health coach: all AI providers failed —', failures.join('; '));
   return getFallback(typedMessages, userProfile, planContext);
+}
+
+// ── Streaming helpers ─────────────────────────────────────────
+// Each provider function below returns a ReadableStream of plain-text
+// chunks, or throws so the chain can fail over to the next provider.
+// A tight timeout on the first token keeps a hanging provider from
+// stalling the whole conversation.
+
+const FIRST_TOKEN_TIMEOUT_MS = 15000;
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/** Convert an OpenAI-style SSE stream into a plain-text ReadableStream. */
+function sseToTextStream(body: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  let buffer = '';
+  let closed = false;
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      if (closed) return;
+      const { done, value } = await reader.read();
+      if (done) {
+        closed = true;
+        controller.close();
+        return;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t.startsWith('data:')) continue;
+        const payload = t.slice(5).trim();
+        if (payload === '[DONE]') {
+          closed = true;
+          controller.close();
+          return;
+        }
+        try {
+          const text: string = JSON.parse(payload)?.choices?.[0]?.delta?.content ?? '';
+          if (text) controller.enqueue(encoder.encode(text));
+        } catch {
+          // Skip malformed SSE lines.
+        }
+      }
+    },
+    cancel() {
+      closed = true;
+      reader.cancel().catch(() => {});
+    },
+  });
+}
+
+function chatMessagesFor(messages: IncomingMessage[], systemPrompt: string) {
+  return [
+    { role: 'system', content: systemPrompt },
+    ...messages.map((m) => ({
+      role: m.role === 'agent' ? 'assistant' : 'user',
+      content: String(m.content ?? ''),
+    })),
+  ];
 }
 
 // ── Groq ──────────────────────────────────────────────────────
@@ -177,6 +241,7 @@ async function pickGroqModel(apiKey: string): Promise<string> {
   try {
     const res = await fetch('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10000),
     });
     if (res.ok) {
       const data = await res.json();
@@ -192,88 +257,65 @@ async function pickGroqModel(apiKey: string): Promise<string> {
   return pick;
 }
 
-async function tryGroq(
+async function streamGroq(
   messages: IncomingMessage[],
-  systemPrompt: string
-): Promise<Attempt> {
+  systemPrompt: string,
+): Promise<ReadableStream<Uint8Array>> {
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    return { ok: false, reason: 'GROQ_API_KEY not set' };
-  }
+  if (!apiKey) throw new Error('GROQ_API_KEY not set');
 
-  try {
-    const chatMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages.map((m) => ({
-        role: m.role === 'agent' ? 'assistant' : 'user',
-        content: String(m.content ?? ''),
-      })),
-    ];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const model = await withTimeout(pickGroqModel(apiKey), 12000, 'Groq model discovery');
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: chatMessagesFor(messages, systemPrompt),
+        temperature: 0.7,
+        max_tokens: 600,
+        stream: true,
+      }),
+      signal: AbortSignal.timeout(FIRST_TOKEN_TIMEOUT_MS + 10000),
+    });
 
-    const attempted = new Set<string>();
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const model = await pickGroqModel(apiKey);
-      if (attempted.has(model)) break;
-      attempted.add(model);
-
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: chatMessages,
-          temperature: 0.7,
-          max_tokens: 600,
-          stream: false,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const reply = data?.choices?.[0]?.message?.content?.trim();
-        if (!reply) {
-          return { ok: false, reason: 'empty response body' };
-        }
-        return { ok: true, reply };
-      }
-
-      const errText = (await res.text()).slice(0, 200);
-      if (res.status === 404 && errText.includes('model_not_found')) {
-        // Model vanished between discovery and use — rediscover and retry once.
-        cachedGroqModel = null;
-        continue;
-      }
-      return { ok: false, reason: `HTTP ${res.status} — ${errText}` };
+    if (res.ok) {
+      if (!res.body) throw new Error('empty response body');
+      return sseToTextStream(res.body);
     }
-    return { ok: false, reason: 'no working Groq model found' };
-  } catch (err) {
-    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+
+    const errText = (await res.text()).slice(0, 200);
+    if (res.status === 404 && errText.includes('model_not_found')) {
+      // Model vanished between discovery and use — rediscover and retry once.
+      cachedGroqModel = null;
+      continue;
+    }
+    throw new Error(`HTTP ${res.status} — ${errText}`);
   }
+  throw new Error('no working Groq model found');
 }
 
 // ── Gemini ────────────────────────────────────────────────────
 
-async function tryGemini(
+async function streamGemini(
   messages: IncomingMessage[],
-  systemPrompt: string
-): Promise<Attempt> {
+  systemPrompt: string,
+): Promise<ReadableStream<Uint8Array>> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return { ok: false, reason: 'GEMINI_API_KEY not set' };
-  }
+  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const contents = messages.map((m) => ({
-      // Gemini uses "model" where OpenAI-style APIs use "assistant"
-      role: m.role === 'agent' ? 'model' : 'user',
-      parts: [{ text: String(m.content ?? '') }],
-    }));
+  const ai = new GoogleGenAI({ apiKey });
+  const contents = messages.map((m) => ({
+    // Gemini uses "model" where OpenAI-style APIs use "assistant"
+    role: m.role === 'agent' ? 'model' : 'user',
+    parts: [{ text: String(m.content ?? '') }],
+  }));
 
-    const response = await ai.models.generateContent({
+  const stream = await withTimeout(
+    ai.models.generateContentStream({
       model: GEMINI_MODEL,
       contents,
       config: {
@@ -281,16 +323,39 @@ async function tryGemini(
         temperature: 0.7,
         maxOutputTokens: 600,
       },
-    });
+    }),
+    FIRST_TOKEN_TIMEOUT_MS,
+    'Gemini stream start',
+  );
 
-    const reply = response.text?.trim();
-    if (!reply) {
-      return { ok: false, reason: 'empty response body' };
-    }
-    return { ok: true, reply };
-  } catch (err) {
-    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
-  }
+  const encoder = new TextEncoder();
+  const iterator = stream[Symbol.asyncIterator]();
+  // Fail fast if the first chunk doesn't arrive promptly.
+  const first = await withTimeout(iterator.next(), FIRST_TOKEN_TIMEOUT_MS, 'Gemini first token');
+  const firstText: string = (first.value as { text?: string } | undefined)?.text ?? '';
+  if (first.done || !firstText) throw new Error('empty response body');
+
+  let closed = false;
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(encoder.encode(firstText));
+    },
+    async pull(controller) {
+      if (closed) return;
+      const { done, value } = await iterator.next();
+      if (done) {
+        closed = true;
+        controller.close();
+        return;
+      }
+      const text: string = (value as { text?: string } | undefined)?.text ?? '';
+      if (text) controller.enqueue(encoder.encode(text));
+    },
+    async cancel() {
+      closed = true;
+      await iterator.return?.(undefined);
+    },
+  });
 }
 
 // ── OpenRouter ────────────────────────────────────────────────
@@ -316,6 +381,7 @@ async function pickOpenRouterModel(apiKey: string): Promise<string> {
   try {
     const res = await fetch('https://openrouter.ai/api/v1/models', {
       headers: openRouterHeaders(apiKey),
+      signal: AbortSignal.timeout(10000),
     });
     if (res.ok) {
       const data = await res.json();
@@ -331,68 +397,43 @@ async function pickOpenRouterModel(apiKey: string): Promise<string> {
   return pick;
 }
 
-async function tryOpenRouter(
+async function streamOpenRouter(
   messages: IncomingMessage[],
-  systemPrompt: string
-): Promise<Attempt> {
+  systemPrompt: string,
+): Promise<ReadableStream<Uint8Array>> {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return { ok: false, reason: 'OPENROUTER_API_KEY not set' };
-  }
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
 
-  try {
-    const chatMessages = [
-      { role: 'system', content: systemPrompt },
-      ...messages.map((m) => ({
-        role: m.role === 'agent' ? 'assistant' : 'user',
-        content: String(m.content ?? ''),
-      })),
-    ];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const model = await withTimeout(pickOpenRouterModel(apiKey), 12000, 'OpenRouter model discovery');
+    if (!model) throw new Error('no working OpenRouter model found');
 
-    const attempted = new Set<string>();
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const model = await pickOpenRouterModel(apiKey);
-      if (!model || attempted.has(model)) break;
-      attempted.add(model);
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: openRouterHeaders(apiKey),
+      body: JSON.stringify({
+        model,
+        messages: chatMessagesFor(messages, systemPrompt),
+        temperature: 0.7,
+        max_tokens: 600,
+        stream: true,
+      }),
+      signal: AbortSignal.timeout(FIRST_TOKEN_TIMEOUT_MS + 10000),
+    });
 
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: openRouterHeaders(apiKey),
-        body: JSON.stringify({
-          model,
-          messages: chatMessages,
-          temperature: 0.7,
-          max_tokens: 600,
-          stream: false,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const reply = data?.choices?.[0]?.message?.content?.trim();
-        if (!reply) {
-          return { ok: false, reason: 'empty response body' };
-        }
-        return { ok: true, reply };
-      }
-
-      const errText = (await res.text()).slice(0, 200);
-      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
-        cachedOpenRouterModel = null;
-        continue;
-      }
-      // 429s: OpenRouter sends Retry-After; wait once, then let the chain move on.
-      if (res.status === 429) {
-        const waitMs = Math.min(10000, (Number(res.headers.get('retry-after')) || 3) * 1000);
-        await new Promise((r) => setTimeout(r, waitMs));
-        continue;
-      }
-      return { ok: false, reason: `HTTP ${res.status} — ${errText}` };
+    if (res.ok) {
+      if (!res.body) throw new Error('empty response body');
+      return sseToTextStream(res.body);
     }
-    return { ok: false, reason: 'no working OpenRouter model found' };
-  } catch (err) {
-    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+
+    const errText = (await res.text()).slice(0, 200);
+    if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+      cachedOpenRouterModel = null;
+      continue;
+    }
+    throw new Error(`HTTP ${res.status} — ${errText}`);
   }
+  throw new Error('no working OpenRouter model found');
 }
 
 /** Keyword-based offline replies for when no provider answers. */
