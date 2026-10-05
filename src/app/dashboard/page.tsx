@@ -135,6 +135,7 @@ export default function DashboardPage() {
   const [savedAt, setSavedAt] = useState('');
   const [todayStr] = useState(getTodayString());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [recipeMeal, setRecipeMeal] = useState<Meal | null>(null);
 
   useEffect(() => {
@@ -756,7 +757,7 @@ export default function DashboardPage() {
             <button className="btn-ghost" onClick={() => setShowResetConfirm(true)} style={{ fontSize: '0.85rem' }} title="Delete your profile, plans and logs from the cloud">
               <TrashIcon size={15} /> Reset data
             </button>
-            <button className="btn-ghost" onClick={handleSignOut} style={{ fontSize: '0.85rem', color: 'var(--color-danger)' }}>
+            <button className="btn-ghost" onClick={() => setShowSignOutConfirm(true)} style={{ fontSize: '0.85rem', color: 'var(--color-danger)' }}>
               <LogoutIcon size={15} /> Sign out
             </button>
           </div>
@@ -1581,6 +1582,35 @@ export default function DashboardPage() {
               </button>
               <button className="btn-danger" onClick={handleResetAll} style={{ padding: '0.65rem 1.3rem' }}>
                 Delete everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showSignOutConfirm && (
+        <div className="modal-overlay" onClick={() => setShowSignOutConfirm(false)} role="dialog" aria-modal="true" aria-label="Confirm sign out">
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, padding: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <span style={{
+                width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+                background: 'var(--color-surface)', color: 'var(--color-text)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <LogoutIcon size={18} />
+              </span>
+              <div>
+                <h3 style={{ fontSize: '1.02rem', marginBottom: '0.35rem' }}>Sign out?</h3>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
+                  You'll need to sign in again to see your plan and logs. Your data stays saved in the cloud.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setShowSignOutConfirm(false)} style={{ padding: '0.65rem 1.3rem' }}>
+                Stay signed in
+              </button>
+              <button className="btn-danger" onClick={handleSignOut} style={{ padding: '0.65rem 1.3rem' }}>
+                Sign out
               </button>
             </div>
           </div>
