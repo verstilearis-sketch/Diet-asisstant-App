@@ -691,10 +691,10 @@ export default function DashboardPage() {
   })();
   const selectedDayPlan = plan.weeklyPlan[activeDay];
 
-  const mealsList = MEAL_META.map((m) => selectedDayPlan[m.key]);
+  const mealsList = MEAL_META.map((m) => selectedDayPlan[m.key]).filter(Boolean);
   const extraCals = (log: DailyLog) => (log.extraMeals || []).reduce((a, m) => a + m.calories, 0);
-  const calsConsumed = mealsList.reduce((acc, meal, i) => acc + (dailyLog.mealsCompleted[i] ? meal.calories : 0), 0) + extraCals(dailyLog);
-  const draftCalsConsumed = mealsList.reduce((acc, meal, i) => acc + (draftLog.mealsCompleted[i] ? meal.calories : 0), 0) + extraCals(draftLog);
+  const calsConsumed = mealsList.reduce((acc, meal, i) => acc + (dailyLog.mealsCompleted[i] && meal ? meal.calories : 0), 0) + extraCals(dailyLog);
+  const draftCalsConsumed = mealsList.reduce((acc, meal, i) => acc + (draftLog.mealsCompleted[i] && meal ? meal.calories : 0), 0) + extraCals(draftLog);
   const draftBurned = (draftLog.exercises || []).reduce((a, e) => a + e.caloriesBurned, 0);
   const draftNet = draftCalsConsumed - draftBurned;
   const exerciseDoneToday = dailyLog.exerciseDone || (dailyLog.exercises || []).length > 0;
@@ -1145,6 +1145,9 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {MEAL_META.map((meta) => {
                 const meal = selectedDayPlan[meta.key];
+                // Defensive: skip slots with no meal data rather than crashing
+                // the whole dashboard (e.g. plans saved by older versions).
+                if (!meal) return null;
                 // New plans carry why-lines; older saved plans and swapped-in
                 // meals get them computed on the fly from the same numbers.
                 const why = meal.why ?? mealWhy(meal, meta.key, {
