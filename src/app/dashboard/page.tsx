@@ -1574,7 +1574,7 @@ export default function DashboardPage() {
       </div>
 
       <ChatErrorBoundary>
-        <HealthAgentChat plan={savedPlan} />
+        <HealthAgentChat plan={savedPlan} userName={userName} />
       </ChatErrorBoundary>
 
       {recipeMeal && (

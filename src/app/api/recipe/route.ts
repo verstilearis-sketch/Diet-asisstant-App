@@ -12,9 +12,20 @@ function parseRecipeJson(raw: string): {
 } | null {
   const obj = extractJsonObject(raw);
   if (!obj || !Array.isArray(obj.ingredients) || !Array.isArray(obj.steps)) return null;
+  // Some models repeat a sentence twice within a step ("Heat oil. Heat oil.").
+  // Collapse consecutive duplicate sentences.
+  const dedup = (text: string): string => {
+    const sentences = text.match(/[^.!?]+[.!?]+["']?/g) || [text];
+    const out: string[] = [];
+    for (const s of sentences) {
+      const t = s.trim();
+      if (t && t.toLowerCase() !== (out[out.length - 1] || '').trim().toLowerCase()) out.push(s.trim());
+    }
+    return out.join(' ').trim() || text.trim();
+  };
   return {
-    ingredients: (obj.ingredients as unknown[]).map(String).filter(Boolean).slice(0, 20),
-    steps: (obj.steps as unknown[]).map(String).filter(Boolean).slice(0, 15),
+    ingredients: (obj.ingredients as unknown[]).map((x) => dedup(String(x))).filter(Boolean).slice(0, 20),
+    steps: (obj.steps as unknown[]).map((x) => dedup(String(x))).filter(Boolean).slice(0, 15),
     servings: Number(obj.servings) > 0 ? Math.round(Number(obj.servings)) : 2,
     prepTime: String(obj.prepTime || '').slice(0, 30),
   };

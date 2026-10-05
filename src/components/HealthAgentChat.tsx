@@ -23,18 +23,22 @@ function firstName(name: string): string {
 }
 
 function prettyGoal(goal: string): string {
-  return (goal || 'health').replace(/_/g, ' ');
+  const labels: Record<string, string> = {
+    lose_weight: 'Weight Loss', gain_weight: 'Muscle Gain', maintain: 'Maintenance',
+    improve_health: 'Health', athletic: 'Athletic Performance',
+  };
+  return labels[goal] || (goal || 'health').replace(/_/g, ' ');
 }
 
 // Memoized: the parent dashboard re-renders on every keystroke, but the chat
 // (and its react-markdown parsing) only needs to update when the plan changes.
-export const HealthAgentChat = memo(function HealthAgentChat({ plan }: { plan: SavedPlan }) {
+export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }: { plan: SavedPlan; userName?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'init',
       role: 'agent',
-      content: `Hi ${firstName(plan.profile.name)} — I'm your health coach. Ask me anything about your **${prettyGoal(plan.profile.goal)}** plan, nutrition, or training.`,
+      content: `Hi ${firstName(userName || plan.profile.name)} — I'm your health coach. Ask me anything about your **${prettyGoal(plan.profile.goal)}** plan, nutrition, or training.`,
     },
   ]);
   const [input, setInput] = useState('');
