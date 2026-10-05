@@ -68,8 +68,27 @@ const FAQS = [
   },
 ];
 
-// ── Sample plan numbers ──
-// Sample day at 2,100 kcal target (480 + 680 + 240 + 650)
+// ── Annotated day ──
+// A Tuesday from a sample plan, with the reasoning shown. The "why" lines are
+// the point: the plan shows its work instead of handing you a menu.
+const ANNOTATED_DAY = [
+  {
+    meal: 'Breakfast', name: '3-egg bhurji, 2 toast, glass of milk', kcal: 480, protein: 28,
+    why: 'Big day ahead — front-loading protein keeps you full till lunch.',
+  },
+  {
+    meal: 'Lunch', name: 'Grilled chicken, brown rice, dal', kcal: 680, protein: 52,
+    why: 'Leg day. Carbs timed before your workout, protein after.',
+  },
+  {
+    meal: 'Snack', name: 'Greek yogurt, roasted makhana', kcal: 240, protein: 18,
+    why: 'You’ll be at 98g of your 128g protein — this closes the gap without spoiling dinner.',
+  },
+  {
+    meal: 'Dinner', name: 'Paneer tikka, 2 rotis, salad', kcal: 650, protein: 30,
+    why: 'Light enough to land you at 2,050 of your 2,100 kcal.',
+  },
+];
 
 export default function LandingPage() {
   const router = useRouter();
@@ -130,40 +149,29 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Sample plan — the actual output of the questionnaire */}
+          {/* Annotated day — the plan showing its work */}
           <div className="glass-card" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.1rem' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
-                Your 7-day plan
+                Tuesday, your plan
               </span>
               <span className="badge badge-green">Sample</span>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '1.1rem' }}>
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => (
-                <span key={d} style={{
-                  fontSize: '0.72rem', fontWeight: 600, padding: '0.32rem 0', flex: 1, textAlign: 'center',
-                  borderRadius: '0.5rem',
-                  background: i === 0 ? 'var(--color-accent-soft)' : 'transparent',
-                  color: i === 0 ? 'var(--color-accent)' : 'var(--color-faint)',
-                  border: i === 0 ? '1px solid var(--color-accent)' : '1px solid transparent',
-                }}>{d}</span>
-              ))}
-            </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1rem' }}>
-              {[
-                { meal: 'Breakfast', name: '3-egg bhurji, 2 toast, glass of milk', kcal: 480, protein: 28 },
-                { meal: 'Lunch', name: 'Grilled chicken, brown rice, dal', kcal: 680, protein: 52 },
-                { meal: 'Snack', name: 'Greek yogurt, roasted makhana', kcal: 240, protein: 18 },
-                { meal: 'Dinner', name: 'Paneer tikka, 2 rotis, salad', kcal: 650, protein: 30 },
-              ].map((m) => (
-                <div key={m.meal} style={{ padding: '0.6rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.6rem' }}>
+              {ANNOTATED_DAY.map((m) => (
+                <div key={m.meal} style={{ padding: '0.65rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.6rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.15rem' }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-accent)' }}>{m.meal}</span>
                     <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--color-muted)' }}>{m.kcal} kcal · {m.protein}g protein</span>
                   </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 550 }}>{m.name}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 550, marginBottom: '0.35rem' }}>{m.name}</div>
+                  <div style={{
+                    fontSize: '0.76rem', color: 'var(--color-muted)', lineHeight: 1.55,
+                    borderLeft: '2px solid var(--color-accent)', paddingLeft: '0.55rem',
+                  }}>
+                    <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>Why: </span>{m.why}
+                  </div>
                 </div>
               ))}
             </div>
@@ -173,7 +181,7 @@ export default function LandingPage() {
               <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-accent)' }}>2,050 / 2,100 kcal</span>
             </div>
             <p style={{ fontSize: '0.76rem', color: 'var(--color-muted)' }}>
-              Matched to your cuisine, allergies and goal — swaps in one tap.
+              Every meal placed for a reason — nothing copied from a template.
             </p>
           </div>
         </div>
