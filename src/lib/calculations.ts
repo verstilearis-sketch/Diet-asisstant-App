@@ -23,6 +23,8 @@ export interface UserProfile {
   sleepHours?: number;
   stressLevel?: number; // 1-5
   workType?: 'desk' | 'physical' | 'mixed';
+  /** When workType is 'mixed': how the week splits between desk and physical work. */
+  workMix?: 'mostly_desk' | 'balanced' | 'mostly_physical';
   dietaryRestrictions?: string[];
   allergies?: string[];
   location?: string;
@@ -76,6 +78,18 @@ export function calculateTDEE(bmr: number, activityLevel: ActivityLevel): number
   return Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
 }
 
+/** Small TDEE nudge from the kind of work someone does — the activity-level
+ *  multiplier alone doesn't capture an 8-hour physical shift vs a desk day. */
+export function workTypeFactor(workType?: UserProfile['workType'], workMix?: UserProfile['workMix']): number {
+  if (workType === 'physical') return 1.06;
+  if (workType === 'mixed') {
+    if (workMix === 'mostly_desk') return 1.02;
+    if (workMix === 'mostly_physical') return 1.05;
+    return 1.035; // balanced, or older profiles without a mix set
+  }
+  return 1.0; // desk (or unset): activity level already covers it
+}
+
 export function calculateDailyCalorieGoal(tdee: number, goal: Goal): number {
   switch (goal) {
     case 'lose_weight': return tdee - 500;   // ~0.5 kg/week loss
@@ -125,7 +139,7 @@ export function computeAll(profile: UserProfile): Calculations {
   const bmi = calculateBMI(profile.weightKg, profile.heightCm);
   const bmiCategory = getBMICategory(bmi);
   const bmr = calculateBMR(profile);
-  const tdee = calculateTDEE(bmr, profile.activityLevel);
+  const tdee = Math.round(calculateTDEE(bmr, profile.activityLevel) * workTypeFactor(profile.workType, profile.workMix));
   const dailyCalorieGoal = calculateDailyCalorieGoal(tdee, profile.goal);
   const macros = calculateMacros(dailyCalorieGoal, profile.goal, profile.weightKg);
   const waterLiters = calculateWater(profile.weightKg, profile.activityLevel);

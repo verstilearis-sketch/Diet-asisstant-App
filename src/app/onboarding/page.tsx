@@ -468,6 +468,25 @@ export default function OnboardingPage() {
                     </button>
                   ))}
                 </div>
+                {profile.workType === 'mixed' && (
+                  <div className="fade-in-up" style={{ marginTop: '0.7rem' }}>
+                    <span className="input-label" style={{ fontSize: '0.8rem' }}>How does your week split?</span>
+                    <div style={{ display: 'flex', gap: '0.6rem' }}>
+                      {[
+                        { v: 'mostly_desk', l: 'Mostly desk' },
+                        { v: 'balanced', l: 'Half & half' },
+                        { v: 'mostly_physical', l: 'Mostly physical' },
+                      ].map((m) => (
+                        <button key={m.v} type="button"
+                          className={`option-card ${(profile.workMix || 'balanced') === m.v ? 'selected' : ''}`}
+                          style={{ flex: 1, justifyContent: 'center', padding: '0.6rem 0.4rem', fontSize: '0.8rem', fontWeight: 600 }}
+                          onClick={() => update('workMix', m.v)}>
+                          {m.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
