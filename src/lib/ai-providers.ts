@@ -36,17 +36,21 @@ let cachedGroqModel: string | null = null;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function isRateLimitError(err: unknown): boolean {
+function isTransientError(err: unknown): boolean {
   const status = (err as { status?: number })?.status;
   if (status === 429) return true;
-  return /429|rate.?limit|quota|resource.?exhausted/i.test(String(err).slice(0, 300));
+  if (typeof status === 'number' && status >= 500 && status <= 504) return true;
+  return /429|rate.?limit|quota|resource.?exhausted|50[0234]|overloaded|unavailable|deadline|timed? ?out/i.test(
+    String(err).slice(0, 300),
+  );
 }
 
-/** fetch() that rides through 429s with backoff (honors Retry-After). */
+/** fetch() that rides through 429s and transient 5xx with backoff (honors Retry-After). */
 async function fetchWithBackoff(url: string, init: RequestInit, maxRetries = 3): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
     const res = await fetch(url, init);
-    if (res.status !== 429 || attempt >= maxRetries) return res;
+    const retryable = res.status === 429 || (res.status >= 500 && res.status <= 504);
+    if (!retryable || attempt >= maxRetries) return res;
     const retryAfter = Number(res.headers.get('retry-after'));
     const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
       ? Math.min(30000, retryAfter * 1000)
@@ -340,13 +344,13 @@ export async function tryOpenRouterVision(
   }
 }
 
-/** Wrap a Gemini SDK call with 429 backoff. */
+/** Wrap a Gemini SDK call with backoff for 429s and transient 5xx. */
 async function withSdkBackoff<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await fn();
     } catch (err) {
-      if (!isRateLimitError(err) || attempt >= maxRetries) throw err;
+      if (!isTransientError(err) || attempt >= maxRetries) throw err;
       await sleep(Math.min(8000, 1000 * 2 ** attempt));
     }
   }

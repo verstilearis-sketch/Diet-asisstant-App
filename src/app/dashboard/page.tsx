@@ -285,19 +285,31 @@ export default function DashboardPage() {
     setPhotoVerdict(null);
     try {
       const { base64, mimeType } = await processPhotoFile(file);
-      const res = await fetch('/api/parse-meal-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: base64,
-          mimeType,
-          goal: savedPlan.profile.goal,
-          remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
-          restrictions: savedPlan.profile.dietaryRestrictions,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Could not read this photo');
+      const analyzePhoto = async () => {
+        const res = await fetch('/api/parse-meal-photo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64,
+            mimeType,
+            goal: savedPlan.profile.goal,
+            remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
+            restrictions: savedPlan.profile.dietaryRestrictions,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Could not read this photo');
+        return data;
+      };
+      let data: Awaited<ReturnType<typeof analyzePhoto>>;
+      try {
+        data = await analyzePhoto();
+      } catch {
+        // One silent retry — vision providers blip under load; don't make the
+        // user re-upload for a transient failure.
+        await new Promise((r) => setTimeout(r, 2500));
+        data = await analyzePhoto();
+      }
       const m = data.meal as {
         name: string; calories: number; proteinG: number; carbsG: number; fatG: number;
         verdict: 'yes' | 'okay' | 'skip'; verdictWhy: string;
