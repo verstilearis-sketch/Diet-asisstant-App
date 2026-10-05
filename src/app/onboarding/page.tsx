@@ -134,6 +134,12 @@ export default function OnboardingPage() {
     if (step === 5) handleGenerate();
   }, [step, handleGenerate]);
 
+  // Reset scroll when the step changes — otherwise the new step's heading
+  // can end up hidden under the sticky header.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [step]);
+
   const bmi = profile.weightKg && profile.heightCm
     ? calculateBMI(profile.weightKg, profile.heightCm) : null;
 
