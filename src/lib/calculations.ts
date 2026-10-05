@@ -25,6 +25,13 @@ export interface UserProfile {
   workType?: 'desk' | 'physical' | 'mixed';
   /** When workType is 'mixed': how the week splits between desk and physical work. */
   workMix?: 'mostly_desk' | 'balanced' | 'mostly_physical';
+  /** What the user usually eats — free text, used to personalize the plan. */
+  usualBreakfast?: string;
+  usualLunch?: string;
+  usualDinner?: string;
+  /** Favorite foods (comma-separated) and cuisine — the plan leans into these. */
+  favoriteFoods?: string;
+  favoriteCuisine?: string;
   dietaryRestrictions?: string[];
   allergies?: string[];
   location?: string;

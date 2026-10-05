@@ -541,6 +541,44 @@ export default function OnboardingPage() {
 
               <div>
                 <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
+                  Your eating habits <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— we'll build your plan around food you actually like</span>
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+                  <div>
+                    <label className="input-label" htmlFor="habit-breakfast" style={{ fontSize: '0.8rem' }}>Usual breakfast</label>
+                    <input id="habit-breakfast" className="input-field" style={{ marginBottom: 0 }}
+                      value={profile.usualBreakfast || ''} onChange={(e) => update('usualBreakfast', e.target.value)}
+                      placeholder="e.g. parathas and chai, or oats" maxLength={120} />
+                  </div>
+                  <div>
+                    <label className="input-label" htmlFor="habit-lunch" style={{ fontSize: '0.8rem' }}>Usual lunch</label>
+                    <input id="habit-lunch" className="input-field" style={{ marginBottom: 0 }}
+                      value={profile.usualLunch || ''} onChange={(e) => update('usualLunch', e.target.value)}
+                      placeholder="e.g. rice, dal, sabzi" maxLength={120} />
+                  </div>
+                  <div>
+                    <label className="input-label" htmlFor="habit-dinner" style={{ fontSize: '0.8rem' }}>Usual dinner</label>
+                    <input id="habit-dinner" className="input-field" style={{ marginBottom: 0 }}
+                      value={profile.usualDinner || ''} onChange={(e) => update('usualDinner', e.target.value)}
+                      placeholder="e.g. roti sabzi, or khichdi" maxLength={120} />
+                  </div>
+                  <div>
+                    <label className="input-label" htmlFor="habit-fav" style={{ fontSize: '0.8rem' }}>Foods you love <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— comma separated</span></label>
+                    <input id="habit-fav" className="input-field" style={{ marginBottom: 0 }}
+                      value={profile.favoriteFoods || ''} onChange={(e) => update('favoriteFoods', e.target.value)}
+                      placeholder="e.g. paneer, biryani, momos" maxLength={200} />
+                  </div>
+                  <div>
+                    <label className="input-label" htmlFor="habit-cuisine" style={{ fontSize: '0.8rem' }}>Favourite cuisine</label>
+                    <input id="habit-cuisine" className="input-field" style={{ marginBottom: 0 }}
+                      value={profile.favoriteCuisine || ''} onChange={(e) => update('favoriteCuisine', e.target.value)}
+                      placeholder="e.g. Kashmiri, South Indian, Chinese" maxLength={60} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
                   Dietary restrictions <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— select all that apply</span>
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>

@@ -1830,6 +1830,18 @@ function pickSmart(
         if (tasteMatchesAny(f.name, taste.dislikes)) s -= 2;
         else if (tasteMatchesAny(f.name, taste.likes)) s += 0.25;
       }
+      // Familiarity: the plan should feel like THEIR food, made healthier —
+      // not a stranger's menu. Boost what they usually eat and love.
+      const usualForSlot =
+        type === 'breakfast' ? profile.usualBreakfast
+        : type === 'lunch' ? profile.usualLunch
+        : type === 'dinner' ? profile.usualDinner
+        : undefined;
+      if (usualForSlot && tasteNameMatches(f.name, usualForSlot)) s += 0.3;
+      const favFoods = (profile.favoriteFoods || '').split(',').map((x) => x.trim()).filter(Boolean);
+      if (favFoods.length && tasteMatchesAny(f.name, favFoods)) s += 0.2;
+      const favCuisine = (profile.favoriteCuisine || '').toLowerCase().trim();
+      if (favCuisine.length >= 3 && (f.name + ' ' + f.description).toLowerCase().includes(favCuisine)) s += 0.15;
       scored.push({ f, s });
     }
   };
