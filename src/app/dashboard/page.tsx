@@ -17,13 +17,18 @@ import { buildTasteConstraints, hasTasteSignal, recordSwap } from '@/lib/taste';
 import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
 import { MacroDonutPlaceholder, type MacroDatum } from '@/components/MacroDonut';
+// HealthAgentChat pulls in react-markdown (heavy) but isn't visible until the
+// user opens it — load it after the main page so first paint stays fast.
+const HealthAgentChat = dynamic(
+  () => import('@/components/HealthAgentChat').then((m) => m.HealthAgentChat),
+  { ssr: false },
+);
 // Recharts is heavy — load it lazily so it never blocks the initial dashboard
 // render. The memoized donut only re-renders when its data actually changes.
 const MacroDonut = dynamic(
   () => import('@/components/MacroDonut').then((m) => m.MacroDonut),
   { ssr: false, loading: () => <MacroDonutPlaceholder /> },
 );
-import { HealthAgentChat } from '@/components/HealthAgentChat';
 import { ChatErrorBoundary } from '@/components/ChatErrorBoundary';
 import {
   NutriqIcon, DashboardIcon, UtensilsIcon, ClipboardIcon, CartIcon,
