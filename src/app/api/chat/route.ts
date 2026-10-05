@@ -145,7 +145,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
   const failures: string[] = [];
   for (const provider of order) {
     try {
-      const stream =
+      const rawStream =
         provider === 'groq'
           ? await streamGroq(typedMessages, systemPrompt)
           : provider === 'gemini'
@@ -153,6 +153,8 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
             : provider === 'github-models'
               ? await streamGitHubModels(typedMessages, systemPrompt)
               : await streamOpenRouter(typedMessages, systemPrompt);
+      // Never hand the client an empty stream — fail over instead.
+      const stream = await ensureFirstToken(rawStream, provider);
       lastGoodProvider = provider;
       return new Response(stream, {
         headers: {
@@ -215,6 +217,47 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
     ]);
   } finally {
     if (timer) clearTimeout(timer);
+  }
+}
+
+/** Ensure a provider's stream actually carries text — if the first chunk is
+ *  empty, throw so the chain fails over instead of returning an empty 200. */
+async function ensureFirstToken(
+  stream: ReadableStream<Uint8Array>,
+  label: string,
+): Promise<ReadableStream<Uint8Array>> {
+  const reader = stream.getReader();
+  try {
+    const { done, value } = await withTimeout(reader.read(), FIRST_TOKEN_TIMEOUT_MS, `${label} first token`);
+    if (done || !value || value.length === 0) {
+      throw new Error(`${label} returned an empty stream`);
+    }
+    let first = true;
+    return new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        if (first) {
+          first = false;
+          controller.enqueue(value);
+          return;
+        }
+        const res = await reader.read();
+        if (res.done) {
+          controller.close();
+          return;
+        }
+        controller.enqueue(res.value);
+      },
+      cancel() {
+        reader.cancel().catch(() => {});
+      },
+    });
+  } catch (err) {
+    try {
+      reader.cancel().catch(() => {});
+    } catch {
+      /* ignore */
+    }
+    throw err;
   }
 }
 
