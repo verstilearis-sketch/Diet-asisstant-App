@@ -598,7 +598,8 @@ async function getFallback(
   planContext: Record<string, any> | undefined
 ) {
   const lastMsg = (messages?.[messages.length - 1]?.content || '').toLowerCase();
-  const goal = (userProfile?.goal ?? 'health_goal').replace(/_/g, ' ');
+  const goalRaw = (userProfile?.goal ?? 'general_health').replace(/_/g, ' ');
+  const goal = goalRaw === 'general health' ? 'health' : goalRaw;
   const kcal = planContext?.calorieGoal ?? 2000;
   const kg = userProfile?.weightKg ?? 70;
 
