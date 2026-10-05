@@ -37,14 +37,14 @@ const OPENROUTER_MODEL_PREFERENCE = [
   'mistralai/mistral-7b-instruct:free',
   'qwen/qwen-2.5-7b-instruct:free',
 ].filter((m): m is string => !!m);
-// Cerebras: wafer-scale inference, very fast, ~1M tokens/day free.
-// OpenAI-compatible at https://api.cerebras.ai/v1 — key from cloud.cerebras.ai.
-const CEREBRAS_MODEL_PREFERENCE = [
-  process.env.CEREBRAS_MODEL,
-  'llama-3.3-70b',
-  'llama-3.1-8b',
-  'qwen-3-235b',
-  'gpt-oss-120b',
+// GitHub Models: 150 req/day free on GPT-4o-mini, no card — just a GitHub
+// PAT with `models: read` permission. OpenAI-compatible at
+// https://models.github.ai/inference.
+const GITHUB_MODELS_MODEL_PREFERENCE = [
+  process.env.GITHUB_MODELS_MODEL,
+  'openai/gpt-4o-mini',
+  'openai/gpt-4o',
+  'meta/Llama-3.3-70B-Instruct',
 ].filter((m): m is string => !!m);
 
 const PRIMARY: 'groq' | 'gemini' =
@@ -55,7 +55,7 @@ interface IncomingMessage {
   content: string;
 }
 
-type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'cerebras';
+type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'github-models';
 
 // ── Rotation + cooldown ─────────────────────────────────────────
 // Requests start at the provider that succeeded most recently (it is
@@ -73,8 +73,8 @@ function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
 function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
   const now = Date.now();
   const base: ProviderName[] = primary === 'groq'
-    ? ['groq', 'gemini', 'cerebras', 'openrouter']
-    : ['gemini', 'groq', 'cerebras', 'openrouter'];
+    ? ['groq', 'gemini', 'github-models', 'openrouter']
+    : ['gemini', 'groq', 'github-models', 'openrouter'];
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
   for (const p of base) {
@@ -149,8 +149,8 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
           ? await streamGroq(typedMessages, systemPrompt)
           : provider === 'gemini'
             ? await streamGemini(typedMessages, systemPrompt)
-            : provider === 'cerebras'
-              ? await streamCerebras(typedMessages, systemPrompt)
+            : provider === 'github-models'
+              ? await streamGitHubModels(typedMessages, systemPrompt)
               : await streamOpenRouter(typedMessages, systemPrompt);
       lastGoodProvider = provider;
       return new Response(stream, {
@@ -455,17 +455,18 @@ async function streamOpenRouter(
   throw new Error('no working OpenRouter model found');
 }
 
-// ── Cerebras ────────────────────────────────────────────────────
-// Wafer-scale inference: extremely fast, ~1M tokens/day on the free tier.
-// OpenAI-compatible, so the same SSE streaming shape as Groq works.
+// ── GitHub Models ─────────────────────────────────────────────
+// 150 req/day free on GPT-4o-mini, no card. OpenAI-compatible, so the
+// same SSE streaming shape as Groq works. Auth is a GitHub PAT with
+// `models: read` permission.
 
-let cachedCerebrasModel: string | null = null;
+let cachedGitHubModelsModel: string | null = null;
 
-async function pickCerebrasModel(apiKey: string): Promise<string> {
-  if (cachedCerebrasModel) return cachedCerebrasModel;
+async function pickGitHubModelsModel(apiKey: string): Promise<string> {
+  if (cachedGitHubModelsModel) return cachedGitHubModelsModel;
   let available: Set<string> | null = null;
   try {
-    const res = await fetch('https://api.cerebras.ai/v1/models', {
+    const res = await fetch('https://models.github.ai/inference/models', {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: AbortSignal.timeout(10000),
     });
@@ -477,22 +478,22 @@ async function pickCerebrasModel(apiKey: string): Promise<string> {
     // Discovery failed — fall back to the preference order blind.
   }
   const pick =
-    (available && CEREBRAS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    CEREBRAS_MODEL_PREFERENCE[0];
-  cachedCerebrasModel = pick;
+    (available && GITHUB_MODELS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
+    GITHUB_MODELS_MODEL_PREFERENCE[0];
+  cachedGitHubModelsModel = pick;
   return pick;
 }
 
-async function streamCerebras(
+async function streamGitHubModels(
   messages: IncomingMessage[],
   systemPrompt: string,
 ): Promise<ReadableStream<Uint8Array>> {
-  const apiKey = process.env.CEREBRAS_API_KEY;
-  if (!apiKey) throw new Error('CEREBRAS_API_KEY not set');
+  const apiKey = process.env.GITHUB_MODELS_TOKEN;
+  if (!apiKey) throw new Error('GITHUB_MODELS_TOKEN not set');
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    const model = await withTimeout(pickCerebrasModel(apiKey), 12000, 'Cerebras model discovery');
-    const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+    const model = await withTimeout(pickGitHubModelsModel(apiKey), 12000, 'GitHub Models discovery');
+    const res = await fetch('https://models.github.ai/inference/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -515,12 +516,12 @@ async function streamCerebras(
 
     const errText = (await res.text()).slice(0, 200);
     if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
-      cachedCerebrasModel = null;
+      cachedGitHubModelsModel = null;
       continue;
     }
     throw new Error(`HTTP ${res.status} — ${errText}`);
   }
-  throw new Error('no working Cerebras model found');
+  throw new Error('no working GitHub Models model found');
 }
 
 /** Keyword-based offline replies for when no provider answers. */

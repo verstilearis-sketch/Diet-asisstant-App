@@ -27,17 +27,17 @@ const OPENROUTER_VISION_PREFERENCE = [
 const OPENROUTER_REFERER = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : 'https://diet-asisstant-app.vercel.app';
-// Cerebras: wafer-scale inference, very fast, ~1M tokens/day free.
-// OpenAI-compatible at https://api.cerebras.ai/v1 — key from cloud.cerebras.ai.
-const CEREBRAS_MODEL_PREFERENCE = [
-  process.env.CEREBRAS_MODEL,
-  'llama-3.3-70b',
-  'llama-3.1-8b',
-  'qwen-3-235b',
-  'gpt-oss-120b',
+// GitHub Models: 150 req/day free on GPT-4o-mini, no card — just a GitHub
+// PAT with `models: read` permission. OpenAI-compatible at
+// https://models.github.ai/inference.
+const GITHUB_MODELS_MODEL_PREFERENCE = [
+  process.env.GITHUB_MODELS_MODEL,
+  'openai/gpt-4o-mini',
+  'openai/gpt-4o',
+  'meta/Llama-3.3-70B-Instruct',
 ].filter((m): m is string => !!m);
 
-export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'cerebras';
+export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'github-models';
 
 export type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
 
@@ -188,8 +188,8 @@ export async function runAiChain(
         ? await tryGroq(systemPrompt, userPrompt, opts)
         : provider === 'gemini'
           ? await tryGemini(systemPrompt, userPrompt, opts)
-          : provider === 'cerebras'
-            ? await tryCerebras(systemPrompt, userPrompt, opts)
+          : provider === 'github-models'
+            ? await tryGitHubModels(systemPrompt, userPrompt, opts)
             : await tryOpenRouter(systemPrompt, userPrompt, opts);
     if (attempt.ok) {
       lastGoodProvider = provider;
@@ -220,7 +220,7 @@ function rotatedOrder(): ProviderName[] {
   const now = Date.now();
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
-  for (const p of ['groq', 'gemini', 'cerebras', 'openrouter'] as ProviderName[]) {
+  for (const p of ['groq', 'gemini', 'github-models', 'openrouter'] as ProviderName[]) {
     ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
   }
   if (lastGoodProvider && ready.includes(lastGoodProvider)) {
@@ -316,15 +316,16 @@ export async function tryOpenRouter(
   }
 }
 
-/** Cerebras: wafer-scale inference, very fast, generous free tier.
- *  OpenAI-compatible — same shape as Groq. */
-let cachedCerebrasModel: string | null = null;
+/** GitHub Models: 150 req/day free on GPT-4o-mini, no card.
+ *  OpenAI-compatible — same shape as Groq. Auth is a GitHub PAT with
+ *  `models: read` permission. */
+let cachedGitHubModelsModel: string | null = null;
 
-async function pickCerebrasModel(apiKey: string): Promise<string> {
-  if (cachedCerebrasModel) return cachedCerebrasModel;
+async function pickGitHubModelsModel(apiKey: string): Promise<string> {
+  if (cachedGitHubModelsModel) return cachedGitHubModelsModel;
   let available: Set<string> | null = null;
   try {
-    const res = await fetchWithBackoff('https://api.cerebras.ai/v1/models', {
+    const res = await fetchWithBackoff('https://models.github.ai/inference/models', {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (res.ok) {
@@ -337,26 +338,26 @@ async function pickCerebrasModel(apiKey: string): Promise<string> {
     // fall through to preference order
   }
   const pick =
-    (available && CEREBRAS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    CEREBRAS_MODEL_PREFERENCE[0];
-  cachedCerebrasModel = pick;
+    (available && GITHUB_MODELS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
+    GITHUB_MODELS_MODEL_PREFERENCE[0];
+  cachedGitHubModelsModel = pick;
   return pick;
 }
 
-export async function tryCerebras(
+export async function tryGitHubModels(
   systemPrompt: string,
   userPrompt: string,
   opts: { maxTokens?: number; temperature?: number } = {},
 ): Promise<Attempt> {
-  const apiKey = process.env.CEREBRAS_API_KEY;
-  if (!apiKey) return { ok: false, reason: 'CEREBRAS_API_KEY not set' };
+  const apiKey = process.env.GITHUB_MODELS_TOKEN;
+  if (!apiKey) return { ok: false, reason: 'GITHUB_MODELS_TOKEN not set' };
   try {
     const attempted = new Set<string>();
     for (let attempt = 0; attempt < 2; attempt++) {
-      const model = await pickCerebrasModel(apiKey);
+      const model = await pickGitHubModelsModel(apiKey);
       if (attempted.has(model)) break;
       attempted.add(model);
-      const res = await fetchWithBackoff('https://api.cerebras.ai/v1/chat/completions', {
+      const res = await fetchWithBackoff('https://models.github.ai/inference/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
@@ -378,12 +379,12 @@ export async function tryCerebras(
       }
       const errText = (await res.text()).slice(0, 200);
       if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
-        cachedCerebrasModel = null;
+        cachedGitHubModelsModel = null;
         continue;
       }
       return { ok: false, reason: `HTTP ${res.status}` };
     }
-    return { ok: false, reason: 'no working Cerebras model found' };
+    return { ok: false, reason: 'no working GitHub Models model found' };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }
