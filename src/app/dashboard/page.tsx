@@ -144,12 +144,15 @@ export default function DashboardPage() {
       if (!session) { router.replace('/auth'); return; }
       if (cancelled) return;
       setUserName(session.name);
-      const plan = await getLatestPlan(session.userId);
+      // Plan and today's log are independent — fetch in parallel instead of
+      // two sequential roundtrips.
+      const [plan, log] = await Promise.all([
+        getLatestPlan(session.userId),
+        getDailyLog(session.userId, todayStr),
+      ]);
       if (!plan) { router.replace('/onboarding'); return; }
       if (cancelled) return;
       setSavedPlan(plan);
-      const log = await getDailyLog(session.userId, todayStr);
-      if (cancelled) return;
       setDailyLog(log);
       setDraftLog(log);
       if (!cancelled) setLoading(false);

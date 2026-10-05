@@ -143,7 +143,7 @@ export async function signUp(email: string, password: string, name: string): Pro
         user: { id: user.id, email: user.email ?? email, name },
       };
     }
-    const displayName = (await fetchProfileName(user.id)) || name;
+    const displayName = name || (await fetchProfileName(user.id));
     return { success: true, user: { id: user.id, email: user.email ?? email, name: displayName } };
   } catch (err) {
     return { success: false, error: configError(err) };
@@ -157,7 +157,7 @@ export async function signIn(email: string, password: string): Promise<AuthResul
     if (error) return { success: false, error: friendlyAuthError(error.message) };
     const user = data.user;
     const metaName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name : '';
-    const displayName = (await fetchProfileName(user.id)) || metaName;
+    const displayName = metaName || (await fetchProfileName(user.id));
     return { success: true, user: { id: user.id, email: user.email ?? email, name: displayName } };
   } catch (err) {
     return { success: false, error: configError(err) };
@@ -196,7 +196,11 @@ export async function getSession(): Promise<StoredSession | null> {
         : typeof meta.full_name === 'string'
           ? meta.full_name
           : '';
-    const name = (await fetchProfileName(user.id)) || metaName;
+    // The name is almost always in the auth metadata already — skip the
+    // extra DB roundtrip and only fall back to the profiles table when it's
+    // missing. This runs on every dashboard load, so one fewer roundtrip
+    // matters on mobile networks.
+    const name = metaName || (await fetchProfileName(user.id));
     return { userId: user.id, email: user.email ?? '', name };
   } catch {
     return null;
