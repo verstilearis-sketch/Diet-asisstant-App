@@ -27,8 +27,17 @@ const OPENROUTER_VISION_PREFERENCE = [
 const OPENROUTER_REFERER = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : 'https://diet-asisstant-app.vercel.app';
+// Cerebras: wafer-scale inference, very fast, ~1M tokens/day free.
+// OpenAI-compatible at https://api.cerebras.ai/v1 — key from cloud.cerebras.ai.
+const CEREBRAS_MODEL_PREFERENCE = [
+  process.env.CEREBRAS_MODEL,
+  'llama-3.3-70b',
+  'llama-3.1-8b',
+  'qwen-3-235b',
+  'gpt-oss-120b',
+].filter((m): m is string => !!m);
 
-export type ProviderName = 'groq' | 'gemini' | 'openrouter';
+export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'cerebras';
 
 export type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
 
@@ -179,8 +188,13 @@ export async function runAiChain(
         ? await tryGroq(systemPrompt, userPrompt, opts)
         : provider === 'gemini'
           ? await tryGemini(systemPrompt, userPrompt, opts)
-          : await tryOpenRouter(systemPrompt, userPrompt, opts);
-    if (attempt.ok) return { ok: true, reply: attempt.reply, provider };
+          : provider === 'cerebras'
+            ? await tryCerebras(systemPrompt, userPrompt, opts)
+            : await tryOpenRouter(systemPrompt, userPrompt, opts);
+    if (attempt.ok) {
+      lastGoodProvider = provider;
+      return { ok: true, reply: attempt.reply, provider };
+    }
     failures.push(`${provider} (${attempt.reason})`);
     if (/429|rate.?limit|quota|resource.?exhausted/i.test(attempt.reason)) {
       markCooldown(provider);
@@ -193,18 +207,24 @@ export async function runAiChain(
 
 const COOLDOWN_MS = 60000;
 const cooldownUntil = new Map<ProviderName, number>();
+let lastGoodProvider: ProviderName | null = null;
 
 function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
   cooldownUntil.set(provider, Date.now() + ms);
 }
 
-/** Providers in rotation order: random start, cooling-down providers last. */
+/** Providers in rotation order: the last one that answered goes first
+ *  (probably healthy right now), then the rest rotated for even quota
+ *  spread, cooling-down providers last. */
 function rotatedOrder(): ProviderName[] {
   const now = Date.now();
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
-  for (const p of ['groq', 'gemini', 'openrouter'] as ProviderName[]) {
+  for (const p of ['groq', 'gemini', 'cerebras', 'openrouter'] as ProviderName[]) {
     ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
+  }
+  if (lastGoodProvider && ready.includes(lastGoodProvider)) {
+    return [lastGoodProvider, ...ready.filter((p) => p !== lastGoodProvider), ...cooling];
   }
   const start = ready.length ? Math.floor(Math.random() * ready.length) : 0;
   return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
@@ -291,6 +311,79 @@ export async function tryOpenRouter(
       return { ok: false, reason: `HTTP ${res.status}` };
     }
     return { ok: false, reason: 'no working OpenRouter model found' };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
+}
+
+/** Cerebras: wafer-scale inference, very fast, generous free tier.
+ *  OpenAI-compatible — same shape as Groq. */
+let cachedCerebrasModel: string | null = null;
+
+async function pickCerebrasModel(apiKey: string): Promise<string> {
+  if (cachedCerebrasModel) return cachedCerebrasModel;
+  let available: Set<string> | null = null;
+  try {
+    const res = await fetchWithBackoff('https://api.cerebras.ai/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      available = new Set(
+        ((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[],
+      );
+    }
+  } catch {
+    // fall through to preference order
+  }
+  const pick =
+    (available && CEREBRAS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
+    CEREBRAS_MODEL_PREFERENCE[0];
+  cachedCerebrasModel = pick;
+  return pick;
+}
+
+export async function tryCerebras(
+  systemPrompt: string,
+  userPrompt: string,
+  opts: { maxTokens?: number; temperature?: number } = {},
+): Promise<Attempt> {
+  const apiKey = process.env.CEREBRAS_API_KEY;
+  if (!apiKey) return { ok: false, reason: 'CEREBRAS_API_KEY not set' };
+  try {
+    const attempted = new Set<string>();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const model = await pickCerebrasModel(apiKey);
+      if (attempted.has(model)) break;
+      attempted.add(model);
+      const res = await fetchWithBackoff('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: opts.temperature ?? 0.3,
+          max_tokens: opts.maxTokens ?? 1000,
+          stream: false,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content?.trim();
+        if (!reply) return { ok: false, reason: 'empty response body' };
+        return { ok: true, reply };
+      }
+      const errText = (await res.text()).slice(0, 200);
+      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+        cachedCerebrasModel = null;
+        continue;
+      }
+      return { ok: false, reason: `HTTP ${res.status}` };
+    }
+    return { ok: false, reason: 'no working Cerebras model found' };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }

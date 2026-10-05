@@ -37,6 +37,15 @@ const OPENROUTER_MODEL_PREFERENCE = [
   'mistralai/mistral-7b-instruct:free',
   'qwen/qwen-2.5-7b-instruct:free',
 ].filter((m): m is string => !!m);
+// Cerebras: wafer-scale inference, very fast, ~1M tokens/day free.
+// OpenAI-compatible at https://api.cerebras.ai/v1 — key from cloud.cerebras.ai.
+const CEREBRAS_MODEL_PREFERENCE = [
+  process.env.CEREBRAS_MODEL,
+  'llama-3.3-70b',
+  'llama-3.1-8b',
+  'qwen-3-235b',
+  'gpt-oss-120b',
+].filter((m): m is string => !!m);
 
 const PRIMARY: 'groq' | 'gemini' =
   process.env.AI_PROVIDER?.toLowerCase() === 'gemini' ? 'gemini' : 'groq';
@@ -46,14 +55,16 @@ interface IncomingMessage {
   content: string;
 }
 
-type ProviderName = 'groq' | 'gemini' | 'openrouter';
+type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'cerebras';
 
 // ── Rotation + cooldown ─────────────────────────────────────────
-// Same as the shared chain: random start per request spreads quota evenly,
-// and a provider that just rate-limited sits out for a minute.
+// Requests start at the provider that succeeded most recently (it is
+// probably healthy right now); the rest follow in a rotated order so quota
+// spreads evenly. A provider that just rate-limited sits out for a minute.
 
 const COOLDOWN_MS = 60000;
 const cooldownUntil = new Map<ProviderName, number>();
+let lastGoodProvider: ProviderName | null = null;
 
 function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
   cooldownUntil.set(provider, Date.now() + ms);
@@ -62,12 +73,17 @@ function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
 function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
   const now = Date.now();
   const base: ProviderName[] = primary === 'groq'
-    ? ['groq', 'gemini', 'openrouter']
-    : ['gemini', 'groq', 'openrouter'];
+    ? ['groq', 'gemini', 'cerebras', 'openrouter']
+    : ['gemini', 'groq', 'cerebras', 'openrouter'];
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
   for (const p of base) {
     ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
+  }
+  // Prefer the last provider that actually answered — avoids stumbling into
+  // a degraded provider on every few requests just because of the rotation.
+  if (lastGoodProvider && ready.includes(lastGoodProvider)) {
+    return [lastGoodProvider, ...ready.filter((p) => p !== lastGoodProvider), ...cooling];
   }
   const start = ready.length ? Math.floor(Math.random() * ready.length) : 0;
   return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
@@ -133,7 +149,10 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
           ? await streamGroq(typedMessages, systemPrompt)
           : provider === 'gemini'
             ? await streamGemini(typedMessages, systemPrompt)
-            : await streamOpenRouter(typedMessages, systemPrompt);
+            : provider === 'cerebras'
+              ? await streamCerebras(typedMessages, systemPrompt)
+              : await streamOpenRouter(typedMessages, systemPrompt);
+      lastGoodProvider = provider;
       return new Response(stream, {
         headers: {
           'Content-Type': 'text/plain; charset=utf-8',
@@ -434,6 +453,74 @@ async function streamOpenRouter(
     throw new Error(`HTTP ${res.status} — ${errText}`);
   }
   throw new Error('no working OpenRouter model found');
+}
+
+// ── Cerebras ────────────────────────────────────────────────────
+// Wafer-scale inference: extremely fast, ~1M tokens/day on the free tier.
+// OpenAI-compatible, so the same SSE streaming shape as Groq works.
+
+let cachedCerebrasModel: string | null = null;
+
+async function pickCerebrasModel(apiKey: string): Promise<string> {
+  if (cachedCerebrasModel) return cachedCerebrasModel;
+  let available: Set<string> | null = null;
+  try {
+    const res = await fetch('https://api.cerebras.ai/v1/models', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      available = new Set(((data?.data ?? []) as { id?: string }[]).map((m) => m.id).filter(Boolean) as string[]);
+    }
+  } catch {
+    // Discovery failed — fall back to the preference order blind.
+  }
+  const pick =
+    (available && CEREBRAS_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
+    CEREBRAS_MODEL_PREFERENCE[0];
+  cachedCerebrasModel = pick;
+  return pick;
+}
+
+async function streamCerebras(
+  messages: IncomingMessage[],
+  systemPrompt: string,
+): Promise<ReadableStream<Uint8Array>> {
+  const apiKey = process.env.CEREBRAS_API_KEY;
+  if (!apiKey) throw new Error('CEREBRAS_API_KEY not set');
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const model = await withTimeout(pickCerebrasModel(apiKey), 12000, 'Cerebras model discovery');
+    const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: chatMessagesFor(messages, systemPrompt),
+        temperature: 0.7,
+        max_tokens: 600,
+        stream: true,
+      }),
+      signal: AbortSignal.timeout(FIRST_TOKEN_TIMEOUT_MS + 10000),
+    });
+
+    if (res.ok) {
+      if (!res.body) throw new Error('empty response body');
+      return sseToTextStream(res.body);
+    }
+
+    const errText = (await res.text()).slice(0, 200);
+    if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+      cachedCerebrasModel = null;
+      continue;
+    }
+    throw new Error(`HTTP ${res.status} — ${errText}`);
+  }
+  throw new Error('no working Cerebras model found');
 }
 
 /** Keyword-based offline replies for when no provider answers. */
