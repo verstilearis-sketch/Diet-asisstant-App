@@ -1,5 +1,5 @@
 // ── Smart AI Diet Plan Engine — Enhanced Regional Food Database ──────────────
-import type { UserProfile, Calculations, BudgetTier, CuisineMix } from './calculations';
+import type { UserProfile, Calculations, BudgetTier, CuisineMix, Goal } from './calculations';
 import type { TasteProfile } from './taste';
 
 export interface Meal {
@@ -12,6 +12,8 @@ export interface Meal {
   prepTime: string;
   emoji: string;
   tags: string[];
+  /** One-line reason this meal is in the plan — the plan showing its work. */
+  why?: string;
 }
 
 export interface DayPlan {
@@ -1857,6 +1859,47 @@ function toMeal(f: FoodItem): Meal {
   return { name: f.name, description: f.description, calories: f.cal, protein: f.protein, carbs: f.carbs, fat: f.fat, prepTime: f.prepTime, emoji: f.emoji, tags: f.tags };
 }
 
+export type SlotKey = 'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner';
+
+export interface MealWhyContext {
+  proteinTarget: number; // g/day
+  calorieTarget: number; // kcal/day
+  dayTotal: number;      // kcal for the whole day
+  goal: Goal;
+  exercises: boolean;
+}
+
+/**
+ * One-line reason a meal is in the plan, derived from the numbers — no AI
+ * needed, so it's instant and always truthful. Picks the most distinctive
+ * true statement about the meal's role in the day.
+ */
+export function mealWhy(meal: Meal, slotKey: SlotKey, ctx: MealWhyContext): string {
+  const kcal = (n: number) => Math.round(n).toLocaleString('en-US');
+  // Dinner: frame it as landing the day — the natural bookend.
+  if (slotKey === 'dinner') {
+    return `Closes the day at ~${kcal(ctx.dayTotal)} of your ${kcal(ctx.calorieTarget)} kcal.`;
+  }
+  // Training-day lunch: carbs timed around the workout.
+  if (slotKey === 'lunch' && ctx.exercises && meal.carbs >= 40) {
+    return 'Carbs timed around training — fuel for the session, protein for after.';
+  }
+  // Protein anchor: this meal does heavy lifting toward the daily protein target.
+  if (meal.protein >= 25) {
+    return `Protein anchor — ${Math.round(meal.protein)}g toward your ${Math.round(ctx.proteinTarget)}g daily goal.`;
+  }
+  // Light snack: keeps the day on track.
+  if ((slotKey === 'morningSnack' || slotKey === 'afternoonSnack') && meal.calories < 280) {
+    return `Light bite — keeps you on track for ${kcal(ctx.calorieTarget)} kcal without spoiling the next meal.`;
+  }
+  // Solid breakfast protein.
+  if (slotKey === 'breakfast' && meal.protein >= 15) {
+    return 'Front-loads protein so you stay full till lunch.';
+  }
+  // Fallback: portioned to fit.
+  return `Portioned to fit your ${kcal(ctx.calorieTarget)} kcal day.`;
+}
+
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export async function generateDietPlan(
@@ -1921,6 +1964,18 @@ export async function generateDietPlan(
     }
     const meals = [picked.breakfast, picked.morningSnack, picked.lunch, picked.afternoonSnack, picked.dinner];
     const totalCalories = meals.reduce((a, m) => a + m.calories, 0);
+    // The plan shows its work: every meal gets a one-line reason derived from
+    // the numbers behind it.
+    const whyCtx: MealWhyContext = {
+      proteinTarget: calculations.proteinG,
+      calorieTarget: calculations.dailyCalorieGoal,
+      dayTotal: totalCalories,
+      goal: profile.goal,
+      exercises: (profile.exerciseFrequency ?? 0) > 0,
+    };
+    for (const [key, m] of Object.entries(picked) as [SlotKey, Meal][]) {
+      m.why = mealWhy(m, key, whyCtx);
+    }
     return {
       day: dayName,
       breakfast: picked.breakfast,

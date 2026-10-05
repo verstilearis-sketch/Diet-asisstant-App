@@ -8,7 +8,7 @@ import { computeAll, calculateMacros } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
 import type { SavedPlan, ExtraMeal, ExerciseEntry } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
-import { getMealAlternatives, generateDietPlan, type MealType } from '@/lib/ai-engine';
+import { getMealAlternatives, generateDietPlan, mealWhy, type MealType } from '@/lib/ai-engine';
 import { checkAdaptation, type AdaptationCheck } from '@/lib/adaptive';
 import { buildWeeklyReview } from '@/lib/weekly-review';
 import { FESTIVALS, getFestival, type FestivalFood } from '@/lib/festivals';
@@ -1143,17 +1143,30 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {MEAL_META.map((meta) => (
-                <MealCard
-                  key={meta.key}
-                  meta={meta}
-                  meal={selectedDayPlan[meta.key]}
-                  slotType={meta.key === 'morningSnack' || meta.key === 'afternoonSnack' ? 'snack' : meta.key}
-                  profile={profile}
-                  onShowRecipe={setRecipeMeal}
-                  onSwap={handleSwapMeal}
-                />
-              ))}
+              {MEAL_META.map((meta) => {
+                const meal = selectedDayPlan[meta.key];
+                // New plans carry why-lines; older saved plans and swapped-in
+                // meals get them computed on the fly from the same numbers.
+                const why = meal.why ?? mealWhy(meal, meta.key, {
+                  proteinTarget: calcs.proteinG,
+                  calorieTarget: calcs.dailyCalorieGoal,
+                  dayTotal: selectedDayPlan.totalCalories,
+                  goal: profile.goal,
+                  exercises: (profile.exerciseFrequency ?? 0) > 0,
+                });
+                return (
+                  <MealCard
+                    key={meta.key}
+                    meta={meta}
+                    meal={meal}
+                    slotType={meta.key === 'morningSnack' || meta.key === 'afternoonSnack' ? 'snack' : meta.key}
+                    profile={profile}
+                    why={why}
+                    onShowRecipe={setRecipeMeal}
+                    onSwap={handleSwapMeal}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
@@ -1584,13 +1597,14 @@ export default function DashboardPage() {
 }
 
 function MealCard({
-  meta, meal, slotType, profile, taste, onShowRecipe, onSwap,
+  meta, meal, slotType, profile, taste, why, onShowRecipe, onSwap,
 }: {
   meta: (typeof MEAL_META)[number];
   meal: Meal;
   slotType: MealType;
   profile: UserProfile;
   taste?: TasteProfile;
+  why: string;
   onShowRecipe: (meal: Meal) => void;
   onSwap: (slotKey: 'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner', meal: Meal) => void;
 }) {
@@ -1637,6 +1651,12 @@ function MealCard({
       {open && (
         <div className="fade-in-up" style={{ marginTop: '0.9rem', paddingTop: '0.9rem', borderTop: '1px solid var(--color-border)', fontSize: '0.87rem', color: 'var(--color-muted)', lineHeight: 1.65 }}>
           {meal.description}
+          <div style={{
+            fontSize: '0.8rem', lineHeight: 1.55, marginTop: '0.6rem',
+            borderLeft: '2px solid var(--color-accent)', paddingLeft: '0.6rem',
+          }}>
+            <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>Why: </span>{why}
+          </div>
           {meal.tags && meal.tags.length > 0 && (
             <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.6rem', flexWrap: 'wrap' }}>
               {meal.tags.map((t) => <span key={t} className="badge badge-grey">{t}</span>)}
