@@ -49,14 +49,16 @@ ${prepTime ? `Aim for about ${prepTime} total. ` : ''}Servings: ${Number(serving
 ${restrictions?.length ? `Must respect: ${restrictions.join(', ')} (no exceptions).` : ''}
 ${region ? `Home-kitchen style for ${region}; use locally available ingredients where possible.` : ''}`;
 
-  const result = await runAiChain(systemPrompt, userPrompt, { maxTokens: 1000 });
+  const result = await runAiChain(systemPrompt, userPrompt, {
+    maxTokens: 1000,
+    validate: (reply) => parseRecipeJson(reply) !== null,
+  });
   if (result.ok) {
-    const recipe = parseRecipeJson(result.reply);
-    if (recipe) return NextResponse.json({ recipe, provider: result.provider });
-    console.error('Recipe API: groq/gemini returned bad JSON');
-  } else {
-    console.error('Recipe API: all providers failed —', result.failures.join('; '));
+    // validate() already confirmed this parses.
+    const recipe = parseRecipeJson(result.reply)!;
+    return NextResponse.json({ recipe, provider: result.provider });
   }
+  console.error('Recipe API: all providers failed —', result.failures.join('; '));
 
   return NextResponse.json(
     { error: 'Recipe service is unavailable right now. Please try again in a moment.' },

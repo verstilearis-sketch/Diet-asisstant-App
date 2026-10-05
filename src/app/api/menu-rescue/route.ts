@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
+import { tryGeminiVision, tryGitHubModelsVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Menu rescue ───────────────────────────────────────────────
 // POST /api/menu-rescue  { imageBase64, mimeType?, goal?, calorieGoal?, remainingKcal?, restrictions?, region? }
@@ -72,24 +72,23 @@ Pick the 3 best menu items for this diner. Always respond with STRICT JSON only 
 {"picks": [{"name": "dish name as on menu", "calories": 450, "proteinG": 25, "why": "one-line reason under 20 words"}]}
 Rules: prefer high-protein, moderate-calorie options suited to the goal; estimate realistic restaurant portions including oil/butter/ghee; keep each "why" specific to their goal and under 20 words; never invent dishes not on the menu.`;
 
-  const geminiAttempt = await tryGeminiVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 });
-  const vision = geminiAttempt.ok
-    ? geminiAttempt
-    : await tryOpenRouterVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 });
-
-  if (vision.ok) {
-    const picks = parsePicksJson(vision.reply);
-    if (picks) return NextResponse.json({ picks, provider: geminiAttempt.ok ? 'gemini' : 'openrouter' });
-    console.error('Menu-rescue API: vision returned bad JSON');
-  } else {
-    const reasons = [
-      !geminiAttempt.ok ? `gemini (${geminiAttempt.reason})` : null,
-      `openrouter (${vision.reason})`,
-    ]
-      .filter(Boolean)
-      .join('; ');
-    console.error('Menu-rescue API: vision failed —', reasons);
+  const attempts = [
+    { name: 'gemini', run: () => tryGeminiVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 }) },
+    { name: 'github-models', run: () => tryGitHubModelsVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 }) },
+    { name: 'openrouter', run: () => tryOpenRouterVision(clean, type, prompt, { maxTokens: 600, temperature: 0.3 }) },
+  ];
+  const failures: string[] = [];
+  for (const a of attempts) {
+    const result = await a.run();
+    if (!result.ok) {
+      failures.push(`${a.name} (${result.reason})`);
+      continue;
+    }
+    const picks = parsePicksJson(result.reply);
+    if (picks) return NextResponse.json({ picks, provider: a.name });
+    failures.push(`${a.name} (unusable response)`);
   }
+  console.error('Menu-rescue API: vision failed —', failures.join('; '));
 
   return NextResponse.json(
     { error: 'Could not read this menu right now. Please try again in a moment.' },

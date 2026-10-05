@@ -185,7 +185,7 @@ export async function tryGemini(
 export async function runAiChain(
   systemPrompt: string,
   userPrompt: string,
-  opts: { maxTokens?: number; temperature?: number } = {},
+  opts: { maxTokens?: number; temperature?: number; validate?: (reply: string) => boolean } = {},
 ): Promise<{ ok: true; reply: string; provider: ProviderName } | { ok: false; failures: string[] }> {
   const failures: string[] = [];
   for (const provider of rotatedOrder()) {
@@ -200,6 +200,12 @@ export async function runAiChain(
               ? await tryPollinations(systemPrompt, userPrompt, opts)
               : await tryOpenRouter(systemPrompt, userPrompt, opts);
     if (attempt.ok) {
+      // A reply that isn't usable (e.g. bad JSON) fails over to the next
+      // provider instead of killing the whole chain.
+      if (opts.validate && !opts.validate(attempt.reply)) {
+        failures.push(`${provider} (unusable response)`);
+        continue;
+      }
       // Never promote the last-resort provider to the front of the rotation.
       if (provider !== 'pollinations') lastGoodProvider = provider;
       return { ok: true, reply: attempt.reply, provider };
@@ -351,7 +357,8 @@ export async function tryPollinations(
         private: true,
         stream: false,
       }),
-      signal: AbortSignal.timeout(30000),
+      // Roomy timeout: long generations (recipes) can take 45s+.
+      signal: AbortSignal.timeout(60000),
     }, 1);
     if (!res.ok) return { ok: false, reason: `HTTP ${res.status}` };
     const data = await res.json();

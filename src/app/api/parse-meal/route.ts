@@ -57,14 +57,17 @@ Rules: calories as a whole number; macros in grams with one decimal at most; ass
 ${restrictions?.length ? `Note the eater's restrictions: ${restrictions.join(', ')} — just name foods accurately, do not moralize.` : ''}
 ${region ? `Regional context: ${region}.` : ''}`;
 
-  const result = await runAiChain(systemPrompt, userPrompt, { maxTokens: 300, temperature: 0.2 });
+  const result = await runAiChain(systemPrompt, userPrompt, {
+    maxTokens: 300,
+    temperature: 0.2,
+    validate: (reply) => parseMealJson(reply) !== null,
+  });
   if (result.ok) {
-    const meal = parseMealJson(result.reply);
-    if (meal) return NextResponse.json({ meal, provider: result.provider });
-    console.error('Parse-meal API: provider returned bad JSON');
-  } else {
-    console.error('Parse-meal API: all providers failed —', result.failures.join('; '));
+    // validate() already confirmed this parses.
+    const meal = parseMealJson(result.reply)!;
+    return NextResponse.json({ meal, provider: result.provider });
   }
+  console.error('Parse-meal API: all providers failed —', result.failures.join('; '));
 
   // Offline fallback: local unit-food estimate keeps logging working.
   const offline = estimateMealOffline(text);

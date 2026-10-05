@@ -84,20 +84,24 @@ Also judge whether this fits the diner's day. Diner's goal: ${goalLabel}.${typeo
   const failures: string[] = [];
   for (const a of attempts) {
     const result = await a.run();
-    if (result.ok) {
+    if (!result.ok) {
+      failures.push(`${a.name} (${result.reason})`);
+      continue;
+    }
+    // A reply that doesn't parse as a meal fails over to the next provider
+    // instead of ending the chain.
+    if (parseMealJson(result.reply)) {
       vision = result;
       provider = a.name;
       break;
     }
-    failures.push(`${a.name} (${result.reason})`);
+    failures.push(`${a.name} (unusable response)`);
   }
   if (vision.ok && vision.reply) {
-    const meal = parseMealJson(vision.reply);
-    if (meal) return NextResponse.json({ meal, provider });
-    console.error('Parse-meal-photo API: vision returned bad JSON');
-  } else {
-    console.error('Parse-meal-photo API: vision failed —', failures.join('; '));
+    const meal = parseMealJson(vision.reply)!;
+    return NextResponse.json({ meal, provider });
   }
+  console.error('Parse-meal-photo API: vision failed —', failures.join('; '));
 
   return NextResponse.json(
     { error: 'Could not read this photo right now. Please try again in a moment.' },

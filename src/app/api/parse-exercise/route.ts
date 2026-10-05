@@ -52,14 +52,17 @@ Rules: caloriesBurned as a whole number; be realistic and slightly conservative,
     `Estimate the calorie burn for: "${text.trim()}"` +
     (typeof weightKg === 'number' && weightKg > 0 ? `\nBody weight: ${weightKg} kg.` : '');
 
-  const result = await runAiChain(systemPrompt, userPrompt, { maxTokens: 300, temperature: 0.2 });
+  const result = await runAiChain(systemPrompt, userPrompt, {
+    maxTokens: 300,
+    temperature: 0.2,
+    validate: (reply) => parseExerciseJson(reply) !== null,
+  });
   if (result.ok) {
-    const exercise = parseExerciseJson(result.reply);
-    if (exercise) return NextResponse.json({ exercise, provider: result.provider });
-    console.error('Parse-exercise API: provider returned bad JSON');
-  } else {
-    console.error('Parse-exercise API: all providers failed —', result.failures.join('; '));
+    // validate() already confirmed this parses.
+    const exercise = parseExerciseJson(result.reply)!;
+    return NextResponse.json({ exercise, provider: result.provider });
   }
+  console.error('Parse-exercise API: all providers failed —', result.failures.join('; '));
 
   // Offline fallback: MET-formula estimate keeps logging working.
   const offline = estimateExerciseOffline(text, typeof weightKg === 'number' ? weightKg : 70);
