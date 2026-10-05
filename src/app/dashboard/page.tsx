@@ -35,7 +35,7 @@ import {
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  FlameIcon, TrashIcon, PlusIcon, CameraIcon, SparklesIcon,
+  FlameIcon, TrashIcon, PlusIcon, CameraIcon, SparklesIcon, ActivityIcon, TargetIcon,
 } from '@/components/icons';
 
 // ── Estimate caches: avoid repeat AI calls for the same text ──────
@@ -854,6 +854,34 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="glass-card" style={{ padding: '1.4rem' }}>
+                <h3 style={{ marginBottom: '1.1rem', fontSize: '0.98rem' }}>Health stats</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {[
+                    { icon: FlameIcon, l: 'BMR', v: `${calcs.bmr.toLocaleString()} kcal`, d: 'Burned at rest', c: '#d97706' },
+                    { icon: ActivityIcon, l: 'TDEE', v: `${calcs.tdee.toLocaleString()} kcal`, d: 'Total daily burn', c: '#4f46e5' },
+                    { icon: TargetIcon, l: 'Daily target', v: `${calcs.dailyCalorieGoal.toLocaleString()} kcal`, d: GOAL_LABELS[profile.goal] || 'Your goal', c: '#177245' },
+                  ].map((s) => (
+                    <div key={s.l} style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <span style={{
+                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                        background: `${s.c}14`, color: s.c,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <s.icon size={17} />
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '1.02rem', fontWeight: 750, fontVariantNumeric: 'tabular-nums' }}>{s.v}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--color-muted)' }}>{s.l} · {s.d}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: '0.76rem', color: 'var(--color-faint)', marginTop: '1.1rem', marginBottom: 0, lineHeight: 1.5 }}>
+                  BMR is what your body burns doing nothing; TDEE adds your activity and work. Your target is set from these.
+                </p>
               </div>
 
               <div className="glass-card" style={{ padding: '1.4rem' }}>
