@@ -43,7 +43,7 @@ const GITHUB_MODELS_VISION_PREFERENCE = [
   'openai/gpt-4o',
 ].filter((m): m is string => !!m);
 
-export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'github-models';
+export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'github-models' | 'pollinations';
 
 export type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
 
@@ -196,9 +196,12 @@ export async function runAiChain(
           ? await tryGemini(systemPrompt, userPrompt, opts)
           : provider === 'github-models'
             ? await tryGitHubModels(systemPrompt, userPrompt, opts)
-            : await tryOpenRouter(systemPrompt, userPrompt, opts);
+            : provider === 'pollinations'
+              ? await tryPollinations(systemPrompt, userPrompt, opts)
+              : await tryOpenRouter(systemPrompt, userPrompt, opts);
     if (attempt.ok) {
-      lastGoodProvider = provider;
+      // Never promote the last-resort provider to the front of the rotation.
+      if (provider !== 'pollinations') lastGoodProvider = provider;
       return { ok: true, reply: attempt.reply, provider };
     }
     failures.push(`${provider} (${attempt.reason})`);
@@ -229,11 +232,13 @@ function rotatedOrder(): ProviderName[] {
   for (const p of ['groq', 'gemini', 'github-models', 'openrouter'] as ProviderName[]) {
     ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
   }
+  // Pollinations is keyless and weakest — always absolute last, never rotated
+  // into the lead, so it only fires when every real provider has failed.
   if (lastGoodProvider && ready.includes(lastGoodProvider)) {
-    return [lastGoodProvider, ...ready.filter((p) => p !== lastGoodProvider), ...cooling];
+    return [lastGoodProvider, ...ready.filter((p) => p !== lastGoodProvider), ...cooling, 'pollinations'];
   }
   const start = ready.length ? Math.floor(Math.random() * ready.length) : 0;
-  return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
+  return [...ready.slice(start), ...ready.slice(0, start), ...cooling, 'pollinations'];
 }
 
 // ── OpenRouter (third link — separate free-model quota pool) ────
@@ -317,6 +322,42 @@ export async function tryOpenRouter(
       return { ok: false, reason: `HTTP ${res.status}` };
     }
     return { ok: false, reason: 'no working OpenRouter model found' };
+  } catch (err) {
+    return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
+  }
+}
+
+/** Pollinations.ai — keyless free last resort (GPT-OSS 20B). No API key, no
+ *  signup, no card; a smaller model, so it sits at the very end of every text
+ *  chain, ahead of only the offline reply. Always private:true so generations
+ *  stay out of their public feed. Verified working 2026-10-05. */
+export async function tryPollinations(
+  systemPrompt: string,
+  userPrompt: string,
+  opts: { maxTokens?: number; temperature?: number } = {},
+): Promise<Attempt> {
+  try {
+    const res = await fetchWithBackoff('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai-fast',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: opts.temperature ?? 0.3,
+        max_tokens: opts.maxTokens ?? 1000,
+        private: true,
+        stream: false,
+      }),
+      signal: AbortSignal.timeout(30000),
+    }, 1);
+    if (!res.ok) return { ok: false, reason: `HTTP ${res.status}` };
+    const data = await res.json();
+    const reply = data?.choices?.[0]?.message?.content?.trim();
+    if (!reply) return { ok: false, reason: 'empty response body' };
+    return { ok: true, reply };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }

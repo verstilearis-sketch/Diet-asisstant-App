@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { tryPollinations } from '@/lib/ai-providers';
 
 // ── Health-coach AI providers ─────────────────────────────────
 // The coach rotates across Groq, Gemini and OpenRouter: each request starts
@@ -166,6 +167,29 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
         markCooldown(provider);
       }
     }
+  }
+
+  console.error('Health coach: streaming providers failed —', failures.join('; '));
+
+  // Last resort: keyless Pollinations (non-streaming) before the offline
+  // reply. Flatten the conversation into one prompt — at this point any
+  // real answer beats a canned one.
+  try {
+    const flatPrompt = typedMessages
+      .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
+      .join('\n\n');
+    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600 });
+    if (attempt.ok) {
+      return new Response(attempt.reply, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+        },
+      });
+    }
+    failures.push(`pollinations (${attempt.reason})`);
+  } catch (err) {
+    failures.push(`pollinations (${String(err).slice(0, 120)})`);
   }
 
   console.error('Health coach: all AI providers failed —', failures.join('; '));
