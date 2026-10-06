@@ -333,10 +333,18 @@ async function discoverGroqModel(apiKey: string): Promise<string> {
   } catch {
     // Discovery failed — fall back to the preference order blind.
   }
-  return (
-    (available && GROQ_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    GROQ_MODEL_PREFERENCE[0]
-  );
+  const preferred =
+    available && GROQ_MODEL_PREFERENCE.find((m) => available!.has(m));
+  if (preferred) return preferred;
+  // No preferred model available — pick any chat-capable model rather than
+  // failing. Exclude audio/whisper/guard models.
+  if (available) {
+    const anyChat = [...available].find(
+      (id) => !/whisper|tts|guard|moderation|embedding/i.test(id),
+    );
+    if (anyChat) return anyChat;
+  }
+  return GROQ_MODEL_PREFERENCE[0];
 }
 
 function isModelNotFound(err: unknown): boolean {
@@ -485,10 +493,17 @@ async function discoverOpenRouterModel(apiKey: string): Promise<string> {
   } catch {
     // Discovery failed — fall back to the preference order blind.
   }
-  return (
-    (available && OPENROUTER_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    OPENROUTER_MODEL_PREFERENCE[0]
-  );
+  const preferred =
+    available && OPENROUTER_MODEL_PREFERENCE.find((m) => available!.has(m));
+  if (preferred) return preferred;
+  // No preferred model available — pick any free chat model rather than failing.
+  if (available) {
+    const anyFree = [...available].find(
+      (id) => id.endsWith(':free') && !/whisper|tts|guard|moderation|embedding/i.test(id),
+    );
+    if (anyFree) return anyFree;
+  }
+  return OPENROUTER_MODEL_PREFERENCE[0];
 }
 
 async function tryOpenRouterModel(
