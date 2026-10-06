@@ -5,7 +5,11 @@ import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/a
 // POST /api/menu-rescue  { imageBase64, mimeType?, goal?, calorieGoal?, remainingKcal?, restrictions?, region? }
 // Returns { picks: [{ name, calories, proteinG, why }], provider }
 // Reads a restaurant menu photo and picks the 3 smartest options for the
-// diner's goal. Vision: Gemini first, OpenRouter fallback.
+// diner's goal. Vision: Gemini first, OpenRouter fallback (both fail-fast so
+// the request stays under the serverless time budget).
+
+// Give the vision chain room to finish both providers.
+export const maxDuration = 60;
 
 const MAX_BASE64_LEN = 4_000_000;
 

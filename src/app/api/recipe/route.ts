@@ -7,6 +7,9 @@ import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
 // Tries Groq → Gemini → OpenRouter. If all fail it returns 503 — the UI shows
 // a retry instead of a made-up recipe.
 
+// Give the AI chain room to finish: recipes are long generations.
+export const maxDuration = 60;
+
 function parseRecipeJson(raw: string): {
   ingredients: string[]; steps: string[]; servings: number; prepTime: string;
 } | null {
@@ -61,7 +64,9 @@ ${restrictions?.length ? `Must respect: ${restrictions.join(', ')} (no exception
 ${region ? `Home-kitchen style for ${region}; use locally available ingredients where possible.` : ''}`;
 
   const result = await runAiChain(systemPrompt, userPrompt, {
-    maxTokens: 1000,
+    // 2000 tokens: a full recipe (12 ingredients + 8 steps) needs room.
+    // If a provider still truncates, runAiChain retries it with double.
+    maxTokens: 2000,
     validate: (reply) => parseRecipeJson(reply) !== null,
   });
   if (result.ok) {

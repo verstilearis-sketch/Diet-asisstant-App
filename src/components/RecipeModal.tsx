@@ -65,26 +65,49 @@ export default function RecipeModal({
     }
 
     (async () => {
-      try {
-        const res = await fetch('/api/recipe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: meal.name,
-            description: meal.description,
-            calories: meal.calories,
-            protein: meal.protein,
-            prepTime: meal.prepTime,
-            servings: 2,
-            restrictions: restrictions ?? [],
-            region: region ?? '',
-          }),
-        });
-        const data = await res.json();
-        if (cancelled) return;
-        if (!res.ok || !data.recipe) {
-          throw new Error(data.error || 'Recipe service unavailable');
+      // 75s per attempt: server budget is 60s, plus network buffer.
+      // One silent auto-retry on timeout — AI providers blip under load.
+      const fetchRecipe = async () => {
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 75000);
+        try {
+          const res = await fetch('/api/recipe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              name: meal.name,
+              description: meal.description,
+              calories: meal.calories,
+              protein: meal.protein,
+              prepTime: meal.prepTime,
+              servings: 2,
+              restrictions: restrictions ?? [],
+              region: region ?? '',
+            }),
+          });
+          return res;
+        } finally {
+          window.clearTimeout(timer);
         }
+      };
+      try {
+        let res = await fetchRecipe();
+        let data = await res.json();
+        if (!res.ok || !data.recipe) {
+          // Retry once on timeout/overload before showing the error.
+          const retryable = res.status === 503 || res.status === 504;
+          if (retryable && !cancelled) {
+            await new Promise((r) => setTimeout(r, 2000));
+            if (cancelled) return;
+            res = await fetchRecipe();
+            data = await res.json();
+          }
+          if (!res.ok || !data.recipe) {
+            throw new Error(data.error || 'Recipe service unavailable');
+          }
+        }
+        if (cancelled) return;
         setRecipe(data.recipe);
         try {
           localStorage.setItem(cacheKey(meal.name), JSON.stringify(data.recipe));

@@ -32,7 +32,7 @@ const OPENROUTER_REFERER = process.env.VERCEL_URL
 
 export type ProviderName = 'groq' | 'gemini' | 'openrouter' | 'pollinations';
 
-export type Attempt = { ok: true; reply: string } | { ok: false; reason: string };
+export type Attempt = { ok: true; reply: string; truncated?: boolean } | { ok: false; reason: string };
 
 let cachedGroqModel: string | null = null;
 
@@ -121,7 +121,10 @@ export async function tryGroq(
         const data = await res.json();
         const reply = data?.choices?.[0]?.message?.content?.trim();
         if (!reply) return { ok: false, reason: 'empty response body' };
-        return { ok: true, reply };
+        // finish_reason 'length' = cut off at max_tokens. Flag it so the
+        // caller retries with a bigger budget instead of failing over.
+        const truncated = data?.choices?.[0]?.finish_reason === 'length';
+        return { ok: true, reply, truncated };
       }
       const errText = (await res.text()).slice(0, 200);
       if (res.status === 404 && errText.includes('model_not_found')) {
@@ -158,7 +161,9 @@ export async function tryGemini(
     );
     const reply = response.text?.trim();
     if (!reply) return { ok: false, reason: 'empty response body' };
-    return { ok: true, reply };
+    // Gemini signals truncation via finishReason 'MAX_TOKENS'.
+    const finishReason = (response as unknown as { candidates?: { finishReason?: string }[] })?.candidates?.[0]?.finishReason;
+    return { ok: true, reply, truncated: finishReason === 'MAX_TOKENS' };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }
@@ -172,19 +177,39 @@ export async function tryGemini(
 export async function runAiChain(
   systemPrompt: string,
   userPrompt: string,
-  opts: { maxTokens?: number; temperature?: number; validate?: (reply: string) => boolean } = {},
+  opts: { maxTokens?: number; temperature?: number; validate?: (reply: string) => boolean; _bumped?: boolean } = {},
 ): Promise<{ ok: true; reply: string; provider: ProviderName } | { ok: false; failures: string[] }> {
   const failures: string[] = [];
   for (const provider of rotatedOrder()) {
-    const attempt =
+    const runProvider = (o: typeof opts) =>
       provider === 'groq'
-        ? await tryGroq(systemPrompt, userPrompt, opts)
+        ? tryGroq(systemPrompt, userPrompt, o)
         : provider === 'gemini'
-          ? await tryGemini(systemPrompt, userPrompt, opts)
+          ? tryGemini(systemPrompt, userPrompt, o)
           : provider === 'pollinations'
-            ? await tryPollinations(systemPrompt, userPrompt, opts)
-            : await tryOpenRouter(systemPrompt, userPrompt, opts);
+            ? tryPollinations(systemPrompt, userPrompt, o)
+            : tryOpenRouter(systemPrompt, userPrompt, o);
+    const attempt = await runProvider(opts);
     if (attempt.ok) {
+      // Truncated at the token budget — retry THIS provider with double the
+      // budget instead of burning a failover hop. A different provider would
+      // likely truncate too.
+      if (attempt.truncated && !opts._bumped) {
+        failures.push(`${provider} (truncated at ${(opts.maxTokens ?? 1000)} tokens, retrying with more)`);
+        const bumped = await runProvider({ ...opts, maxTokens: (opts.maxTokens ?? 1000) * 2, _bumped: true });
+        if (bumped.ok && !bumped.truncated) {
+          if (opts.validate && !opts.validate(bumped.reply)) {
+            failures.push(`${provider} (unusable response)`);
+            continue;
+          }
+          if (provider !== 'pollinations') lastGoodProvider = provider;
+          return { ok: true, reply: bumped.reply, provider };
+        }
+        // Retry also truncated/failed — fall through and treat the original
+        // reply with the normal validation path below.
+        if (bumped.ok) attempt.reply = bumped.reply;
+        else failures.push(`${provider} (retry: ${bumped.reason})`);
+      }
       // A reply that isn't usable (e.g. bad JSON) fails over to the next
       // provider instead of killing the whole chain.
       if (opts.validate && !opts.validate(attempt.reply)) {
@@ -303,7 +328,8 @@ export async function tryOpenRouter(
         const data = await res.json();
         const reply = data?.choices?.[0]?.message?.content?.trim();
         if (!reply) return { ok: false, reason: 'empty response body' };
-        return { ok: true, reply };
+        const truncated = data?.choices?.[0]?.finish_reason === 'length';
+        return { ok: true, reply, truncated };
       }
       const errText = (await res.text()).slice(0, 200);
       if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
@@ -349,7 +375,8 @@ export async function tryPollinations(
     const data = await res.json();
     const reply = data?.choices?.[0]?.message?.content?.trim();
     if (!reply) return { ok: false, reason: 'empty response body' };
-    return { ok: true, reply };
+    const truncated = data?.choices?.[0]?.finish_reason === 'length';
+    return { ok: true, reply, truncated };
   } catch (err) {
     return { ok: false, reason: `request failed — ${String(err).slice(0, 120)}` };
   }
@@ -388,7 +415,9 @@ export async function tryOpenRouterVision(
           max_tokens: opts.maxTokens ?? 400,
           stream: false,
         }),
-        signal: AbortSignal.timeout(45000),
+        // Tight cap: fail fast so the overall request stays under the
+        // serverless time budget.
+        signal: AbortSignal.timeout(30000),
       }, 1);
       if (res.ok) {
         const data = await res.json();
@@ -444,8 +473,8 @@ export async function tryGeminiVision(
   if (!apiKey) return { ok: false, reason: 'GEMINI_API_KEY not set' };
   try {
     const ai = new GoogleGenAI({ apiKey });
-    // Vision gets a roomier timeout (40s) but only one retry — fail over to
-    // the next provider instead of burning minutes on a struggling one.
+    // Vision gets a tight timeout (25s) and NO retry — fail over to the next
+    // provider immediately instead of burning the serverless time budget.
     const response = await withSdkBackoff(() =>
       ai.models.generateContent({
         model: GEMINI_MODEL,
@@ -459,7 +488,7 @@ export async function tryGeminiVision(
           temperature: opts.temperature ?? 0.2,
           maxOutputTokens: opts.maxTokens ?? 400,
         },
-      }), 1, 40000,
+      }), 0, 25000,
     );
     const reply = response.text?.trim();
     if (!reply) return { ok: false, reason: 'empty response body' };

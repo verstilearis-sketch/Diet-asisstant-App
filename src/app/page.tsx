@@ -39,7 +39,7 @@ const FORMULAS = [
 ];
 
 const STEPS = [
-  { n: '01', title: 'Create your account', desc: 'Sign up with your name and email. About a minute.' },
+  { n: '01', title: 'Create your account', desc: 'Continue with Google to sign in. About a minute.' },
   { n: '02', title: 'Answer the questions', desc: 'Four short steps: your body, your goal, your lifestyle, your food preferences.' },
   { n: '03', title: 'Get your numbers', desc: 'BMI, BMR, TDEE, calorie target and macro split — shown with the working.' },
   { n: '04', title: 'Follow your plan', desc: 'Seven days of meals, hydration and milestones — plus the AI coach when you have questions.' },
@@ -52,7 +52,7 @@ const FAQS = [
   },
   {
     q: 'Do I need to create an account?',
-    a: 'Yes. Click Get started and sign up with your name and email — no verification codes, no waiting. Your answers and your plan are saved to your account so you can come back to them — and so the AI coach remembers your numbers.',
+    a: 'Yes. Click Get started and continue with Google — no passwords, no waiting. Your answers and your plan are saved to your account so you can come back to them — and so the AI coach remembers your numbers.',
   },
   {
     q: 'How do you handle allergies and dietary restrictions?',
@@ -64,7 +64,7 @@ const FAQS = [
   },
   {
     q: 'Where is my data stored?',
-    a: 'In your browser’s local storage — your profile, plan and chat history stay on your device. You can wipe everything at any time with the Reset data button on the dashboard.',
+    a: 'In your Nutriq cloud account — your profile, plans, logs and chat history are saved to your secure database, so they follow you across devices. The Reset data button on the dashboard deletes your cloud data as well and signs you out.',
   },
 ];
 

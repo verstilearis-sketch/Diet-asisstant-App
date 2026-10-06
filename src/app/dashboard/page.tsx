@@ -456,24 +456,46 @@ export default function DashboardPage() {
     setMenuPicks([]);
     try {
       const { base64, mimeType } = await processPhotoFile(file);
-      const res = await fetch('/api/menu-rescue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: base64,
-          mimeType,
-          goal: savedPlan.profile.goal,
-          calorieGoal: dailyGoal,
-          remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
-          restrictions: savedPlan.profile.dietaryRestrictions,
-          region: savedPlan.plan.region,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Could not read this menu');
+      // 65s per attempt: server budget is 60s, plus network buffer.
+      // One silent auto-retry — vision providers blip under load.
+      const fetchMenu = async () => {
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 65000);
+        try {
+          const res = await fetch('/api/menu-rescue', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              imageBase64: base64,
+              mimeType,
+              goal: savedPlan.profile.goal,
+              calorieGoal: dailyGoal,
+              remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
+              restrictions: savedPlan.profile.dietaryRestrictions,
+              region: savedPlan.plan.region,
+            }),
+          });
+          return res;
+        } finally {
+          window.clearTimeout(timer);
+        }
+      };
+      let res = await fetchMenu();
+      let data = await res.json();
+      if (!res.ok) {
+        const retryable = res.status === 503 || res.status === 504;
+        if (retryable) {
+          await new Promise((r) => setTimeout(r, 2500));
+          res = await fetchMenu();
+          data = await res.json();
+        }
+        if (!res.ok) throw new Error(data?.error || 'Could not read this menu');
+      }
       setMenuPicks(data.picks as { name: string; calories: number; proteinG: number; why: string }[]);
     } catch (e) {
-      setMenuError(e instanceof Error ? e.message : 'Could not read this menu');
+      const isAbort = e instanceof DOMException && e.name === 'AbortError';
+      setMenuError(isAbort ? 'Menu scan is taking too long — please try again' : e instanceof Error ? e.message : 'Could not read this menu');
     } finally {
       setMenuBusy(false);
       if (menuInputRef.current) menuInputRef.current.value = '';
@@ -1243,6 +1265,10 @@ export default function DashboardPage() {
               <h3 style={{ marginBottom: '1rem', fontSize: '0.98rem' }}>Log meals</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {MEAL_META.map((meta, i) => {
+                  const meal = selectedDayPlan[meta.key];
+                  // Defensive: skip slots with no meal data rather than crashing
+                  // the whole dashboard (e.g. plans saved by older versions).
+                  if (!meal) return null;
                   const done = draftLog.mealsCompleted[i];
                   return (
                     <button key={meta.key} onClick={() => toggleMealDraft(i)}
@@ -1259,7 +1285,7 @@ export default function DashboardPage() {
                       <span style={{ flex: 1 }}>
                         <span style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem' }}>{meta.label}</span>
                         <span style={{ display: 'block', fontSize: '0.76rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                          {selectedDayPlan[meta.key].calories} kcal
+                          {meal.calories} kcal
                         </span>
                       </span>
                     </button>
