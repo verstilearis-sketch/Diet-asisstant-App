@@ -220,6 +220,7 @@ export default function DashboardPage() {
       fatG: m.fatG,
       source: 'text',
       ...(provider === 'offline' ? { offline: true } : {}),
+      ...(provider === 'food-db' ? { verified: true } : {}),
     };
     setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
     setSaveState('idle');
@@ -1384,6 +1385,11 @@ export default function DashboardPage() {
                           {m.offline && (
                             <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Estimated on your device — the AI service was unreachable">
                               offline estimate
+                            </span>
+                          )}
+                          {m.verified && (
+                            <span className="badge" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0, background: 'rgba(23,114,69,0.12)', color: '#177245', border: '1px solid rgba(23,114,69,0.25)' }} title="Nutrition from a published food-composition database">
+                              verified nutrition
                             </span>
                           )}
                         </div>

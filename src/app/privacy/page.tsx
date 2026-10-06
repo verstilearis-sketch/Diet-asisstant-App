@@ -30,6 +30,13 @@ const SECTIONS: { title: string; body: string[] }[] = [
     ],
   },
   {
+    title: 'Nutrition data sources',
+    body: [
+      'Nutriq looks up real nutrition values from published food-composition databases where possible: the ICMR National Institute of Nutrition\'s Indian Food Composition Tables (2017), the Anuvaad Indian Nutrient Databank, Open Food Facts (ODbL license), and the U.S. Department of Agriculture\'s FoodData Central.',
+      'When a food isn\'t in these databases, our AI estimates its nutrition from your description — those entries are marked as estimates in the app.',
+    ],
+  },
+  {
     title: 'Your control',
     body: [
       'You can delete your account and all associated data at any time from the dashboard (Reset data), or by contacting us at the email below.',

@@ -42,6 +42,8 @@ export interface ExtraMeal {
   source?: 'text' | 'photo' | 'menu';
   /** True when estimated locally because AI providers were unreachable. */
   offline?: boolean;
+  /** True when nutrition came from a real food-composition database. */
+  verified?: boolean;
 }
 
 export interface ExerciseEntry {

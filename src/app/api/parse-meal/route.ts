@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
 import { estimateMealOffline } from '@/lib/offline-estimate';
+import { estimateFromDb } from '@/lib/food-db';
 
 // ── Free-text meal logging ────────────────────────────────────
 // POST /api/parse-meal  { text, restrictions?, region? }
 // Returns { meal: { name, calories, proteinG, carbsG, fatG }, provider }
-// Estimates nutrition for anything the user actually ate, in plain words.
-// Tries Groq, then Gemini (both with 429 backoff); if both are down it falls
-// back to a local food-unit estimate so logging keeps working offline.
+// 1. Bundled Indian food-composition database (ICMR-NIN IFCT 2017 +
+//    Anuvaad INDB) — instant, no AI call, most accurate for Indian dishes.
+// 2. AI estimator chain (Groq → Gemini → …).
+// 3. Local offline unit-food estimate so logging keeps working.
 
 function parseMealJson(raw: string): {
   name: string; calories: number; proteinG: number; carbsG: number; fatG: number;
@@ -46,6 +48,17 @@ export async function POST(req: Request) {
   }
   if (text.length > 500) {
     return NextResponse.json({ error: 'Please keep the description under 500 characters' }, { status: 400 });
+  }
+
+  // 1. Real food-composition data first — instant and most accurate for
+  //    Indian dishes (no AI call needed).
+  const dbHit = estimateFromDb(text);
+  if (dbHit) {
+    return NextResponse.json({
+      meal: dbHit.meal,
+      provider: 'food-db',
+      dbSource: dbHit.source,
+    });
   }
 
   const systemPrompt = `You are a nutrition estimator. Given a free-text description of food someone ate, estimate its nutrition as accurately as you can.
