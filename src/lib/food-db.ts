@@ -289,28 +289,24 @@ export async function lookupBarcode(barcode: string): Promise<FoodEntry | null> 
 export async function searchOpenFoodFacts(query: string, limit = 5): Promise<FoodEntry[]> {
   const q = query.trim();
   if (!q) return [];
+  // v2 structured search has been flaky ("Page temporarily unavailable"),
+  // so use the search index for candidate barcodes, then fetch each
+  // product's v3 record for its nutriments.
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 12000);
-    const url =
-      `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(q)}` +
-      `&page_size=${limit}&fields=product_name,brands,nutriments,code`;
-    const res = await fetch(url, { headers: { 'User-Agent': OFF_UA }, signal: ctrl.signal });
+    const res = await fetch(
+      `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=${limit}`,
+      { headers: { 'User-Agent': OFF_UA }, signal: ctrl.signal },
+    );
     clearTimeout(t);
     if (!res.ok) return [];
-    const data = (await res.json()) as {
-      products?: { product_name?: string; brands?: string; nutriments?: Record<string, number>; code?: string }[];
-    };
+    const data = (await res.json()) as { hits?: { code?: string }[] };
+    const codes = [...new Set((data?.hits ?? []).map((h) => String(h?.code || '')).filter(Boolean))].slice(0, 3);
     const out: FoodEntry[] = [];
-    for (const p of data?.products ?? []) {
-      const macros = p?.nutriments ? nutrimentsToMacros(p.nutriments) : null;
-      if (!macros) continue;
-      out.push({
-        name: [p.brands, p.product_name].filter(Boolean).join(' ').slice(0, 80) || 'Unknown product',
-        per100g: macros,
-        source: 'Open Food Facts',
-        sourceUrl: p.code ? `https://world.openfoodfacts.org/product/${p.code}` : undefined,
-      });
+    for (const code of codes) {
+      const entry = await lookupBarcode(code);
+      if (entry) out.push(entry);
     }
     return out;
   } catch {
