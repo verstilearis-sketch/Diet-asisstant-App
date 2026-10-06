@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSession, savePlan } from '@/lib/storage';
 import { computeAll, calculateBMI, getBMICategory } from '@/lib/calculations';
-import { generateDietPlan } from '@/lib/ai-engine';
 import type { UserProfile, Gender, ActivityLevel, Goal, BudgetTier, CuisineMix } from '@/lib/calculations';
 import {
   UserIcon, TargetIcon, ActivityIcon, GlobeIcon, SparklesIcon,
@@ -53,14 +52,6 @@ const CUISINE_OPTIONS: { value: CuisineMix; label: string; desc: string }[] = [
   { value: 'international', label: 'International', desc: 'Flavors from around the world' },
 ];
 
-const GEN_MESSAGES = [
-  'Analyzing your body metrics',
-  'Calculating calorie targets',
-  'Matching your budget, taste & cuisine style',
-  'Building your 7-day meal plan',
-  'Finalizing tips and shopping list',
-];
-
 // ── Initial state ─────────────────────────────────────────────
 
 const initProfile: Partial<UserProfile> = {
@@ -79,7 +70,6 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [profile, setProfile] = useState<Partial<UserProfile>>(initProfile);
   const [generating, setGenerating] = useState(false);
-  const [genPhase, setGenPhase] = useState(0);
   const [userId, setUserId] = useState('');
   const [saveError, setSaveError] = useState('');
 
@@ -113,14 +103,12 @@ export default function OnboardingPage() {
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setSaveError('');
-    setGenPhase(0);
-    for (let i = 0; i < GEN_MESSAGES.length - 1; i++) {
-      await new Promise((r) => setTimeout(r, 700));
-      setGenPhase(i + 1);
-    }
     try {
       const fullProfile = profile as UserProfile;
       const calculations = computeAll(fullProfile);
+      // The meal engine (all regional food databases) is heavy — load it
+      // only now, so steps 1–4 stay light and fast on mobile.
+      const { generateDietPlan } = await import('@/lib/ai-engine');
       const plan = await generateDietPlan(fullProfile, calculations);
       await savePlan(userId, fullProfile, plan);
       router.push('/dashboard');
@@ -643,34 +631,8 @@ export default function OnboardingPage() {
               Analyzing your profile and crafting your 7-day meal plan.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxWidth: 380, margin: '0 auto', textAlign: 'left' }}>
-              {GEN_MESSAGES.map((msg, i) => (
-                <div key={msg} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.8rem',
-                  padding: '0.7rem 1rem', borderRadius: '0.75rem',
-                  background: i <= genPhase ? 'var(--color-accent-soft)' : 'var(--color-surface)',
-                  border: `1px solid ${i <= genPhase ? '#cfe7d6' : 'var(--color-border)'}`,
-                  transition: 'all 300ms ease',
-                  opacity: i <= genPhase ? 1 : 0.45,
-                }}>
-                  <span style={{
-                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: i < genPhase ? 'var(--color-accent)' : i === genPhase ? 'var(--color-surface)' : 'transparent',
-                    border: i === genPhase ? '2px solid var(--color-border-strong)' : 'none',
-                    borderTopColor: i === genPhase ? 'var(--color-accent)' : undefined,
-                    color: '#fff',
-                    animation: i === genPhase ? 'spin 0.9s linear infinite' : 'none',
-                  }}>
-                    {i < genPhase && <CheckIcon size={13} />}
-                  </span>
-                  <span style={{ fontSize: '0.87rem', fontWeight: i <= genPhase ? 600 : 500, color: i <= genPhase ? 'var(--color-text)' : 'var(--color-muted)' }}>
-                    {msg}{i === genPhase ? '…' : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-            {generating && <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--color-faint)' }}>This usually takes a few seconds</div>}
+            <div className="spinner" style={{ width: 34, height: 34, margin: '0 auto 1.25rem' }} />
+            {generating && <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--color-muted)' }}>Putting your week together…</div>}
             {saveError && (
               <div className="error-box" style={{ maxWidth: 380, margin: '1.5rem auto 0', textAlign: 'left' }}>
                 {saveError}

@@ -1919,8 +1919,7 @@ export async function generateDietPlan(
   calculations: Calculations,
   taste?: TasteProfile,
 ): Promise<DietPlan> {
-  await new Promise(r => setTimeout(r, 1800));
-
+  // No artificial delay: the plan builds locally in milliseconds.
   const rawRegion = detectRegion(profile.location);
   const region = resolveRegion(rawRegion);
   const budget: BudgetTier = profile.budget || 'moderate';

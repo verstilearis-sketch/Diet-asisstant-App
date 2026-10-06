@@ -251,16 +251,23 @@ export async function savePlan(userId: string, profile: UserProfile, plan: DietP
     throw new Error('Could not save your plan: ' + (error?.message ?? 'unknown error'));
   }
   // Keep the history tidy — retain only the 10 most recent plans.
-  const { data: extras } = await sb
-    .from('plans')
-    .select('id')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .range(10, 100);
-  const extraIds = (extras as { id: string }[] | null)?.map((r) => r.id) ?? [];
-  if (extraIds.length > 0) {
-    await sb.from('plans').delete().in('id', extraIds);
-  }
+  // Runs in the background: the user never waits for this housekeeping.
+  void (async () => {
+    try {
+      const { data: extras } = await sb
+        .from('plans')
+        .select('id')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .range(10, 100);
+      const extraIds = (extras as { id: string }[] | null)?.map((r) => r.id) ?? [];
+      if (extraIds.length > 0) {
+        await sb.from('plans').delete().in('id', extraIds);
+      }
+    } catch {
+      /* tidiness is best-effort */
+    }
+  })();
   const row = data as { id: string; created_at: string };
   return { id: row.id, userId, profile, plan, createdAt: row.created_at };
 }
