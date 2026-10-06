@@ -265,15 +265,26 @@ export async function lookupBarcode(barcode: string): Promise<FoodEntry | null> 
       return null;
     }
     const data = (await res.json()) as {
-      product?: { product_name?: string; brands?: string; nutriments?: Record<string, number>; code?: string };
+      product?: {
+        product_name?: string; brands?: string;
+        nutriments?: Record<string, number>; code?: string;
+        serving_size?: string; quantity?: string;
+      };
     };
     const p = data?.product;
     const macros = p?.nutriments ? nutrimentsToMacros(p.nutriments) : null;
+    // Prefer the label's serving size ("70g", "30 g") so logging defaults
+    // to one pack/serving instead of a full 100g.
+    let servingG: number | null = null;
+    const servingStr = p?.serving_size || '';
+    const m = servingStr.match(/([\d.]+)\s*g/i);
+    if (m) servingG = parseFloat(m[1]);
     const entry: FoodEntry | null =
       p && macros
         ? {
             name: [p.brands, p.product_name].filter(Boolean).join(' ').slice(0, 80) || `Product ${code}`,
             per100g: macros,
+            serving: servingG ? { unit: 'serving', grams: servingG } : undefined,
             source: 'Open Food Facts',
             sourceUrl: `https://world.openfoodfacts.org/product/${code}`,
           }

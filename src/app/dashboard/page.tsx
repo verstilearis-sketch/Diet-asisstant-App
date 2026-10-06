@@ -30,12 +30,13 @@ const MacroDonut = dynamic(
   { ssr: false, loading: () => <MacroDonutPlaceholder /> },
 );
 import { ChatErrorBoundary } from '@/components/ChatErrorBoundary';
+const BarcodeScanner = dynamic(() => import('@/components/BarcodeScanner'), { ssr: false });
 import {
   NutriqIcon, DashboardIcon, UtensilsIcon, ClipboardIcon, CartIcon,
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  FlameIcon, TrashIcon, PlusIcon, CameraIcon, SparklesIcon, ActivityIcon, TargetIcon,
+  FlameIcon, TrashIcon, PlusIcon, BarcodeIcon, SparklesIcon, ActivityIcon, TargetIcon,
 } from '@/components/icons';
 
 // ── Estimate caches: avoid repeat AI calls for the same text ──────
@@ -109,10 +110,12 @@ export default function DashboardPage() {
   const [exerciseText, setExerciseText] = useState('');
   const [exerciseBusy, setExerciseBusy] = useState(false);
   const [exerciseError, setExerciseError] = useState<string | null>(null);
-  const [menuPicks, setMenuPicks] = useState<{ name: string; calories: number; proteinG: number; why: string }[]>([]);
-  const [menuBusy, setMenuBusy] = useState(false);
-  const [menuError, setMenuError] = useState<string | null>(null);
-  const menuInputRef = useRef<HTMLInputElement | null>(null);
+  // Barcode scan: point the camera at a pack, get real label nutrition.
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanned, setScanned] = useState<{ name: string; per100g: { kcal: number; proteinG: number; carbsG: number; fatG: number }; servingG: number | null; sourceUrl?: string } | null>(null);
+  const [scanGrams, setScanGrams] = useState('');
+  const [scanBusy, setScanBusy] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [festivalOpen, setFestivalOpen] = useState(false);
   const [festivalChoice, setFestivalChoice] = useState('diwali');
   const [festivalDate, setFestivalDate] = useState(getFestival('diwali')?.defaultDate ?? '2026-11-08');
@@ -449,73 +452,54 @@ export default function DashboardPage() {
     setSaveState('idle');
   };
 
-  // Menu rescue: photograph a restaurant menu, get the 3 smartest picks.
-  const handleMenuPhoto = async (file: File | undefined) => {
-    if (!file || menuBusy || !savedPlan) return;
-    setMenuBusy(true);
-    setMenuError(null);
-    setMenuPicks([]);
+  // Barcode scan: resolve the barcode against Open Food Facts, then let
+  // the user log it with an amount. Real label data — no AI guessing.
+  const handleBarcode = async (barcode: string) => {
+    setScanOpen(false);
+    setScanBusy(true);
+    setScanError(null);
+    setScanned(null);
     try {
-      const { base64, mimeType } = await processPhotoFile(file);
-      // 65s per attempt: server budget is 60s, plus network buffer.
-      // One silent auto-retry — vision providers blip under load.
-      const fetchMenu = async () => {
-        const controller = new AbortController();
-        const timer = window.setTimeout(() => controller.abort(), 65000);
-        try {
-          const res = await fetch('/api/menu-rescue', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal,
-            body: JSON.stringify({
-              imageBase64: base64,
-              mimeType,
-              goal: savedPlan.profile.goal,
-              calorieGoal: dailyGoal,
-              remainingKcal: Math.max(0, dailyGoal - draftCalsConsumed),
-              restrictions: savedPlan.profile.dietaryRestrictions,
-              region: savedPlan.plan.region,
-            }),
-          });
-          return res;
-        } finally {
-          window.clearTimeout(timer);
-        }
-      };
-      let res = await fetchMenu();
-      let data = await res.json();
-      if (!res.ok) {
-        const retryable = res.status === 503 || res.status === 504;
-        if (retryable) {
-          await new Promise((r) => setTimeout(r, 2500));
-          res = await fetchMenu();
-          data = await res.json();
-        }
-        if (!res.ok) throw new Error(data?.error || 'Could not read this menu');
+      const res = await fetch(`/api/food-lookup?barcode=${encodeURIComponent(barcode)}`);
+      const data = await res.json();
+      const entry = (data?.results ?? [])[0] as
+        | { name: string; per100g: { kcal: number; proteinG: number; carbsG: number; fatG: number }; serving?: { grams: number }; sourceUrl?: string }
+        | undefined;
+      if (!entry) {
+        setScanError('No nutrition data found for that barcode. Try another pack.');
+        return;
       }
-      setMenuPicks(data.picks as { name: string; calories: number; proteinG: number; why: string }[]);
-    } catch (e) {
-      const isAbort = e instanceof DOMException && e.name === 'AbortError';
-      setMenuError(isAbort ? 'Menu scan is taking too long — please try again' : e instanceof Error ? e.message : 'Could not read this menu');
+      const servingG = entry.serving?.grams ?? null;
+      setScanned({ name: entry.name, per100g: entry.per100g, servingG, sourceUrl: entry.sourceUrl });
+      setScanGrams(servingG ? String(Math.round(servingG)) : '100');
+    } catch {
+      setScanError('Could not look up that barcode. Please try again.');
     } finally {
-      setMenuBusy(false);
-      if (menuInputRef.current) menuInputRef.current.value = '';
+      setScanBusy(false);
     }
   };
 
-  const logMenuPick = (pick: { name: string; calories: number; proteinG: number }) => {
+  const logScannedFood = () => {
+    if (!scanned) return;
+    const grams = Math.max(1, Math.min(2000, parseFloat(scanGrams) || 0));
+    if (!grams) return;
+    const f = grams / 100;
+    const r1 = (n: number) => Math.round(n * 10) / 10;
     const entry: ExtraMeal = {
       id: newEntryId('em'),
-      name: pick.name,
-      text: 'Menu pick',
-      calories: pick.calories,
-      proteinG: pick.proteinG,
-      carbsG: 0,
-      fatG: 0,
-      source: 'menu',
+      name: scanned.name,
+      text: `Barcode · ${grams}g`,
+      calories: Math.round(scanned.per100g.kcal * f),
+      proteinG: r1(scanned.per100g.proteinG * f),
+      carbsG: r1(scanned.per100g.carbsG * f),
+      fatG: r1(scanned.per100g.fatG * f),
+      source: 'barcode',
+      verified: true,
     };
     setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
     setSaveState('idle');
+    setScanned(null);
+    setScanGrams('');
   };
 
   // Festival mode: adapt the plan to feasts and fasts.
@@ -1377,9 +1361,9 @@ export default function DashboardPage() {
                               photo · estimate
                             </span>
                           )}
-                          {m.source === 'menu' && (
-                            <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Picked from a restaurant menu">
-                              menu pick
+                          {m.source === 'barcode' && (
+                            <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Scanned from the pack's barcode — real label data">
+                              barcode
                             </span>
                           )}
                           {m.offline && (
@@ -1408,49 +1392,58 @@ export default function DashboardPage() {
                 <p style={{ fontSize: '0.8rem', color: 'var(--color-faint)' }}>Nothing extra logged today.</p>
               )}
 
-              {/* ── Menu rescue ─────────────────────────────── */}
+              {/* ── Barcode scan ─────────────────────────────── */}
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
-                <input
-                  ref={menuInputRef} type="file" accept="image/*" capture="environment"
-                  style={{ display: 'none' }} aria-label="Photograph the restaurant menu"
-                  onChange={(e) => handleMenuPhoto(e.target.files?.[0])}
-                />
                 <button
-                  type="button" className="btn-ghost" onClick={() => menuInputRef.current?.click()}
-                  disabled={menuBusy}
+                  type="button" className="btn-ghost" onClick={() => { setScanError(null); setScanned(null); setScanOpen(true); }}
                   style={{ width: '100%', padding: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.86rem', fontWeight: 650 }}
                 >
-                  {menuBusy
-                    ? <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                    : <CameraIcon size={16} />}
-                  {menuBusy ? 'Reading the menu…' : 'Eating out? Scan the menu'}
+                  <BarcodeIcon size={16} />
+                  Scan a barcode
                 </button>
-                {menuError && (
-                  <p style={{ fontSize: '0.82rem', color: 'var(--color-danger)', marginTop: '0.6rem', marginBottom: 0 }}>
-                    {menuError} — <button type="button" className="btn-ghost" style={{ padding: '0.15rem 0.5rem', fontSize: '0.8rem' }} onClick={() => menuInputRef.current?.click()}>Try again</button>
-                  </p>
-                )}
-                {menuPicks.length > 0 && (
-                  <div style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: 0 }}>Smartest picks for your goal:</p>
-                    {menuPicks.map((p, i) => (
-                      <div key={i} style={{ background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.7rem 0.85rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.6rem' }}>
-                          <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{i + 1}. {p.name}</span>
-                          <span style={{ fontSize: '0.74rem', color: 'var(--color-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-                            {p.calories} kcal · {p.proteinG}g protein
-                          </span>
-                        </div>
-                        {p.why && (
-                          <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', margin: '0.3rem 0 0.55rem', lineHeight: 1.5 }}>{p.why}</p>
-                        )}
-                        <button type="button" className="btn-primary" onClick={() => logMenuPick(p)} style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}>
-                          Log this
-                        </button>
-                      </div>
-                    ))}
+                <p style={{ fontSize: '0.74rem', color: 'var(--color-faint)', margin: '0.45rem 0 0', textAlign: 'center' }}>
+                  Point at any pack — get real label nutrition, no typing.
+                </p>
+                {scanBusy && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', marginTop: '0.8rem', fontSize: '0.85rem', color: 'var(--color-muted)' }}>
+                    <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                    Looking it up…
                   </div>
                 )}
+                {scanError && (
+                  <p style={{ fontSize: '0.82rem', color: 'var(--color-danger)', marginTop: '0.6rem', marginBottom: 0, textAlign: 'center' }}>
+                    {scanError}
+                  </p>
+                )}
+                {scanned && !scanBusy && (() => {
+                  const grams = Math.max(0, parseFloat(scanGrams) || 0);
+                  const f = grams / 100;
+                  const r1 = (n: number) => Math.round(n * 10) / 10;
+                  return (
+                    <div style={{ marginTop: '0.8rem', background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.8rem 0.9rem' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: '0.15rem' }}>{scanned.name}</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', marginBottom: '0.6rem', fontVariantNumeric: 'tabular-nums' }}>
+                        Per 100g: {scanned.per100g.kcal} kcal · {scanned.per100g.proteinG}g protein · {scanned.per100g.carbsG}g carbs · {scanned.per100g.fatG}g fat
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-end' }}>
+                        <label style={{ flex: 1 }}>
+                          <span className="input-label" style={{ fontSize: '0.74rem' }}>Amount (g)</span>
+                          <input
+                            type="number" inputMode="decimal" min={1} max={2000}
+                            value={scanGrams} onChange={(e) => setScanGrams(e.target.value)}
+                            style={{ width: '100%', padding: '0.55rem 0.7rem', borderRadius: '0.6rem', border: '1px solid var(--color-border-strong)', fontSize: '0.9rem', background: 'var(--color-surface)' }}
+                          />
+                        </label>
+                        <button
+                          type="button" className="btn-primary" onClick={logScannedFood} disabled={!grams}
+                          style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                        >
+                          Log {grams > 0 ? `${Math.round(scanned.per100g.kcal * f)} kcal` : ''}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -1675,6 +1668,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+      {scanOpen && (
+        <BarcodeScanner onScan={handleBarcode} onClose={() => setScanOpen(false)} />
       )}
     </div>
   );
