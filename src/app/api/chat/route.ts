@@ -192,13 +192,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
   }
 
   console.error('Health coach: all AI providers failed —', failures.join('; '));
-  const fb = await getFallback(typedMessages, userProfile, planContext);
-  // TEMPORARY DEBUG: expose provider failure reasons in a header (not visible
-  // in the UI) so we can diagnose without Vercel log access. Remove after fix.
-  // Sanitize: headers reject newlines/control chars.
-  const debugVal = failures.join(' | ').replace(/[\r\n\x00-\x1F\x7F]+/g, ' ').slice(0, 500);
-  fb.headers.set('X-Debug-Failures', debugVal);
-  return fb;
+  return getFallback(typedMessages, userProfile, planContext);
 }
 
 // ── Streaming helpers ─────────────────────────────────────────
