@@ -12,7 +12,7 @@ const GROQ_MODEL_PREFERENCE = [
   'qwen/qwen3-32b',
   'moonshotai/kimi-k2-instruct',
 ].filter((m): m is string => !!m);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 // OpenRouter: third link in the chain — separate free-model quota pool.
 const OPENROUTER_MODEL_PREFERENCE = [
   process.env.OPENROUTER_MODEL,

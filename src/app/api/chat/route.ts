@@ -24,7 +24,7 @@ export const maxDuration = 60;
 //   GEMINI_API_KEY=...      (optional backup, from Google AI Studio)
 //   OPENROUTER_API_KEY=...  (optional backup, free key from openrouter.ai/keys)
 //   GROQ_MODEL=...          (optional; default auto-selected)
-//   GEMINI_MODEL=...        (optional; default gemini-3.5-flash)
+//   GEMINI_MODEL=...        (optional; default gemini-3-flash-preview)
 //   OPENROUTER_MODEL=...    (optional; default auto-selected free model)
 
 const GROQ_MODEL_PREFERENCE = [
@@ -35,7 +35,7 @@ const GROQ_MODEL_PREFERENCE = [
   'qwen/qwen3-32b',
   'moonshotai/kimi-k2-instruct',
 ].filter((m): m is string => !!m);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 const OPENROUTER_MODEL_PREFERENCE = [
   process.env.OPENROUTER_MODEL,
   'google/gemma-3-27b-it:free',
