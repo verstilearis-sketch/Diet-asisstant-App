@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { tryPollinations } from '@/lib/ai-providers';
 
+// 60s execution budget: the failover chain below is tuned to always resolve
+// (or fail over to the instant offline reply) well inside it.
+export const maxDuration = 60;
+
 // ── Health-coach AI providers ─────────────────────────────────
 // The coach rotates across Groq, Gemini and OpenRouter: each request starts
 // at a random provider (spreading quota evenly) and fails over through the
@@ -166,12 +170,13 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 
   // Last resort: keyless Pollinations (non-streaming) before the offline
   // reply. Flatten the conversation into one prompt — at this point any
-  // real answer beats a canned one.
+  // real answer beats a canned one. Kept short: the offline reply below
+  // is instant, so don't stall long here.
   try {
     const flatPrompt = typedMessages
       .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
       .join('\n\n');
-    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 40000 });
+    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 15000 });
     if (attempt.ok) {
       return new Response(attempt.reply, {
         headers: {
@@ -307,13 +312,13 @@ function chatMessagesFor(messages: IncomingMessage[], systemPrompt: string) {
 
 // ── Groq ──────────────────────────────────────────────────────
 
-// The model Groq actually serves right now, picked from the preference list.
-// Discovered once via /v1/models and cached in memory; the cache is dropped
-// if a completion 404s so the next request re-discovers.
-let cachedGroqModel: string | null = null;
+// The model Groq actually serves right now. NOTE: this is per serverless
+// instance — instances don't share memory, so we NEVER block the hot path
+// on /v1/models discovery. We try the last-known-good (or default) model
+// directly and only discover when it 404s.
+let preferredGroqModel: string | null = null;
 
-async function pickGroqModel(apiKey: string): Promise<string> {
-  if (cachedGroqModel) return cachedGroqModel;
+async function discoverGroqModel(apiKey: string): Promise<string> {
   let available: Set<string> | null = null;
   try {
     const res = await fetch('https://api.groq.com/openai/v1/models', {
@@ -327,11 +332,44 @@ async function pickGroqModel(apiKey: string): Promise<string> {
   } catch {
     // Discovery failed — fall back to the preference order blind.
   }
-  const pick =
+  return (
     (available && GROQ_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    GROQ_MODEL_PREFERENCE[0];
-  cachedGroqModel = pick;
-  return pick;
+    GROQ_MODEL_PREFERENCE[0]
+  );
+}
+
+function isModelNotFound(err: unknown): boolean {
+  const msg = String(err && typeof err === 'object' && 'message' in err ? (err as Error).message : err);
+  return /model_not_found|no such model/i.test(msg);
+}
+
+async function tryGroqModel(
+  apiKey: string,
+  messages: IncomingMessage[],
+  systemPrompt: string,
+  model: string,
+): Promise<ReadableStream<Uint8Array>> {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: chatMessagesFor(messages, systemPrompt),
+      temperature: 0.7,
+      max_tokens: 600,
+      stream: true,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) {
+    const errText = (await res.text()).slice(0, 200);
+    throw new Error(`HTTP ${res.status} — ${errText}`);
+  }
+  if (!res.body) throw new Error('empty response body');
+  return sseToTextStream(res.body);
 }
 
 async function streamGroq(
@@ -341,38 +379,18 @@ async function streamGroq(
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error('GROQ_API_KEY not set');
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const model = await withTimeout(pickGroqModel(apiKey), 12000, 'Groq model discovery');
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: chatMessagesFor(messages, systemPrompt),
-        temperature: 0.7,
-        max_tokens: 600,
-        stream: true,
-      }),
-      signal: AbortSignal.timeout(FIRST_TOKEN_TIMEOUT_MS + 10000),
-    });
-
-    if (res.ok) {
-      if (!res.body) throw new Error('empty response body');
-      return sseToTextStream(res.body);
-    }
-
-    const errText = (await res.text()).slice(0, 200);
-    if (res.status === 404 && errText.includes('model_not_found')) {
-      // Model vanished between discovery and use — rediscover and retry once.
-      cachedGroqModel = null;
-      continue;
-    }
-    throw new Error(`HTTP ${res.status} — ${errText}`);
+  const firstTry = preferredGroqModel ?? GROQ_MODEL_PREFERENCE[0];
+  try {
+    const stream = await tryGroqModel(apiKey, messages, systemPrompt, firstTry);
+    preferredGroqModel = firstTry;
+    return stream;
+  } catch (err) {
+    // Model retired between deploys — discover what's live now, retry once.
+    if (!isModelNotFound(err)) throw err;
   }
-  throw new Error('no working Groq model found');
+  const discovered = await withTimeout(discoverGroqModel(apiKey), 10000, 'Groq model discovery');
+  preferredGroqModel = discovered;
+  return tryGroqModel(apiKey, messages, systemPrompt, discovered);
 }
 
 // ── Gemini ────────────────────────────────────────────────────
@@ -436,10 +454,10 @@ async function streamGemini(
 }
 
 // ── OpenRouter ────────────────────────────────────────────────
-// Third link: free models with their own quota pool. Same discovery pattern
-// as Groq — the free-model lineup changes, so we pick what actually exists.
+// Third link: free models with their own quota pool. Same hot-path rule as
+// Groq — try the last-known-good model directly, discover only on 404.
 
-let cachedOpenRouterModel: string | null = null;
+let preferredOpenRouterModel: string | null = null;
 
 function openRouterHeaders(apiKey: string): Record<string, string> {
   return {
@@ -452,8 +470,7 @@ function openRouterHeaders(apiKey: string): Record<string, string> {
   };
 }
 
-async function pickOpenRouterModel(apiKey: string): Promise<string> {
-  if (cachedOpenRouterModel) return cachedOpenRouterModel;
+async function discoverOpenRouterModel(apiKey: string): Promise<string> {
   let available: Set<string> | null = null;
   try {
     const res = await fetch('https://openrouter.ai/api/v1/models', {
@@ -467,11 +484,36 @@ async function pickOpenRouterModel(apiKey: string): Promise<string> {
   } catch {
     // Discovery failed — fall back to the preference order blind.
   }
-  const pick =
+  return (
     (available && OPENROUTER_MODEL_PREFERENCE.find((m) => available!.has(m))) ||
-    OPENROUTER_MODEL_PREFERENCE[0];
-  cachedOpenRouterModel = pick;
-  return pick;
+    OPENROUTER_MODEL_PREFERENCE[0]
+  );
+}
+
+async function tryOpenRouterModel(
+  apiKey: string,
+  messages: IncomingMessage[],
+  systemPrompt: string,
+  model: string,
+): Promise<ReadableStream<Uint8Array>> {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: openRouterHeaders(apiKey),
+    body: JSON.stringify({
+      model,
+      messages: chatMessagesFor(messages, systemPrompt),
+      temperature: 0.7,
+      max_tokens: 600,
+      stream: true,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) {
+    const errText = (await res.text()).slice(0, 200);
+    throw new Error(`HTTP ${res.status} — ${errText}`);
+  }
+  if (!res.body) throw new Error('empty response body');
+  return sseToTextStream(res.body);
 }
 
 async function streamOpenRouter(
@@ -481,36 +523,17 @@ async function streamOpenRouter(
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
 
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const model = await withTimeout(pickOpenRouterModel(apiKey), 12000, 'OpenRouter model discovery');
-    if (!model) throw new Error('no working OpenRouter model found');
-
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: openRouterHeaders(apiKey),
-      body: JSON.stringify({
-        model,
-        messages: chatMessagesFor(messages, systemPrompt),
-        temperature: 0.7,
-        max_tokens: 600,
-        stream: true,
-      }),
-      signal: AbortSignal.timeout(FIRST_TOKEN_TIMEOUT_MS + 10000),
-    });
-
-    if (res.ok) {
-      if (!res.body) throw new Error('empty response body');
-      return sseToTextStream(res.body);
-    }
-
-    const errText = (await res.text()).slice(0, 200);
-    if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
-      cachedOpenRouterModel = null;
-      continue;
-    }
-    throw new Error(`HTTP ${res.status} — ${errText}`);
+  const firstTry = preferredOpenRouterModel ?? OPENROUTER_MODEL_PREFERENCE[0];
+  try {
+    const stream = await tryOpenRouterModel(apiKey, messages, systemPrompt, firstTry);
+    preferredOpenRouterModel = firstTry;
+    return stream;
+  } catch (err) {
+    if (!isModelNotFound(err)) throw err;
   }
-  throw new Error('no working OpenRouter model found');
+  const discovered = await withTimeout(discoverOpenRouterModel(apiKey), 10000, 'OpenRouter model discovery');
+  preferredOpenRouterModel = discovered;
+  return tryOpenRouterModel(apiKey, messages, systemPrompt, discovered);
 }
 
 /** Keyword-based offline replies for when no provider answers. */
@@ -540,6 +563,5 @@ async function getFallback(
     reply = `Hi — I'm your health coach. Ask me about nutrition, meals, hydration, or training.`;
   }
 
-  await new Promise((r) => setTimeout(r, 400));
   return NextResponse.json({ reply, offline: true });
 }

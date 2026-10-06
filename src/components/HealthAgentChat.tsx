@@ -43,7 +43,9 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [failedId, setFailedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,55 +76,84 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
     onChunk: (partial: string) => void,
   ): Promise<string> => {
     const calcs = computeAll(plan.profile);
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: history,
-        userProfile: plan.profile,
-        planContext: {
-          region: plan.plan.region,
-          hydrationPlan: plan.plan.hydrationPlan,
-          calorieGoal: calcs.dailyCalorieGoal,
-          festival: plan.plan.festivalMode ?? null,
-        },
-      }),
-    });
-    const contentType = res.headers.get('content-type') || '';
-    // Offline fallback arrives as JSON; live replies stream as plain text.
-    if (contentType.includes('application/json')) {
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      onFirstChunk();
-      return data.reply || "I couldn't generate a response — please try again.";
-    }
-    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let full = '';
-    let first = true;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      full += decoder.decode(value, { stream: true });
-      if (first) {
-        first = false;
+    // 55s cap: the server budget is 60s — never spin the typing dots forever
+    // on a hung connection. The catch below turns this into a retryable error.
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const timer = setTimeout(() => controller.abort(), 55000);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          messages: history,
+          userProfile: plan.profile,
+          planContext: {
+            region: plan.plan.region,
+            hydrationPlan: plan.plan.hydrationPlan,
+            calorieGoal: calcs.dailyCalorieGoal,
+            festival: plan.plan.festivalMode ?? null,
+          },
+        }),
+      });
+      const contentType = res.headers.get('content-type') || '';
+      // Offline fallback arrives as JSON; live replies stream as plain text.
+      if (contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
         onFirstChunk();
+        return data.reply || "I couldn't generate a response — please try again.";
+      }
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let full = '';
+      let first = true;
+      // Throttle re-renders: re-parsing markdown on every token janks on
+      // phones. Update at most ~8×/second; the final flush below is exact.
+      let lastEmit = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        full += decoder.decode(value, { stream: true });
+        if (first) {
+          first = false;
+          onFirstChunk();
+        }
+        const now = Date.now();
+        if (now - lastEmit >= 120) {
+          lastEmit = now;
+          onChunk(full);
+        }
       }
       onChunk(full);
+      return full;
+    } finally {
+      clearTimeout(timer);
+      if (abortRef.current === controller) abortRef.current = null;
     }
-    return full;
   };
 
-  const sendText = async (text: string) => {
+  const sendText = async (text: string, retryAgentId?: string) => {
     const trimmed = text.trim();
     if (!trimmed || isTyping) return;
-    const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: trimmed };
-    const history = [...messages, userMsg];
-    const agentId = `a-${Date.now()}`;
-    // Placeholder agent message — fills in live as the stream arrives.
-    setMessages([...history, { id: agentId, role: 'agent', content: '' }]);
-    setInput('');
+    setFailedId(null);
+    let history: Message[];
+    let agentId: string;
+    if (retryAgentId) {
+      // Retry: drop the failed placeholder, reuse the original user message.
+      agentId = retryAgentId;
+      history = messages.filter((m) => m.id !== retryAgentId);
+      setMessages([...history, { id: agentId, role: 'agent', content: '' }]);
+    } else {
+      const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: trimmed };
+      history = [...messages, userMsg];
+      agentId = `a-${Date.now()}`;
+      // Placeholder agent message — fills in live as the stream arrives.
+      setMessages([...history, { id: agentId, role: 'agent', content: '' }]);
+      setInput('');
+    }
     setIsTyping(true);
     try {
       const reply = await fetchReply(
@@ -139,6 +170,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
         prev.map((m) => (m.id === agentId ? { ...m, content: clean } : m)),
       );
     } catch {
+      setFailedId(agentId);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === agentId
@@ -150,6 +182,11 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
       setIsTyping(false);
     }
   };
+
+  // Abort an in-flight request when the chat unmounts or the panel closes.
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -193,6 +230,19 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
             className={`hac-msg ${msg.role === 'user' ? 'hac-msg-user' : 'hac-msg-agent'}`}
           >
             <ReactMarkdown>{msg.content}</ReactMarkdown>
+            {failedId === msg.id && (() => {
+              const idx = messages.findIndex((m) => m.id === msg.id);
+              const lastUser = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user');
+              return lastUser ? (
+                <button
+                  type="button" className="btn-secondary"
+                  style={{ marginTop: '0.5rem', padding: '0.45rem 1rem', fontSize: '0.8rem' }}
+                  onClick={() => void sendText(lastUser.content, msg.id)}
+                >
+                  Try again
+                </button>
+              ) : null;
+            })()}
           </div>
         ))}
         {isTyping && (
