@@ -6,19 +6,20 @@ import { GoogleGenAI } from '@google/genai';
 
 const GROQ_MODEL_PREFERENCE = [
   process.env.GROQ_MODEL,
-  'llama-3.1-8b-instant',
+  // llama-3.1-8b-instant was decommissioned by Groq on 2026-08-16;
+  // openai/gpt-oss-20b is Groq's official replacement.
+  'openai/gpt-oss-20b',
   'qwen/qwen3-32b',
   'moonshotai/kimi-k2-instruct',
-  'openai/gpt-oss-20b',
 ].filter((m): m is string => !!m);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 // OpenRouter: third link in the chain — separate free-model quota pool.
 const OPENROUTER_MODEL_PREFERENCE = [
   process.env.OPENROUTER_MODEL,
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'google/gemma-2-9b-it:free',
-  'mistralai/mistral-7b-instruct:free',
-  'qwen/qwen-2.5-7b-instruct:free',
+  'google/gemma-3-27b-it:free',
+  'qwen/qwen3-32b:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'deepseek/deepseek-chat-v3-0324:free',
 ].filter((m): m is string => !!m);
 const OPENROUTER_VISION_PREFERENCE = [
   process.env.OPENROUTER_VISION_MODEL,
@@ -127,7 +128,7 @@ export async function tryGroq(
         return { ok: true, reply, truncated };
       }
       const errText = (await res.text()).slice(0, 200);
-      if (res.status === 404 && errText.includes('model_not_found')) {
+      if (res.status === 404 && /model_not_found|does not exist|decommissioned/i.test(errText)) {
         cachedGroqModel = null;
         continue;
       }
@@ -332,7 +333,7 @@ export async function tryOpenRouter(
         return { ok: true, reply, truncated };
       }
       const errText = (await res.text()).slice(0, 200);
-      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+      if (res.status === 404 && /model_not_found|no such model|does not exist|decommissioned/i.test(errText)) {
         openRouterTextCache.model = null;
         continue;
       }
@@ -426,7 +427,7 @@ export async function tryOpenRouterVision(
         return { ok: true, reply };
       }
       const errText = (await res.text()).slice(0, 200);
-      if (res.status === 404 && /model_not_found|no such model/i.test(errText)) {
+      if (res.status === 404 && /model_not_found|no such model|does not exist|decommissioned/i.test(errText)) {
         openRouterVisionCache.model = null;
         continue;
       }

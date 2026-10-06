@@ -24,23 +24,24 @@ export const maxDuration = 60;
 //   GEMINI_API_KEY=...      (optional backup, from Google AI Studio)
 //   OPENROUTER_API_KEY=...  (optional backup, free key from openrouter.ai/keys)
 //   GROQ_MODEL=...          (optional; default auto-selected)
-//   GEMINI_MODEL=...        (optional; default gemini-3.8-flash)
+//   GEMINI_MODEL=...        (optional; default gemini-3.5-flash)
 //   OPENROUTER_MODEL=...    (optional; default auto-selected free model)
 
 const GROQ_MODEL_PREFERENCE = [
   process.env.GROQ_MODEL,
-  'llama-3.1-8b-instant',
+  // llama-3.1-8b-instant was decommissioned by Groq on 2026-08-16;
+  // openai/gpt-oss-20b is Groq's official replacement.
+  'openai/gpt-oss-20b',
   'qwen/qwen3-32b',
   'moonshotai/kimi-k2-instruct',
-  'openai/gpt-oss-20b',
 ].filter((m): m is string => !!m);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 const OPENROUTER_MODEL_PREFERENCE = [
   process.env.OPENROUTER_MODEL,
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'google/gemma-2-9b-it:free',
-  'mistralai/mistral-7b-instruct:free',
-  'qwen/qwen-2.5-7b-instruct:free',
+  'google/gemma-3-27b-it:free',
+  'qwen/qwen3-32b:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'deepseek/deepseek-chat-v3-0324:free',
 ].filter((m): m is string => !!m);
 // NOTE: GitHub Models was retired by GitHub on July 30, 2026 — removed from
 // the chat chain. Chain is now: Groq → Gemini → OpenRouter.
@@ -340,7 +341,7 @@ async function discoverGroqModel(apiKey: string): Promise<string> {
 
 function isModelNotFound(err: unknown): boolean {
   const msg = String(err && typeof err === 'object' && 'message' in err ? (err as Error).message : err);
-  return /model_not_found|no such model/i.test(msg);
+  return /model_not_found|no such model|does not exist|decommissioned|model_decommissioned/i.test(msg);
 }
 
 async function tryGroqModel(
