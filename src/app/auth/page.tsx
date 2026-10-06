@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getSession, signInWithGoogle } from '@/lib/storage';
@@ -11,6 +11,10 @@ function AuthForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [needAgree, setNeedAgree] = useState(false);
+  // Ref guard: React state hasn't re-rendered yet during a rapid double-tap,
+  // so `loading` alone can't stop two OAuth flows from starting.
+  const redirecting = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -21,6 +25,13 @@ function AuthForm() {
   }, [router]);
 
   const handleGoogle = async () => {
+    // Every tap does something visible — never a dead button.
+    if (!agreed) {
+      setNeedAgree(true);
+      return;
+    }
+    if (redirecting.current) return;
+    redirecting.current = true;
     setError('');
     setLoading(true);
     const result = await signInWithGoogle();
@@ -29,6 +40,7 @@ function AuthForm() {
     if (!result.success) {
       setError(result.error || 'Google sign-in failed. Please try again.');
       setLoading(false);
+      redirecting.current = false;
     }
   };
 
@@ -51,12 +63,12 @@ function AuthForm() {
 
         {error && <div className="error-box" style={{ marginBottom: '1rem' }}><AlertIcon size={16} /> {error}</div>}
 
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginTop: '1.25rem', cursor: 'pointer', fontSize: '0.84rem', color: 'var(--color-muted)', lineHeight: 1.55 }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginTop: '1.25rem', cursor: 'pointer', fontSize: '0.84rem', color: needAgree && !agreed ? 'var(--color-text)' : 'var(--color-muted)', lineHeight: 1.55 }}>
           <input
             type="checkbox"
             checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-            style={{ marginTop: '0.2rem', width: 16, height: 16, accentColor: 'var(--color-accent)', flexShrink: 0, cursor: 'pointer' }}
+            onChange={(e) => { setAgreed(e.target.checked); if (e.target.checked) setNeedAgree(false); }}
+            style={{ marginTop: '0.2rem', width: 18, height: 18, accentColor: 'var(--color-accent)', flexShrink: 0, cursor: 'pointer', outline: needAgree && !agreed ? '2px solid var(--color-accent)' : 'none', outlineOffset: 2, borderRadius: 4 }}
           />
           <span>
             I&apos;ve read and agree to the{' '}
@@ -66,10 +78,15 @@ function AuthForm() {
             .
           </span>
         </label>
+        {needAgree && !agreed && (
+          <p style={{ fontSize: '0.8rem', color: 'var(--color-accent)', marginTop: '0.5rem', fontWeight: 600 }}>
+            Please tick the box above first — one tap, then continue.
+          </p>
+        )}
 
         <button
-          type="button" className="btn-secondary" onClick={handleGoogle} disabled={loading || !agreed}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '0.8rem', marginTop: '1rem', opacity: loading || !agreed ? 0.6 : 1 }}
+          type="button" className="btn-secondary" onClick={handleGoogle} disabled={loading}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '0.8rem', marginTop: '1rem', opacity: loading ? 0.6 : 1 }}
         >
           {loading ? (
             <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />

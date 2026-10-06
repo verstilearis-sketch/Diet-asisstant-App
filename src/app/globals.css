@@ -90,6 +90,9 @@ a:hover { text-decoration: underline; }
 
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
+/* Kill the mobile tap delay — every button responds on first touch. */
+button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
 /* ── Cards ──────────────────────────────────────────────────── */
 .glass-card {
   background: var(--color-surface);
