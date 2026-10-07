@@ -8,9 +8,9 @@ import { NutriqIcon, AlertIcon } from '@/components/icons';
 
 // ── OAuth callback ──────────────────────────────────────────────
 // Direct Google OAuth (not via Supabase Auth) lands here with the ID token
-// in the URL hash (#id_token=…, set by /api/auth/google/callback). We sign
-// into Supabase with it, then send the user to the dashboard — which
-// bounces to /onboarding when they have no plan yet.
+// in a short-lived cookie (set by /api/auth/google/callback). We sign into
+// Supabase with it, then send the user to the dashboard — which bounces to
+// /onboarding when they have no plan yet.
 // (The old Supabase-hosted ?code=… flow is kept as a fallback.)
 
 function CallbackHandler() {
@@ -35,16 +35,15 @@ function CallbackHandler() {
         }
         return;
       }
-      // New flow: ID token from our own Google OAuth, passed in the hash.
-      const hash = typeof window !== 'undefined' ? window.location.hash : '';
-      const idToken = new URLSearchParams(hash.replace(/^#/, '')).get('id_token');
+      // New flow: ID token from our own Google OAuth, passed via cookie.
+      const idToken = document.cookie.match(/(?:^|;\s*)nutriq_id_token=([^;]+)/)?.[1];
       if (idToken) {
-        // Clear it from the URL immediately — it must not linger in history.
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        // Clear it immediately — it must not linger.
+        document.cookie = 'nutriq_id_token=; path=/; max-age=0';
         try {
           const { error } = await sb.auth.signInWithIdToken({
             provider: 'google',
-            token: idToken,
+            token: decodeURIComponent(idToken),
           });
           if (error) throw error;
         } catch (e) {

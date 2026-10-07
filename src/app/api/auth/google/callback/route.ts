@@ -64,11 +64,17 @@ export async function GET(req: Request) {
       return fail('Could not complete Google sign-in. Please try again.');
     }
 
-    // Hand the ID token to the client via the URL hash — the fragment is
-    // never sent to any server and never appears in logs.
-    const dest = new URL('/auth/callback', url.origin);
-    dest.hash = `id_token=${encodeURIComponent(idToken)}`;
-    const res = NextResponse.redirect(dest);
+    // Hand the ID token to the client via a short-lived cookie (more
+    // reliable than a URL fragment across the redirect). The client reads
+    // it, signs in, and clears it immediately.
+    const res = NextResponse.redirect(new URL('/auth/callback', url.origin));
+    res.cookies.set('nutriq_id_token', idToken, {
+      httpOnly: false, // client JS must read it
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 300, // 5 minutes
+      path: '/',
+    });
     // Clear the one-time state cookie.
     res.cookies.set('nutriq_oauth_state', '', { maxAge: 0, path: '/' });
     return res;
