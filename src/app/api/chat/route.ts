@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, clientKey, validString } from '@/lib/api-guard';
+import { requireUser } from '@/lib/api-auth';
 import { GoogleGenAI } from '@google/genai';
 import { tryPollinations } from '@/lib/ai-providers';
 
@@ -92,6 +93,9 @@ function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
 // ── POST handler ────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof NextResponse) return auth;
+
   // 30 chat requests per minute per IP — blunts automated abuse of AI APIs.
   if (!checkRateLimit(clientKey(req, 'chat'), 30, 60_000)) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
@@ -198,7 +202,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
     const flatPrompt = typedMessages
       .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
       .join('\n\n');
-    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 15000 });
+    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 8000 });
     if (attempt.ok) {
       return new Response(attempt.reply, {
         headers: {
@@ -222,7 +226,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 // A tight timeout on the first token keeps a hanging provider from
 // stalling the whole conversation.
 
-const FIRST_TOKEN_TIMEOUT_MS = 10000;
+const FIRST_TOKEN_TIMEOUT_MS = 5000;
 
 async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -415,12 +419,10 @@ async function streamGroq(
     preferredGroqModel = firstTry;
     return stream;
   } catch (err) {
-    // Model retired between deploys — discover what's live now, retry once.
-    if (!isModelNotFound(err)) throw err;
+    // Model retired or failing — don't waste time on discovery here,
+    // just fail over to the next provider immediately.
+    throw err;
   }
-  const discovered = await withTimeout(discoverGroqModel(apiKey), 10000, 'Groq model discovery');
-  preferredGroqModel = discovered;
-  return tryGroqModel(apiKey, messages, systemPrompt, discovered);
 }
 
 // ── Gemini ────────────────────────────────────────────────────
@@ -566,11 +568,9 @@ async function streamOpenRouter(
     preferredOpenRouterModel = firstTry;
     return stream;
   } catch (err) {
-    if (!isModelNotFound(err)) throw err;
+    // Fail over immediately — no discovery delay on the hot path.
+    throw err;
   }
-  const discovered = await withTimeout(discoverOpenRouterModel(apiKey), 10000, 'OpenRouter model discovery');
-  preferredOpenRouterModel = discovered;
-  return tryOpenRouterModel(apiKey, messages, systemPrompt, discovered);
 }
 
 /** Keyword-based offline replies for when no provider answers. */

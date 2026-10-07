@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Meal } from '@/lib/ai-engine';
 import { XIcon, ClockIcon, CheckIcon } from '@/components/icons';
+import { authedFetch } from '@/lib/api-client';
 
 interface Recipe {
   ingredients: string[];
@@ -71,7 +72,7 @@ export default function RecipeModal({
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), 75000);
         try {
-          const res = await fetch('/api/recipe', {
+          const res = await authedFetch('/api/recipe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal,

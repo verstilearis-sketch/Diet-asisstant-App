@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import type { SavedPlan } from '@/lib/storage';
 import { computeAll } from '@/lib/calculations';
 import { ChatIcon, LeafIcon, XIcon, SendIcon } from './icons';
+import { authedFetch } from '@/lib/api-client';
 
 interface Message {
   id: string;
@@ -82,7 +83,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
     abortRef.current = controller;
     const timer = setTimeout(() => controller.abort(), 55000);
     try {
-      const res = await fetch('/api/chat', {
+      const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,

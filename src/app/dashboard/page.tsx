@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, getDailyLogsRange, DailyLog, resetAllData, updatePlan } from '@/lib/storage';
+import { authedFetch } from '@/lib/api-client';
 import { computeAll, calculateMacros } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
 import type { SavedPlan, ExtraMeal, ExerciseEntry } from '@/lib/storage';
@@ -246,7 +247,7 @@ export default function DashboardPage() {
     setExtraBusy(true);
     setExtraError(null);
     try {
-      const res = await fetch('/api/parse-meal', {
+      const res = await authedFetch('/api/parse-meal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -323,7 +324,7 @@ export default function DashboardPage() {
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), 55000);
         try {
-          const res = await fetch('/api/parse-meal-photo', {
+          const res = await authedFetch('/api/parse-meal-photo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: controller.signal,
@@ -427,7 +428,7 @@ export default function DashboardPage() {
     setExerciseBusy(true);
     setExerciseError(null);
     try {
-      const res = await fetch('/api/parse-exercise', {
+      const res = await authedFetch('/api/parse-exercise', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, weightKg: savedPlan.profile.weightKg }),
@@ -462,7 +463,7 @@ export default function DashboardPage() {
     setScanError(null);
     setScanned(null);
     try {
-      const res = await fetch(`/api/food-lookup?barcode=${encodeURIComponent(barcode)}`);
+      const res = await authedFetch(`/api/food-lookup?barcode=${encodeURIComponent(barcode)}`);
       const data = await res.json();
       const entry = (data?.results ?? [])[0] as
         | { name: string; per100g: { kcal: number; proteinG: number; carbsG: number; fatG: number }; serving?: { grams: number }; sourceUrl?: string }

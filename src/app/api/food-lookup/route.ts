@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, clientKey } from '@/lib/api-guard';
+import { requireUser } from '@/lib/api-auth';
 import {
   searchIndianFoods,
   lookupBarcode,
@@ -18,6 +19,9 @@ import {
 export const maxDuration = 30;
 
 export async function GET(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof NextResponse) return auth;
+
   if (!checkRateLimit(clientKey(req, 'food-lookup'), 60, 60_000)) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireUser } from '@/lib/api-auth';
 import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Photo meal logging ──────────────────────────────────────────
@@ -38,6 +39,9 @@ function parseMealJson(raw: string): {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof NextResponse) return auth;
+
   let body: unknown;
   try {
     body = await req.json();

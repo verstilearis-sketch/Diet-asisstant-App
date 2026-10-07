@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, clientKey } from '@/lib/api-guard';
+import { requireUser } from '@/lib/api-auth';
 import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
 import { estimateExerciseOffline } from '@/lib/offline-estimate';
 
@@ -28,6 +29,9 @@ function parseExerciseJson(raw: string): {
 }
 
 export async function POST(req: Request) {
+  const auth = await requireUser(req);
+  if (auth instanceof NextResponse) return auth;
+
   if (!checkRateLimit(clientKey(req, 'parse-exercise'), 60, 60_000)) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
