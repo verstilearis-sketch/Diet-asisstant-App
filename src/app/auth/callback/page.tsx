@@ -7,9 +7,11 @@ import { getSupabase } from '@/lib/supabase';
 import { NutriqIcon, AlertIcon } from '@/components/icons';
 
 // ── OAuth callback ──────────────────────────────────────────────
-// Google (and any future OAuth provider) redirects here with ?code=….
-// We exchange it for a session, then send the user to the dashboard —
-// which bounces to /onboarding when they have no plan yet.
+// Direct Google OAuth (not via Supabase Auth) lands here with the ID token
+// in the URL hash (#id_token=…, set by /api/auth/google/callback). We sign
+// into Supabase with it, then send the user to the dashboard — which
+// bounces to /onboarding when they have no plan yet.
+// (The old Supabase-hosted ?code=… flow is kept as a fallback.)
 
 function CallbackHandler() {
   const router = useRouter();
@@ -21,12 +23,10 @@ function CallbackHandler() {
     let cancelled = false;
     (async () => {
       const sb = getSupabase();
-      const code = searchParams.get('code');
       const errDesc = searchParams.get('error_description') || searchParams.get('error');
       const debugUrl = () => {
         const q = typeof window !== 'undefined' ? window.location.search : '';
-        const h = typeof window !== 'undefined' ? window.location.hash : '';
-        return `query: ${q.slice(0, 160) || '(empty)'} | hash: ${h.slice(0, 80) || '(empty)'}`;
+        return `query: ${q.slice(0, 160) || '(empty)'}`;
       };
       if (errDesc) {
         if (!cancelled) {
@@ -35,6 +35,30 @@ function CallbackHandler() {
         }
         return;
       }
+      // New flow: ID token from our own Google OAuth, passed in the hash.
+      const hash = typeof window !== 'undefined' ? window.location.hash : '';
+      const idToken = new URLSearchParams(hash.replace(/^#/, '')).get('id_token');
+      if (idToken) {
+        // Clear it from the URL immediately — it must not linger in history.
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        try {
+          const { error } = await sb.auth.signInWithIdToken({
+            provider: 'google',
+            token: idToken,
+          });
+          if (error) throw error;
+        } catch (e) {
+          if (!cancelled) {
+            setError('Could not complete Google sign-in. Please try again.');
+            const msg = e instanceof Error ? e.message : String(e);
+            setDebug(`id_token sign-in failed: ${msg.slice(0, 160)}`);
+          }
+          return;
+        }
+        if (!cancelled) router.replace('/dashboard');
+        return;
+      }
+      const code = searchParams.get('code');
       if (code) {
         try {
           const { error } = await sb.auth.exchangeCodeForSession(code);

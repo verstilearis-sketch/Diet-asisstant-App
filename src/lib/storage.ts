@@ -168,16 +168,28 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 
 export async function signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
   try {
-    const sb = getSupabase();
-    // PKCE flow: the browser leaves for Google, then returns to /auth/callback
-    // which exchanges the code for a session (see src/app/auth/callback/page.tsx).
-    const redirectTo = `${window.location.origin}/auth/callback`;
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
+    // Direct Google OAuth (not via Supabase Auth): the Google consent screen
+    // shows our own domain ("to continue to nutriq.app") instead of the
+    // Supabase project hostname. The client ID is public by design.
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return { success: false, error: 'Google sign-in is not configured yet.' };
+    }
+    const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+    // CSRF state: random value, verified by the callback route via cookie.
+    const state = [...crypto.getRandomValues(new Uint8Array(16))]
+      .map((b) => b.toString(16).padStart(2, '0')).join('');
+    document.cookie = `nutriq_oauth_state=${encodeURIComponent(state)}; path=/; max-age=600; SameSite=Lax`;
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      state,
+      prompt: 'select_account',
     });
-    if (error) return { success: false, error: friendlyAuthError(error.message) };
-    // No error → the browser is navigating to Google; nothing more to do here.
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+    // The browser is navigating to Google; nothing more to do here.
     return { success: true };
   } catch (err) {
     return { success: false, error: configError(err) };
