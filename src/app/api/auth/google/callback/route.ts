@@ -77,3 +77,4 @@ export async function GET(req: Request) {
     return fail('Could not complete Google sign-in. Please try again.');
   }
 }
+
