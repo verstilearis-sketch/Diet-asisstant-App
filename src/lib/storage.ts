@@ -94,11 +94,13 @@ function configError(err: unknown): string {
   return err instanceof Error ? err.message : 'Something went wrong. Please try again.';
 }
 
-/** Turn Supabase auth errors into plain-language messages. */
+/** Turn Supabase auth errors into plain-language messages.
+ *  Never reveal whether an email is registered — both signup and login
+ *  use generic messages to prevent user enumeration. */
 function friendlyAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes('user already registered') || m.includes('already exists')) {
-    return 'Email already registered. Try signing in instead.';
+    return 'This email may already be registered. Try signing in instead.';
   }
   if (m.includes('invalid login credentials')) {
     return 'Incorrect email or password.';
@@ -106,7 +108,7 @@ function friendlyAuthError(message: string): string {
   if (m.includes('email not confirmed')) {
     return 'Please confirm your email first — check your inbox for the link.';
   }
-  return message;
+  return 'Something went wrong. Please try again.';
 }
 
 async function fetchProfileName(userId: string): Promise<string> {

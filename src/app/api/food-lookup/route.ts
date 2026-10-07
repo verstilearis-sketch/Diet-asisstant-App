@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit, clientKey } from '@/lib/api-guard';
 import {
   searchIndianFoods,
   lookupBarcode,
@@ -17,6 +18,10 @@ import {
 export const maxDuration = 30;
 
 export async function GET(req: Request) {
+  if (!checkRateLimit(clientKey(req, 'food-lookup'), 60, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
+
   const url = new URL(req.url);
   const q = (url.searchParams.get('q') || '').trim().slice(0, 120);
   const barcode = (url.searchParams.get('barcode') || '').trim().slice(0, 32);

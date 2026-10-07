@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit, clientKey } from '@/lib/api-guard';
 import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
 import { estimateMealOffline } from '@/lib/offline-estimate';
 import { estimateFromDb } from '@/lib/food-db';
@@ -32,6 +33,10 @@ function parseMealJson(raw: string): {
 }
 
 export async function POST(req: Request) {
+  if (!checkRateLimit(clientKey(req, 'parse-meal'), 60, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit, clientKey, validString } from '@/lib/api-guard';
 import { GoogleGenAI } from '@google/genai';
 import { tryPollinations } from '@/lib/ai-providers';
 
@@ -91,6 +92,11 @@ function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
 // ── POST handler ────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  // 30 chat requests per minute per IP — blunts automated abuse of AI APIs.
+  if (!checkRateLimit(clientKey(req, 'chat'), 30, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -104,8 +110,23 @@ export async function POST(req: Request) {
     planContext?: Record<string, any>;
   };
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return NextResponse.json({ error: 'messages must be a non-empty array' }, { status: 400 });
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 50) {
+    return NextResponse.json({ error: 'messages must be a non-empty array (max 50)' }, { status: 400 });
+  }
+
+  // Validate each message: role + content as bounded strings.
+  for (const m of messages) {
+    if (typeof m !== 'object' || m === null) {
+      return NextResponse.json({ error: 'Invalid message format' }, { status: 400 });
+    }
+    const role = (m as { role?: unknown }).role;
+    const content = (m as { content?: unknown }).content;
+    if (role !== 'user' && role !== 'assistant' && role !== 'system') {
+      return NextResponse.json({ error: 'Invalid message role' }, { status: 400 });
+    }
+    if (validString(content, 4000) === null) {
+      return NextResponse.json({ error: 'Message too long (max 4000 characters)' }, { status: 400 });
+    }
   }
 
   const typedMessages = messages as IncomingMessage[];

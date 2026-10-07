@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit, clientKey } from '@/lib/api-guard';
 import { runAiChain, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Recipe generation ─────────────────────────────────────────
@@ -35,6 +36,10 @@ function parseRecipeJson(raw: string): {
 }
 
 export async function POST(req: Request) {
+  if (!checkRateLimit(clientKey(req, 'recipe'), 60, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -50,6 +55,12 @@ export async function POST(req: Request) {
 
   if (!name || typeof name !== 'string') {
     return NextResponse.json({ error: 'name is required' }, { status: 400 });
+  }
+  if (name.trim().length > 200) {
+    return NextResponse.json({ error: 'name must be under 200 characters' }, { status: 400 });
+  }
+  if (description && (typeof description !== 'string' || description.length > 500)) {
+    return NextResponse.json({ error: 'description must be under 500 characters' }, { status: 400 });
   }
 
   const systemPrompt = `You are a professional recipe developer. You write practical, home-kitchen recipes with exact quantities.
