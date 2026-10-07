@@ -11,7 +11,7 @@ import type { Meal } from '@/lib/ai-engine';
 import { getMealAlternatives, generateDietPlan, mealWhy, type MealType } from '@/lib/ai-engine';
 import { checkAdaptation, type AdaptationCheck } from '@/lib/adaptive';
 import { buildWeeklyReview } from '@/lib/weekly-review';
-import { FESTIVALS, getFestival, type FestivalFood } from '@/lib/festivals';
+import { FESTIVALS, getFestival, CUSTOM_FEAST_TIPS, CUSTOM_FAST_TIPS, type FestivalFood } from '@/lib/festivals';
 import type { TasteProfile } from '@/lib/taste';
 import { buildTasteConstraints, hasTasteSignal, recordSwap } from '@/lib/taste';
 import RecipeModal from '@/components/RecipeModal';
@@ -119,6 +119,8 @@ export default function DashboardPage() {
   const [festivalOpen, setFestivalOpen] = useState(false);
   const [festivalChoice, setFestivalChoice] = useState('diwali');
   const [festivalDate, setFestivalDate] = useState(getFestival('diwali')?.defaultDate ?? '2026-11-08');
+  const [customName, setCustomName] = useState('');
+  const [customType, setCustomType] = useState<'feast' | 'fast'>('feast');
   const [learnBusy, setLearnBusy] = useState(false);
   const [learnings, setLearnings] = useState<string[] | null>(null);
   const [adaptation, setAdaptation] = useState<AdaptationCheck | null>(null);
@@ -505,11 +507,23 @@ export default function DashboardPage() {
   // Festival mode: adapt the plan to feasts and fasts.
   const activateFestival = async () => {
     if (!savedPlan) return;
-    const f = getFestival(festivalChoice);
-    if (!f) return;
+    let festivalId: string, name: string, type: 'feast' | 'fast';
+    if (festivalChoice === 'custom') {
+      const trimmed = customName.trim();
+      if (!trimmed) return;
+      festivalId = 'custom';
+      name = trimmed;
+      type = customType;
+    } else {
+      const f = getFestival(festivalChoice);
+      if (!f) return;
+      festivalId = f.id;
+      name = f.name;
+      type = f.type;
+    }
     const updated = {
       ...savedPlan.plan,
-      festivalMode: { festivalId: f.id, name: f.name, date: festivalDate, type: f.type },
+      festivalMode: { festivalId, name, date: festivalDate, type },
     };
     setSavedPlan({ ...savedPlan, plan: updated });
     setFestivalOpen(false);
@@ -1018,7 +1032,17 @@ export default function DashboardPage() {
             {(() => {
               const fm = plan.festivalMode;
               const fest = fm ? getFestival(fm.festivalId) : undefined;
-              if (fm && fest) {
+              const isCustom = fm?.festivalId === 'custom';
+              if (fm && (fest || isCustom)) {
+                const blurb = isCustom
+                  ? (fm.type === 'fast'
+                      ? 'Your occasion, your rules — the plan adapts around your fast.'
+                      : 'Your occasion, your rules — enjoy it, fitted into your day.')
+                  : fest!.blurb;
+                const tips = isCustom
+                  ? (fm.type === 'fast' ? CUSTOM_FAST_TIPS : CUSTOM_FEAST_TIPS)
+                  : fest!.tips;
+                const foods = isCustom ? [] : fest!.foods;
                 return (
                   <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem', marginBottom: '1rem', borderLeft: '4px solid var(--color-accent)' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
@@ -1031,7 +1055,7 @@ export default function DashboardPage() {
                       </button>
                     </div>
                     <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.65, margin: '0.4rem 0 0.9rem' }}>
-                      {fest.blurb}
+                      {blurb}
                       <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--color-faint)', marginTop: '0.25rem' }}>
                         {new Date(fm.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
                         {fm.type === 'fast' ? ' · fasting' : ' · feasting'}
@@ -1039,25 +1063,33 @@ export default function DashboardPage() {
                     </p>
                     <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: '0 0 0.5rem' }}>How to enjoy it</p>
                     <ul style={{ margin: '0 0 1rem', paddingLeft: '1.1rem', fontSize: '0.84rem', color: 'var(--color-muted)', lineHeight: 1.7 }}>
-                      {fest.tips.map((t, i) => <li key={i}>{t}</li>)}
+                      {tips.map((t, i) => <li key={i}>{t}</li>)}
                     </ul>
-                    <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: '0 0 0.6rem' }}>Festive picks — log as you eat</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                      {fest.foods.map((food, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.8rem', background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.6rem 0.85rem' }}>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: '0.86rem', fontWeight: 650 }}>{food.name}</div>
-                            <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                              {food.portion} · {food.calories} kcal · {food.proteinG}g protein
-                              {food.tip && <span style={{ display: 'block', fontStyle: 'italic' }}>{food.tip}</span>}
+                    {foods.length > 0 ? (
+                      <>
+                        <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: '0 0 0.6rem' }}>Festive picks — log as you eat</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                          {foods.map((food, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.8rem', background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.6rem 0.85rem' }}>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: '0.86rem', fontWeight: 650 }}>{food.name}</div>
+                                <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                                  {food.portion} · {food.calories} kcal · {food.proteinG}g protein
+                                  {food.tip && <span style={{ display: 'block', fontStyle: 'italic' }}>{food.tip}</span>}
+                                </div>
+                              </div>
+                              <button type="button" className="btn-primary" onClick={() => logFestivalFood(food)} style={{ padding: '0.4rem 0.9rem', fontSize: '0.78rem', flexShrink: 0 }}>
+                                Log
+                              </button>
                             </div>
-                          </div>
-                          <button type="button" className="btn-primary" onClick={() => logFestivalFood(food)} style={{ padding: '0.4rem 0.9rem', fontSize: '0.78rem', flexShrink: 0 }}>
-                            Log
-                          </button>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </>
+                    ) : (
+                      <p style={{ fontSize: '0.82rem', color: 'var(--color-muted)', fontStyle: 'italic', margin: 0 }}>
+                        Log what you eat from the tracker below — the coach will keep your targets in view.
+                      </p>
+                    )}
                   </div>
                 );
               }
@@ -1085,8 +1117,31 @@ export default function DashboardPage() {
                             }}
                           >
                             {FESTIVALS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                            <option value="custom">Custom occasion…</option>
                           </select>
                         </div>
+                        {festivalChoice === 'custom' && (
+                          <>
+                            <div>
+                              <label className="input-label" htmlFor="festival-custom-name">Occasion name</label>
+                              <input
+                                id="festival-custom-name" className="input" value={customName}
+                                onChange={(e) => setCustomName(e.target.value)}
+                                placeholder="e.g. Wedding, Birthday"
+                              />
+                            </div>
+                            <div>
+                              <label className="input-label" htmlFor="festival-custom-type">Type</label>
+                              <select
+                                id="festival-custom-type" className="input" value={customType}
+                                onChange={(e) => setCustomType(e.target.value as 'feast' | 'fast')}
+                              >
+                                <option value="feast">Feast — I’ll be eating</option>
+                                <option value="fast">Fast — I’ll be fasting</option>
+                              </select>
+                            </div>
+                          </>
+                        )}
                         <div>
                           <label className="input-label" htmlFor="festival-date">Date</label>
                           <input id="festival-date" type="date" className="input" value={festivalDate} onChange={(e) => setFestivalDate(e.target.value)} />

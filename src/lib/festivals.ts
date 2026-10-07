@@ -583,3 +583,16 @@ export interface FestivalMode {
 export function getFestival(id: string): Festival | undefined {
   return FESTIVALS.find((f) => f.id === id);
 }
+
+// ── Generic guidance for user-defined custom occasions ──────────
+export const CUSTOM_FEAST_TIPS = [
+  'One celebratory meal, not a celebratory week — keep the other meals normal.',
+  'Protein first at the big table, then enjoy the festive dishes.',
+  'Log what you eat as you go — awareness beats restriction on happy days.',
+];
+
+export const CUSTOM_FAST_TIPS = [
+  'Front-load protein and water before the fast begins — it decides the whole day.',
+  'Break the fast gently: something light first, the meal 20–30 minutes later.',
+  'Most fasting fatigue is dehydration — drink well in the eating window.',
+];
