@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     description: 'Your personal AI nutrition coach',
     type: 'website',
   },
+  verification: {
+    google: '_O3jFaMKeggtCMbXhQ7ba6OVyuCQzc-p0sU7ar0Zilo',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
