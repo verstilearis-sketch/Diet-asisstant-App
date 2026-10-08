@@ -358,6 +358,8 @@ export default function LandingPage() {
           </Link>
           <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
             <Link href="/" className="nav-link" style={{ fontSize: '0.85rem' }}>Home</Link>
+            <Link href="/about" className="nav-link" style={{ fontSize: '0.85rem' }}>About</Link>
+            <Link href="/blog" className="nav-link" style={{ fontSize: '0.85rem' }}>Blog</Link>
             <Link href="/auth" className="nav-link" style={{ fontSize: '0.85rem' }}>Sign in</Link>
             <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
           </nav>
