@@ -121,7 +121,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
       let full = '';
       let first = true;
       // Throttle re-renders: re-parsing markdown on every token janks on
-      // phones. Update at most ~8×/second; the final flush below is exact.
+      // phones. Update at most ~4×/second; the final flush below is exact.
       let lastEmit = 0;
       for (;;) {
         const { done, value } = await reader.read();
@@ -132,7 +132,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
           onFirstChunk();
         }
         const now = Date.now();
-        if (now - lastEmit >= 120) {
+        if (now - lastEmit >= 250) {
           lastEmit = now;
           onChunk(full);
         }
