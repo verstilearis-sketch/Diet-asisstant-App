@@ -1698,14 +1698,58 @@ function budgetAllows(tier: 1 | 2 | 3, budget: BudgetTier): boolean {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DETERMINISTIC RANDOMNESS — the plan must be exactly reproducible from the
+// user's details: same inputs → same plan, every time. A seeded PRNG (mulberry32)
+// replaces Math.random everywhere in plan generation. The seed is derived from
+// all plan-relevant profile fields (name excluded — it shouldn't change food).
+// ─────────────────────────────────────────────────────────────────────────────
+
+function hashSeed(str: string): number {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+type Rng = () => number;
+
+/** Build the plan seed from every profile field that affects meal selection. */
+export function planSeedFor(profile: UserProfile): number {
+  const parts = [
+    profile.age, profile.heightCm, profile.weightKg, profile.targetWeightKg ?? '',
+    profile.goal, profile.activityLevel, profile.exerciseType ?? '', profile.exerciseFrequency ?? '',
+    profile.exerciseDuration ?? '', profile.sleepHours ?? '', profile.stressLevel ?? '',
+    profile.workType ?? '', profile.workMix ?? '',
+    profile.usualBreakfast ?? '', profile.usualLunch ?? '', profile.usualDinner ?? '',
+    profile.favoriteFoods ?? '', profile.favoriteCuisine ?? '',
+    (profile.dietaryRestrictions ?? []).join(','), (profile.allergies ?? []).join(','),
+    profile.location ?? '', profile.budget ?? '', profile.cuisineMix ?? '',
+    profile.gender,
+  ];
+  return hashSeed(parts.join('|'));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CUISINE MIX — blend regional comfort food with international variety, so a
 // native of a place isn't locked into only local dishes.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function shuffled<T>(arr: T[]): T[] {
+function shuffled<T>(arr: T[], rng: Rng): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -1713,9 +1757,9 @@ function shuffled<T>(arr: T[]): T[] {
 
 type PoolSet = Record<MealType, { regional: FoodItem[]; international: FoodItem[] }>;
 
-function buildMealPools(region: string): PoolSet {
+function buildMealPools(region: string, rng: Rng): PoolSet {
   const globalDb = REGIONAL_DB['global'];
-  const otherKeys = shuffled(Object.keys(REGIONAL_DB).filter((k) => k !== 'global' && k !== region)).slice(0, 4);
+  const otherKeys = shuffled(Object.keys(REGIONAL_DB).filter((k) => k !== 'global' && k !== region), rng).slice(0, 4);
   const db = REGIONAL_DB[region];
   const pools = {} as PoolSet;
   (['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).forEach((mt) => {
@@ -1730,8 +1774,8 @@ function buildMealPools(region: string): PoolSet {
   return pools;
 }
 
-function rollSource(cuisineMix: CuisineMix): 'regional' | 'international' {
-  const r = Math.random();
+function rollSource(cuisineMix: CuisineMix, rng: Rng): 'regional' | 'international' {
+  const r = rng();
   if (cuisineMix === 'local') return r < 0.8 ? 'regional' : 'international';
   if (cuisineMix === 'international') return r < 0.8 ? 'international' : 'regional';
   return r < 0.45 ? 'regional' : 'international'; // mixed — the default
@@ -1804,9 +1848,10 @@ function pickSmart(
   budget: BudgetTier,
   cuisineMix: CuisineMix,
   proteinWeight: number,
+  rng: Rng,
   taste?: TasteProfile,
 ): FoodItem {
-  const primary = rollSource(cuisineMix);
+  const primary = rollSource(cuisineMix, rng);
   const secondary = primary === 'regional' ? 'international' : 'regional';
   const scored: { f: FoodItem; s: number }[] = [];
   const seen = new Set<string>();
@@ -1924,7 +1969,10 @@ export async function generateDietPlan(
   const region = resolveRegion(rawRegion);
   const budget: BudgetTier = profile.budget || 'moderate';
   const cuisineMix: CuisineMix = profile.cuisineMix || 'mixed';
-  const pools = buildMealPools(region);
+  // Deterministic plan: the RNG is seeded from the profile, so identical
+  // details always produce the identical plan.
+  const rng = mulberry32(planSeedFor(profile));
+  const pools = buildMealPools(region, rng);
   // High-protein goals get extra protein weighting in meal scoring
   const proteinWeight = profile.goal === 'lose_weight' ? 0.36
     : (profile.goal === 'gain_weight' || profile.goal === 'athletic') ? 0.38 : 0.30;
@@ -1952,7 +2000,7 @@ export async function generateDietPlan(
         carbs: remC * share,
         fat: remF * share,
       };
-      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight, taste);
+      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight, rng, taste);
       const meal = toMeal(food);
       // Portion-scale (up to 2×) so the slot actually meets its calorie target —
       // pools have fixed serving sizes, and real dietetics adjusts portions, not wishes.
@@ -2082,7 +2130,8 @@ export function getMealAlternatives(
 ): Meal[] {
   const region = resolveRegion(detectRegion(profile.location));
   const budget = profile.budget || 'moderate';
-  const pools = buildMealPools(region);
+  const rng = mulberry32(planSeedFor(profile));
+  const pools = buildMealPools(region, rng);
   const seen = new Set<string>([current.name]);
   const candidates: FoodItem[] = [];
   // Regional first, then international — same priority as plan generation.
