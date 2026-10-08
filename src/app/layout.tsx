@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 import { GlobalChrome } from '@/components/GlobalChrome';
 
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main id="main-content">
           {children}
         </main>
+        <Analytics />
       </body>
     </html>
   );
