@@ -12,6 +12,11 @@ interface Message {
   content: string;
 }
 
+// Thrown when /api/chat answers 401: the Supabase session expired or the
+// request went out without one. Kept distinct from network/timeout failures
+// so the UI can say "sign in again" instead of "couldn't reach the server".
+class SessionExpiredError extends Error {}
+
 const SUGGESTIONS = [
   'How much protein should I eat?',
   'What should I eat before a workout?',
@@ -98,6 +103,10 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
           },
         }),
       });
+      // 401 from requireUser(): the Supabase session expired or never arrived.
+      // Throw a distinct error so the UI reports a login problem, not a
+      // network failure — the generic message below has misled us once already.
+      if (res.status === 401) throw new SessionExpiredError('Sign in required');
       const contentType = res.headers.get('content-type') || '';
       // Offline fallback arrives as JSON; live replies stream as plain text.
       if (contentType.includes('application/json')) {
@@ -170,12 +179,19 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
       setMessages((prev) =>
         prev.map((m) => (m.id === agentId ? { ...m, content: clean } : m)),
       );
-    } catch {
+    } catch (err) {
       setFailedId(agentId);
+      // A 401 is a login problem, not a network problem — say so plainly.
+      const sessionExpired = err instanceof SessionExpiredError;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === agentId
-            ? { ...m, content: "I couldn't reach the server. Check your connection and try again." }
+            ? {
+                ...m,
+                content: sessionExpired
+                  ? 'Your sign-in expired. Sign out and sign back in with Google, then try the chat again.'
+                  : "I couldn't reach the server. Check your connection and try again.",
+              }
             : m,
         ),
       );

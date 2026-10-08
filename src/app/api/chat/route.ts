@@ -125,7 +125,7 @@ export async function POST(req: Request) {
     }
     const role = (m as { role?: unknown }).role;
     const content = (m as { content?: unknown }).content;
-    if (role !== 'user' && role !== 'assistant' && role !== 'system') {
+    if (role !== 'user' && role !== 'assistant' && role !== 'agent' && role !== 'system') {
       return NextResponse.json({ error: 'Invalid message role' }, { status: 400 });
     }
     if (validString(content, 4000) === null) {
