@@ -103,6 +103,33 @@ export default function LandingPage() {
 
   return (
     <div className="page-shell">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'SoftwareApplication',
+                name: 'Nutriq',
+                applicationCategory: 'HealthApplication',
+                operatingSystem: 'Web',
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+                description:
+                  'AI-powered personalized nutrition planner. Computes calorie targets with the Mifflin-St Jeor equation and builds 7-day meal plans matched to your local cuisine.',
+              },
+              {
+                '@type': 'FAQPage',
+                mainEntity: FAQS.map((f) => ({
+                  '@type': 'Question',
+                  name: f.q,
+                  acceptedAnswer: { '@type': 'Answer', text: f.a },
+                })),
+              },
+            ],
+          }),
+        }}
+      />
 
       {/* ── Nav ─────────────────────────────────────────── */}
       <nav className="site-nav">
@@ -329,6 +356,11 @@ export default function LandingPage() {
             <span className="brand-mark" style={{ width: 36, height: 36 }}><NutriqIcon size={20} /></span>
             Nutriq
           </Link>
+          <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
+            <Link href="/" className="nav-link" style={{ fontSize: '0.85rem' }}>Home</Link>
+            <Link href="/auth" className="nav-link" style={{ fontSize: '0.85rem' }}>Sign in</Link>
+            <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
+          </nav>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
             For informational purposes only — not medical advice. © 2026 Nutriq.
           </p>
