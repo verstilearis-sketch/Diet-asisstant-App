@@ -372,7 +372,7 @@ button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-colo
   display: inline-flex; align-items: center; gap: 0.45rem;
   color: var(--color-muted); background: transparent;
 }
-.tab-btn-active { background: var(--color-text); color: #fff; box-shadow: var(--shadow-card); }
+.tab-btn-active { background: var(--color-text); color: var(--color-bg); box-shadow: var(--shadow-card); }
 .tab-btn-inactive:hover { background: var(--color-surface2); color: var(--color-text); }
 
 /* ── Range input ────────────────────────────────────────────── */
