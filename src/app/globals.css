@@ -58,6 +58,49 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ── Dark mode ─────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  /* Surfaces */
+  --color-bg: #131311;
+  --color-surface: #1d1d1b;
+  --color-surface2: #262624;
+
+  /* Text */
+  --color-text: #ececea;
+  --color-muted: #a3a29c;
+  --color-faint: #6f6e69;
+
+  /* Borders */
+  --color-border: #2e2e2b;
+  --color-border-strong: #3d3d39;
+
+  /* Brand — brightened for dark backgrounds */
+  --color-accent: #2da36b;
+  --color-accent-hover: #38b878;
+  --color-accent-active: #2da36b;
+  --color-accent-soft: #1a2e23;
+  --color-accent-ink: #d4edde;
+  --color-accent2: #2dd4bf;
+
+  /* Legacy gradient tokens */
+  --gradient-primary: var(--color-bg);
+  --gradient-accent: var(--color-accent);
+  --gradient-card: var(--color-surface);
+
+  /* Semantic */
+  --color-warning: #f59e0b;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+
+  /* Chart palette */
+  --chart-protein: #2da36b;
+  --chart-carbs: #f59e0b;
+  --chart-fat: #60a5fa;
+
+  /* Shape & elevation */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
@@ -582,4 +625,39 @@ details[open] .faq-chevron { transform: rotate(180deg); }
   padding: 0.45rem 0.95rem; border-radius: 999px;
   border: 1px solid var(--color-border-strong); background: var(--color-surface);
   font-size: 0.85rem; font-weight: 550; color: var(--color-text);
+}
+
+/* ── Print stylesheet ──────────────────────────────────────────── */
+@media print {
+  .no-print, button, .btn-primary, .btn-ghost, nav { display: none !important; }
+  body { background: #fff; color: #000; }
+  .glass-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+  a { color: #000; text-decoration: none; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 0.8em; }
+}
+
+/* ── Hover states ──────────────────────────────────────────────── */
+a { transition: color 0.15s ease; }
+a:hover { color: var(--color-accent); }
+.btn-primary { transition: background 0.15s ease, transform 0.15s ease; }
+.btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); }
+.btn-primary:active { background: var(--color-accent-active); transform: translateY(0); }
+.btn-ghost { transition: background 0.15s ease; }
+.btn-ghost:hover { background: var(--color-surface2); }
+.glass-card { transition: box-shadow 0.2s ease; }
+tr:hover td { background: var(--color-surface2); }
+
+/* ── Sticky headers ────────────────────────────────────────────── */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--color-bg);
+  backdrop-filter: blur(8px);
+}
+thead.sticky-header th {
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  z-index: 10;
 }

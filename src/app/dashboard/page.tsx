@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getSession, getLatestPlan, signOut, getDailyLog, saveDailyLog, getDailyLogsRange, DailyLog, resetAllData, updatePlan } from '@/lib/storage';
 import { authedFetch } from '@/lib/api-client';
+import { DarkModeToggle } from '@/components/DarkModeToggle';
 import { computeAll, calculateMacros } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
 import type { SavedPlan, ExtraMeal, ExerciseEntry } from '@/lib/storage';
@@ -776,6 +777,7 @@ export default function DashboardPage() {
             <button className="btn-ghost" onClick={() => router.push('/onboarding')} style={{ fontSize: '0.85rem' }}>
               <RefreshIcon size={15} /> New plan
             </button>
+            <DarkModeToggle />
             <button className="btn-ghost" onClick={() => setShowResetConfirm(true)} style={{ fontSize: '0.85rem' }} title="Delete your profile, plans and logs from the cloud">
               <TrashIcon size={15} /> Reset data
             </button>
@@ -794,6 +796,11 @@ export default function DashboardPage() {
               {firstName ? `${firstName}'s ${GOAL_LABELS[profile.goal] || 'nutrition'} plan` : `Your ${GOAL_LABELS[profile.goal] || 'nutrition'} plan`}
             </h1>
             <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', maxWidth: 640 }}>{plan.summary.split('\n')[0]}</p>
+            {savedPlan?.createdAt && (
+              <p style={{ color: 'var(--color-faint)', fontSize: '0.75rem', marginTop: '0.4rem' }}>
+                Last updated {new Date(savedPlan.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+            )}
           </div>
         </div>
 

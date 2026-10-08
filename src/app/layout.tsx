@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { GlobalChrome } from '@/components/GlobalChrome';
 
 export const viewport: Viewport = {
   themeColor: '#177245',
@@ -20,7 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body suppressHydrationWarning>
-        {children}
+        <GlobalChrome />
+        <main id="main-content">
+          {children}
+        </main>
       </body>
     </html>
   );
