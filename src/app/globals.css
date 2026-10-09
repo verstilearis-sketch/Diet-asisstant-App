@@ -702,7 +702,7 @@ input[type="range"]::-moz-range-thumb {
   /* Hero: smaller headline, more air above the sample day card */
   .hero-title { font-size: 1.85rem !important; line-height: 1.15 !important; }
   .floating-hero h1 { font-size: 2rem !important; line-height: 1.12 !important; }
-  .floating-hero p { font-size: 0.92rem !important; }
+  .floating-hero p { font-size: 0.92rem !important; line-height: 1.6 !important; max-width: 22rem !important; }
   .hero-grid { gap: 2.75rem; }
   .sample-day { padding: 1.15rem !important; }
   /* Card micro-text: nothing below ~12.5px on phones */
