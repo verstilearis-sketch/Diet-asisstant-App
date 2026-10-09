@@ -762,3 +762,44 @@ thead.sticky-header th {
   background: var(--color-surface);
   z-index: 10;
 }
+
+/* ── Blog article layout with sidebar ──────────────────────────── */
+.article-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5rem;
+  max-width: 1080px;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.article-sidebar {
+  position: sticky;
+  top: 5.5rem;
+  height: calc(100vh - 7rem);
+  flex-shrink: 0;
+  display: block;
+}
+.article-sidebar-inner {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.article-main {
+  flex: 1;
+  min-width: 0;
+  max-width: 700px;
+}
+@media (max-width: 1023px) {
+  .article-sidebar {
+    display: none;
+  }
+  .article-layout {
+    max-width: 700px;
+    gap: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .article-keep-reading {
+    display: none;
+  }
+}
