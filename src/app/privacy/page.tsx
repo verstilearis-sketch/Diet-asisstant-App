@@ -25,7 +25,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'Where it is stored',
     body: [
-      'Your account and app data are stored securely with our database provider (Supabase), protected by industry-standard encryption in transit and at rest.',
+      'Your account and app data are stored securely in our cloud database, protected by industry-standard encryption in transit and at rest.',
       'When you use AI features (meal analysis, the health coach, photo estimates), the text or image you submit is sent to our AI processing providers solely to generate your result. We never use your inputs to train models ourselves, and we never sell your data. Note that AI providers process this data under their own privacy policies, and some may use it to improve their services — so please avoid including highly sensitive personal details in health coach messages.',
     ],
   },

@@ -608,6 +608,8 @@ input[type="range"]::-moz-range-thumb {
   .glass-card { border-radius: 1rem; }
   /* Tame desktop-sized section padding on phones */
   .page-shell section.container { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+  /* Kill backdrop blur on phones — it re-renders every scroll frame and lags */
+  .site-nav, .sticky-header { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 .nav-link {
   padding: 0.5rem 0.8rem; border-radius: 0.5rem;
