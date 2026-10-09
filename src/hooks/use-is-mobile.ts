@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
  * Used to serve a compact mobile layout vs the full desktop experience.
  */
 export function useIsMobile(breakpoint = 768): boolean {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
+  );
 
   useEffect(() => {
     const query = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
