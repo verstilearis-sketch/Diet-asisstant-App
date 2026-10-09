@@ -56,8 +56,8 @@ function useGeometry() {
   return useMemo(
     () =>
       mobile
-        ? { RX: 135, RY: 84, CW: 248, CH: 208 }
-        : { RX: 265, RY: 118, CW: 330, CH: 244 },
+        ? { RX: 155, RY: 95, CW: 280, CH: 240 }
+        : { RX: 310, RY: 135, CW: 400, CH: 300 },
     [mobile]
   );
 }
@@ -219,7 +219,12 @@ export function CircularCarousel({
                 }}
               >
                 {item.content ? (
-                  <span className="block size-full text-left">{item.content}</span>
+                  <span
+                    className="block size-full text-left"
+                    style={{ fontSize: CW * 0.045 }}
+                  >
+                    {item.content}
+                  </span>
                 ) : (
                   <span className="flex h-full w-full flex-col items-start justify-between p-4 text-left">
                     {item.tag && (

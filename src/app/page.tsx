@@ -108,31 +108,32 @@ const FAQS = [
 // Compact content cards for the WorksWheel. Kept tight so they read
 // on phone-sized cards as well as desktop.
 const wheelCard: React.CSSProperties = {
-  padding: '1rem 1.1rem',
+  padding: '1.2em 1.3em',
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
+  fontSize: '1em',
 };
 const wheelEyebrow: React.CSSProperties = {
-  marginBottom: '0.2rem',
-  fontSize: '0.66rem',
+  marginBottom: '0.25em',
+  fontSize: '0.72em',
   letterSpacing: '0.12em',
   textTransform: 'uppercase',
   color: 'var(--color-faint)',
   fontWeight: 700,
 };
 const wheelTitle: React.CSSProperties = {
-  fontSize: '0.98rem',
+  fontSize: '1.1em',
   fontWeight: 700,
-  marginBottom: '0.65rem',
+  marginBottom: '0.6em',
   lineHeight: 1.25,
 };
 const wheelRow: React.CSSProperties = {
-  padding: '0.42rem 0.6rem',
+  padding: '0.5em 0.7em',
   background: 'var(--color-bg)',
   border: '1px solid var(--color-border)',
-  borderRadius: '0.55rem',
+  borderRadius: '0.6em',
 };
 
 function FaqWheelCard() {
@@ -141,7 +142,7 @@ function FaqWheelCard() {
     <div style={wheelCard}>
       <div style={wheelEyebrow}>FAQ</div>
       <div style={wheelTitle}>Questions, answered.</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28em' }}>
         {FAQS.map((f, i) => (
           <div key={f.q} style={{ ...wheelRow, padding: 0 }}>
             <button
@@ -149,17 +150,17 @@ function FaqWheelCard() {
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setOpen(open === i ? null : i)}
               style={{
-                width: '100%', textAlign: 'left', padding: '0.42rem 0.6rem',
-                fontSize: '0.72rem', fontWeight: 600, display: 'flex',
-                justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem',
+                width: '100%', textAlign: 'left', padding: '0.42em 0.6rem',
+                fontSize: '0.72em', fontWeight: 600, display: 'flex',
+                justifyContent: 'space-between', alignItems: 'center', gap: '0.5em',
                 background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer',
               }}
             >
               <span>{f.q}</span>
-              <span style={{ color: 'var(--color-accent)', flexShrink: 0, fontSize: '0.85rem' }}>{open === i ? '−' : '+'}</span>
+              <span style={{ color: 'var(--color-accent)', flexShrink: 0, fontSize: '0.85em' }}>{open === i ? '−' : '+'}</span>
             </button>
             {open === i && (
-              <div style={{ padding: '0 0.6rem 0.5rem', fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.55 }}>{f.a}</div>
+              <div style={{ padding: '0 0.6em 0.5rem', fontSize: '0.7em', color: 'var(--color-muted)', lineHeight: 1.55 }}>{f.a}</div>
             )}
           </div>
         ))}
@@ -184,18 +185,18 @@ function buildCarouselItems(): import('@/components/ui/circular-carousel').Carou
         <div style={wheelCard}>
           <div style={wheelEyebrow}>A taste of the plan</div>
           <div style={wheelTitle}>Every meal placed for a reason.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
             {ANNOTATED_DAY.map((m) => (
-              <div key={m.meal} style={{ ...wheelRow, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.72rem', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--color-accent)', fontSize: '0.64rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.meal}</span>
+              <div key={m.meal} style={{ ...wheelRow, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5em' }}>
+                <span style={{ fontSize: '0.72em', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--color-accent)', fontSize: '0.64em', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.meal}</span>
                   {' · '}{m.name}
                 </span>
-                <span className="mono" style={{ fontSize: '0.7rem', fontWeight: 700, flexShrink: 0 }}>{m.kcal} kcal</span>
+                <span className="mono" style={{ fontSize: '0.7em', fontWeight: 700, flexShrink: 0 }}>{m.kcal} kcal</span>
               </div>
             ))}
           </div>
-          <div style={{ marginTop: '0.55rem', textAlign: 'right', fontSize: '0.76rem', fontWeight: 700 }}>
+          <div style={{ marginTop: '0.55em', textAlign: 'right', fontSize: '0.76em', fontWeight: 700 }}>
             <span className="mono" style={{ color: 'var(--color-accent)' }}>2,050 / 2,100 kcal</span>
           </div>
         </div>
@@ -209,11 +210,11 @@ function buildCarouselItems(): import('@/components/ui/circular-carousel').Carou
         <div style={wheelCard}>
           <div style={wheelEyebrow}>The math, shown</div>
           <div style={wheelTitle}>No black box.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
             {FORMULAS.map((f) => (
               <div key={f.name} style={wheelRow}>
-                <div className="mono" style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '0.06em' }}>{f.name}</div>
-                <div className="mono" style={{ fontSize: '0.72rem', marginTop: '0.1rem' }}>{f.formula}</div>
+                <div className="mono" style={{ fontSize: '0.68em', fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '0.06em' }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: '0.72em', marginTop: '0.1em' }}>{f.formula}</div>
               </div>
             ))}
           </div>
@@ -228,12 +229,12 @@ function buildCarouselItems(): import('@/components/ui/circular-carousel').Carou
         <div style={wheelCard}>
           <div style={wheelEyebrow}>Personalization</div>
           <div style={wheelTitle}>Eat your food. Hit your numbers.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
             {PERSONALIZATION.map((s) => (
               <div key={s.n} style={wheelRow}>
-                <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 700, color: 'var(--color-accent)' }}>{s.n}</div>
-                <div style={{ fontSize: '0.76rem', fontWeight: 650, marginTop: '0.1rem' }}>{s.title}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>{s.example}</div>
+                <div className="mono" style={{ fontSize: '0.66em', fontWeight: 700, color: 'var(--color-accent)' }}>{s.n}</div>
+                <div style={{ fontSize: '0.76em', fontWeight: 650, marginTop: '0.1em' }}>{s.title}</div>
+                <div style={{ fontSize: '0.7em', color: 'var(--color-muted)' }}>{s.example}</div>
               </div>
             ))}
           </div>
@@ -248,12 +249,12 @@ function buildCarouselItems(): import('@/components/ui/circular-carousel').Carou
         <div style={wheelCard}>
           <div style={wheelEyebrow}>How it works</div>
           <div style={wheelTitle}>From sign-up to supper.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
             {STEPS.map((s) => (
               <div key={s.n} style={wheelRow}>
-                <div className="mono" style={{ fontSize: '0.66rem', fontWeight: 700, color: 'var(--color-accent)' }}>{s.n}</div>
-                <div style={{ fontSize: '0.76rem', fontWeight: 650, marginTop: '0.1rem' }}>{s.title}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)', lineHeight: 1.45 }}>{s.desc}</div>
+                <div className="mono" style={{ fontSize: '0.66em', fontWeight: 700, color: 'var(--color-accent)' }}>{s.n}</div>
+                <div style={{ fontSize: '0.76em', fontWeight: 650, marginTop: '0.1em' }}>{s.title}</div>
+                <div style={{ fontSize: '0.7em', color: 'var(--color-muted)', lineHeight: 1.45 }}>{s.desc}</div>
               </div>
             ))}
           </div>
@@ -392,7 +393,7 @@ export default function LandingPage() {
       </FloatingFoodHero>
 
       {/* ── Explore carousel: the sections, orbiting ────────────── */}
-      <section style={{ paddingTop: '3rem', paddingBottom: '3rem' }} aria-label="Explore Zaiq">
+      <section style={{ paddingTop: '3rem', paddingBottom: '3rem', overflow: 'hidden' }} aria-label="Explore Zaiq">
         <CircularCarousel items={buildCarouselItems()} />
       </section>
 
