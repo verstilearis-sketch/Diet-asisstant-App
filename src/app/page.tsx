@@ -139,9 +139,9 @@ export default function LandingPage() {
             Zaiq
           </Link>
           <div className="nav-links">
-            <a href="#math" className="nav-link">The math</a>
-            <a href="#how-it-works" className="nav-link">How it works</a>
-            <a href="#faq" className="nav-link">FAQ</a>
+            <Link href="/" className="nav-link">Home</Link>
+            <Link href="/about" className="nav-link">About</Link>
+            <Link href="/blog" className="nav-link">Blog</Link>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
@@ -357,10 +357,6 @@ export default function LandingPage() {
             Zaiq
           </Link>
           <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
-            <Link href="/" className="nav-link" style={{ fontSize: '0.85rem' }}>Home</Link>
-            <Link href="/about" className="nav-link" style={{ fontSize: '0.85rem' }}>About</Link>
-            <Link href="/blog" className="nav-link" style={{ fontSize: '0.85rem' }}>Blog</Link>
-            <Link href="/auth" className="nav-link" style={{ fontSize: '0.85rem' }}>Sign in</Link>
             <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
           </nav>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
