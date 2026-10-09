@@ -158,50 +158,106 @@ button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-colo
 }
 
 /* ── Buttons ────────────────────────────────────────────────── */
+/* Liquid Glass (iOS 26 style): translucent base, refracted edge,
+   specular top highlight, luminous depth shadow. */
 .btn-primary {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-  background: var(--color-accent);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,.07) 42%, rgba(0,0,0,.10) 100%),
+    color-mix(in srgb, var(--color-accent) 90%, transparent);
   color: #fff;
-  border: none;
+  border: 1px solid rgba(255,255,255,.38);
   border-radius: 0.75rem;
   padding: 0.8rem 1.75rem;
   font-family: var(--font-sans);
   font-weight: 600; font-size: 0.95rem;
   cursor: pointer;
-  transition: background 120ms var(--ease-out), transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
-  box-shadow: 0 1px 2px rgba(23, 114, 69, 0.25);
+  text-shadow: 0 1px 2px rgba(0,0,0,.18);
+  transition: background 120ms var(--ease-out), transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out), border-color 120ms var(--ease-out);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.55),
+    inset 0 -1px 2px rgba(0,0,0,.14),
+    0 10px 28px rgba(23,114,69,.32),
+    0 1px 3px rgba(0,0,0,.12);
+  backdrop-filter: blur(14px) saturate(170%);
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
   white-space: nowrap;
 }
 .btn-primary::before { display: none; }
-.btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(23,114,69,.28); }
-.btn-primary:active { background: var(--color-accent-active); transform: translateY(0); }
-.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-primary:hover {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.34) 0%, rgba(255,255,255,.10) 42%, rgba(0,0,0,.08) 100%),
+    color-mix(in srgb, var(--color-accent-hover) 92%, transparent);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.6),
+    inset 0 -1px 2px rgba(0,0,0,.12),
+    0 14px 34px rgba(23,114,69,.38),
+    0 2px 6px rgba(0,0,0,.14);
+}
+.btn-primary:active {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 42%, rgba(0,0,0,.14) 100%),
+    color-mix(in srgb, var(--color-accent-active) 92%, transparent);
+  transform: translateY(0) scale(.985);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.4),
+    inset 0 2px 6px rgba(0,0,0,.18),
+    0 4px 14px rgba(23,114,69,.25);
+}
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 
 .btn-secondary {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-  background: var(--color-surface);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.10) 50%, rgba(255,255,255,.02) 100%),
+    color-mix(in srgb, var(--color-surface) 62%, transparent);
   color: var(--color-text);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 55%, transparent);
   border-radius: 0.75rem;
   padding: 0.8rem 1.75rem;
   font-family: var(--font-sans);
   font-weight: 600; font-size: 0.95rem;
   cursor: pointer;
-  transition: border-color 120ms var(--ease-out), background 120ms var(--ease-out);
+  transition: border-color 120ms var(--ease-out), background 120ms var(--ease-out), box-shadow 120ms var(--ease-out), transform 120ms var(--ease-out);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.6),
+    inset 0 -1px 2px rgba(0,0,0,.06),
+    0 6px 18px rgba(0,0,0,.08);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   white-space: nowrap;
 }
-.btn-secondary:hover { border-color: var(--color-muted); background: var(--color-surface2); }
+.btn-secondary:hover {
+  border-color: color-mix(in srgb, var(--color-muted) 60%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,255,255,.14) 50%, rgba(255,255,255,.04) 100%),
+    color-mix(in srgb, var(--color-surface2) 68%, transparent);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.7),
+    inset 0 -1px 2px rgba(0,0,0,.05),
+    0 10px 24px rgba(0,0,0,.10);
+}
+.btn-secondary:active { transform: translateY(0) scale(.985); }
 
 .btn-ghost {
   display: inline-flex; align-items: center; gap: 0.4rem;
   background: transparent; color: var(--color-muted);
-  border: none; border-radius: 0.5rem;
+  border: 1px solid transparent; border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   cursor: pointer; font-size: 0.88rem; font-weight: 550;
   font-family: var(--font-sans);
-  transition: color 120ms var(--ease-out), background 120ms var(--ease-out);
+  transition: color 120ms var(--ease-out), background 120ms var(--ease-out), box-shadow 120ms var(--ease-out), border-color 120ms var(--ease-out);
 }
-.btn-ghost:hover { color: var(--color-text); background: var(--color-surface2); }
+.btn-ghost:hover {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-surface2) 70%, transparent);
+  border-color: rgba(255,255,255,.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 4px 14px rgba(0,0,0,.07);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
 
 .btn-danger {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
