@@ -349,8 +349,7 @@ export default function LandingPage() {
       {/* ── How it works (floating-food hero style) ─────────────── */}
       {isMobile ? (
       <section className="container" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
-        <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>How it works</div>
-        <h2 style={{ textAlign: 'center', fontSize: '1.6rem', marginBottom: '1.5rem', textDecoration: 'underline', textUnderlineOffset: '0.35rem', textDecorationThickness: '2px' }}>Four steps, zero guesswork.</h2>
+        <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>How it works</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           {STEPS.map((s) => (
             <div key={s.n} className="glass-card" style={{ padding: '1rem 1.1rem' }}>
