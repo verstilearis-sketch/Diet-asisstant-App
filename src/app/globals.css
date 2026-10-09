@@ -757,6 +757,8 @@ input[type="range"]::-moz-range-thumb {
 }
 @media (max-width: 899px) {
   .nav-menu-btn { display: inline-flex; }
+  /* One Get started is enough on phones — the hero has its own */
+  .nav-cta { display: none; }
   .nav-menu-panel {
     display: flex;
     flex-direction: column;

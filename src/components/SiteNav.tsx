@@ -56,7 +56,7 @@ export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
-          <Link href="/auth?mode=signup" className="btn-primary" style={{ padding: '0.6rem 1.25rem', fontSize: '0.88rem' }}>
+          <Link href="/auth?mode=signup" className="btn-primary nav-cta" style={{ padding: '0.6rem 1.25rem', fontSize: '0.88rem' }}>
             Get started
           </Link>
           <button
