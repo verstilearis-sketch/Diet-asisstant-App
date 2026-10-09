@@ -10,7 +10,7 @@ import {
   WheatIcon,
 } from '@/components/icons';
 import { FloatingFoodHero } from '@/components/ui/hero-section-7';
-import { WorksWheel } from '@/components/ui/works-wheel';
+import { CircularCarousel } from '@/components/ui/circular-carousel';
 
 const HERO_IMAGES = [
   {
@@ -174,10 +174,12 @@ const PERSONALIZATION = [
   { n: '03', title: 'Portions tuned to your goals', example: 'Biryani · 520 kcal · 32g protein' },
 ];
 
-function buildWheelItems(): import('@/components/ui/works-wheel').WorksWheelItem[] {
+function buildCarouselItems(): import('@/components/ui/circular-carousel').CarouselItem[] {
   return [
     {
+      id: 'taste',
       title: 'A taste of the plan',
+      description: 'Every meal placed for a reason.',
       content: (
         <div style={wheelCard}>
           <div style={wheelEyebrow}>A taste of the plan</div>
@@ -200,7 +202,9 @@ function buildWheelItems(): import('@/components/ui/works-wheel').WorksWheelItem
       ),
     },
     {
+      id: 'math',
       title: 'The math, shown',
+      description: 'No black box.',
       content: (
         <div style={wheelCard}>
           <div style={wheelEyebrow}>The math, shown</div>
@@ -217,7 +221,9 @@ function buildWheelItems(): import('@/components/ui/works-wheel').WorksWheelItem
       ),
     },
     {
+      id: 'food',
       title: 'Eat your food',
+      description: 'Hit your numbers.',
       content: (
         <div style={wheelCard}>
           <div style={wheelEyebrow}>Personalization</div>
@@ -235,7 +241,9 @@ function buildWheelItems(): import('@/components/ui/works-wheel').WorksWheelItem
       ),
     },
     {
+      id: 'how',
       title: 'How it works',
+      description: 'From sign-up to supper.',
       content: (
         <div style={wheelCard}>
           <div style={wheelEyebrow}>How it works</div>
@@ -253,7 +261,9 @@ function buildWheelItems(): import('@/components/ui/works-wheel').WorksWheelItem
       ),
     },
     {
+      id: 'faq',
       title: 'FAQ',
+      description: 'Questions, answered.',
       content: <FaqWheelCard />,
     },
   ];
@@ -381,9 +391,9 @@ export default function LandingPage() {
         </div>
       </FloatingFoodHero>
 
-      {/* ── Explore wheel: the sections, in scroll ─────────────── */}
-      <section style={{ height: '94svh', minHeight: 600, position: 'relative' }} aria-label="Explore Zaiq">
-        <WorksWheel items={buildWheelItems()} label="Zaiq" />
+      {/* ── Explore carousel: the sections, orbiting ────────────── */}
+      <section style={{ paddingTop: '3rem', paddingBottom: '3rem' }} aria-label="Explore Zaiq">
+        <CircularCarousel items={buildCarouselItems()} />
       </section>
 
       {/* ── CTA ─────────────────────────────────────────── */}
