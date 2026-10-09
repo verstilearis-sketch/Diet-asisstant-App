@@ -73,6 +73,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   const related = ARTICLES.filter((a) => a.slug !== slug).slice(0, 2);
 
+  const headings = article.blocks
+    .filter((b) => b.type === 'h2' && b.text)
+    .map((b) => ({ id: slugify(b.text!), text: b.text! }));
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -111,9 +115,20 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', lineHeight: 1.2, marginBottom: '0.75rem' }}>
             {article.title}
           </h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: '0.88rem', marginBottom: '2rem' }}>
+          <p style={{ color: 'var(--color-muted)', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
             By Salik Lone · {article.readMinutes} min read
           </p>
+
+          {headings.length > 0 && (
+            <details className="mobile-toc">
+              <summary>On this page</summary>
+              <nav aria-label="Table of contents">
+                {headings.map((h) => (
+                  <a key={h.id} href={`#${h.id}`}>{h.text}</a>
+                ))}
+              </nav>
+            </details>
+          )}
 
           <article style={{ fontSize: '1.02rem', color: 'var(--color-text)' }}>
             {article.blocks.map((b, i) => <Block key={i} block={b} />)}
