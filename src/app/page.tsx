@@ -8,6 +8,7 @@ import {
   ZaiqIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
   WheatIcon,
 } from '@/components/icons';
+import { ZaiqHero } from '@/components/ui/prisma-hero';
 
 // ── The math the app actually uses (src/lib/calculations.ts) ──
 
@@ -131,51 +132,13 @@ export default function LandingPage() {
         }}
       />
 
-      {/* ── Nav ─────────────────────────────────────────── */}
-      <nav className="site-nav">
-        <div className="site-nav-inner">
-          <Link href="/" className="brand">
-            <span className="brand-mark"><ZaiqIcon size={29} /></span>
-            Zaiq
-          </Link>
-          <div className="nav-links">
-            <Link href="/" className="nav-link">Home</Link>
-            <Link href="/about" className="nav-link">About</Link>
-            <Link href="/blog" className="nav-link">Blog</Link>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
-            <Link href="/auth?mode=signup" className="btn-primary" style={{ padding: '0.6rem 1.25rem', fontSize: '0.88rem' }}>
-              Get started
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <ZaiqHero />
 
-      {/* ── Hero ────────────────────────────────────────── */}
-      <section className="container" style={{ paddingTop: '4.5rem', paddingBottom: '4.5rem' }}>
-        <div className="hero-grid">
-          <div>
-            <div className="eyebrow">Personal nutrition software</div>
-            <h1 className="hero-title" style={{ fontSize: 'clamp(2.3rem, 4.6vw, 3.6rem)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.12, marginBottom: '1.25rem' }}>
-              A diet plan computed from your body, not copied from a template.
-            </h1>
-            <p style={{ fontSize: '1.06rem', color: 'var(--color-muted)', lineHeight: 1.75, maxWidth: 520, marginBottom: '2rem' }}>
-              Answer a short set of questions about your body, goals and lifestyle. Zaiq
-              computes your calorie target with the Mifflin–St Jeor equation, matches meals
-              to your local cuisine, and builds a 7-day plan — macros, milestones,
-              hydration and all.
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.1rem' }}>
-              <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.1rem' }}>
-                Get started <ArrowRightIcon size={17} />
-              </Link>
-            </div>
-            <p style={{ fontSize: '0.82rem', color: 'var(--color-faint)' }}>
-              Free · 2-minute setup · No credit card
-            </p>
-          </div>
-
+      {/* ── Sample day ──────────────────────────────────── */}
+      <section className="container" style={{ paddingTop: '4.5rem', paddingBottom: '3.5rem' }}>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '0.75rem' }}>A taste of the plan</div>
+          <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>Every meal placed for a reason.</h2>
           {/* Annotated day — the plan showing its work */}
           <div className="glass-card sample-day" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.1rem' }}>
@@ -203,13 +166,10 @@ export default function LandingPage() {
               ))}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 0.9rem', background: 'var(--color-accent-soft)', borderRadius: '0.6rem', marginBottom: '0.8rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.7rem 0.9rem', background: 'var(--color-accent-soft)', borderRadius: '0.6rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Day total</span>
               <span className="mono" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-accent)' }}>2,050 / 2,100 kcal</span>
             </div>
-            <p style={{ fontSize: '0.76rem', color: 'var(--color-muted)' }}>
-              Every meal placed for a reason — nothing copied from a template.
-            </p>
           </div>
         </div>
       </section>
