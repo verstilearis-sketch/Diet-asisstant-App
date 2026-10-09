@@ -733,6 +733,8 @@ input[type="range"]::-moz-range-thumb {
 details[open] .faq-chevron { transform: rotate(180deg); }
 
 .formula-scroll { overflow-x: auto; white-space: nowrap; padding-bottom: 0.25rem; scrollbar-width: thin; }
+.math-strip { scrollbar-width: none; -ms-overflow-style: none; }
+.math-strip::-webkit-scrollbar { display: none; }
 
 .cuisine-chip {
   display: inline-flex; align-items: center;

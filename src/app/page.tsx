@@ -197,6 +197,31 @@ export default function LandingPage() {
         <p style={{ fontSize: '0.82rem', color: 'var(--color-faint)', width: '100%' }}>
           Free · 2-minute setup · No credit card
         </p>
+        {/* The math — horizontally scrollable strip */}
+        <div style={{ width: '100%', marginTop: '1.75rem' }}>
+          <div className="math-strip" style={{
+            display: 'flex', gap: '0.7rem',
+            overflowX: 'auto', paddingBottom: '0.4rem',
+            scrollSnapType: 'x mandatory',
+          }}>
+            {FORMULAS.map((f) => (
+              <div key={f.name} style={{
+                flex: '0 0 auto', scrollSnapAlign: 'start',
+                width: 230,
+                padding: '0.95rem 1.05rem',
+                background: 'color-mix(in srgb, var(--color-surface) 72%, transparent)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '1rem',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                textAlign: 'left',
+              }}>
+                <div className="mono" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.35rem', letterSpacing: '0.1em' }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: '0.83rem', lineHeight: 1.55, color: 'var(--color-text)' }}>{f.formula}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </FloatingFoodHero>
 
       {/* ── Sample day ──────────────────────────────────── */}
