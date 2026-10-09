@@ -601,15 +601,25 @@ input[type="range"]::-moz-range-thumb {
   .site-nav-inner { padding: 0.75rem 1rem; }
   .brand { font-size: 1.35rem; }
   .brand-mark { width: 40px; height: 40px; }
-  .hero-grid { gap: 2rem; }
   .section-head { margin-bottom: 1.5rem; }
   .faq-item summary { padding: 1rem; font-size: 0.9rem; }
   .faq-item .faq-body { padding: 0 1rem 1rem; font-size: 0.87rem; }
   .glass-card { border-radius: 1rem; }
-  /* Tame desktop-sized section padding on phones */
-  .page-shell section.container { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+  /* ── De-congest mobile (Nike-style air) ── */
+  /* Sections: more breathing room between chapters on phones */
+  .page-shell section.container { padding-top: 3rem !important; padding-bottom: 3rem !important; }
   /* Kill backdrop blur on phones — it re-renders every scroll frame and lags */
   .site-nav, .sticky-header { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  /* Nav: hide Sign in on phones — Get started leads to the same Google sign-in */
+  .nav-signin { display: none; }
+  /* Hero: smaller headline, more air above the sample day card */
+  .hero-title { font-size: 1.85rem !important; line-height: 1.15 !important; }
+  .hero-grid { gap: 2.75rem; }
+  .sample-day { padding: 1.15rem !important; }
+  /* Card micro-text: nothing below ~12.5px on phones */
+  .meal-label { font-size: 0.78rem !important; }
+  .meal-meta { font-size: 0.8rem !important; }
+  .meal-why { font-size: 0.82rem !important; line-height: 1.6 !important; }
 }
 .nav-link {
   padding: 0.5rem 0.8rem; border-radius: 0.5rem;

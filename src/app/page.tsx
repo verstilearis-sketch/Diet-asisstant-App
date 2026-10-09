@@ -144,7 +144,7 @@ export default function LandingPage() {
             <a href="#faq" className="nav-link">FAQ</a>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <Link href="/auth?mode=signin" className="btn-ghost">Sign in</Link>
+            <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
             <Link href="/auth?mode=signup" className="btn-primary" style={{ padding: '0.6rem 1.25rem', fontSize: '0.88rem' }}>
               Get started
             </Link>
@@ -157,7 +157,7 @@ export default function LandingPage() {
         <div className="hero-grid">
           <div>
             <div className="eyebrow">Personal nutrition software</div>
-            <h1 style={{ fontSize: 'clamp(2.3rem, 4.6vw, 3.6rem)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.12, marginBottom: '1.25rem' }}>
+            <h1 className="hero-title" style={{ fontSize: 'clamp(2.3rem, 4.6vw, 3.6rem)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.12, marginBottom: '1.25rem' }}>
               A diet plan computed from your body, not copied from a template.
             </h1>
             <p style={{ fontSize: '1.06rem', color: 'var(--color-muted)', lineHeight: 1.75, maxWidth: 520, marginBottom: '2rem' }}>
@@ -177,7 +177,7 @@ export default function LandingPage() {
           </div>
 
           {/* Annotated day — the plan showing its work */}
-          <div className="glass-card" style={{ padding: '1.5rem' }}>
+          <div className="glass-card sample-day" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.1rem' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
                 Tuesday, your plan
@@ -189,11 +189,11 @@ export default function LandingPage() {
               {ANNOTATED_DAY.map((m) => (
                 <div key={m.meal} style={{ padding: '0.65rem 0.8rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.6rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.15rem' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-accent)' }}>{m.meal}</span>
-                    <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--color-muted)' }}>{m.kcal} kcal · {m.protein}g protein</span>
+                    <span className="meal-label" style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-accent)' }}>{m.meal}</span>
+                    <span className="mono meal-meta" style={{ fontSize: '0.74rem', color: 'var(--color-muted)' }}>{m.kcal} kcal · {m.protein}g protein</span>
                   </div>
                   <div style={{ fontSize: '0.85rem', fontWeight: 550, marginBottom: '0.35rem' }}>{m.name}</div>
-                  <div style={{
+                  <div className="meal-why" style={{
                     fontSize: '0.76rem', color: 'var(--color-muted)', lineHeight: 1.55,
                     borderLeft: '2px solid var(--color-accent)', paddingLeft: '0.55rem',
                   }}>
