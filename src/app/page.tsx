@@ -15,8 +15,7 @@ import { ZaiqAppPreview } from '@/components/ui/zaiq-app-preview';
 import { TiltOnScroll } from '@/components/ui/tilt-on-scroll';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 
-const HERO_IMAGES = [
-  {
+const HERO_IMAGES = [  {
     src: '/images/hero/salad-bowl.png',
     alt: 'A fresh salad bowl',
     className: 'w-40 sm:w-56 md:w-64 lg:w-72 top-10 left-4 sm:left-10 md:top-20 md:left-20 animate-float',
@@ -45,6 +44,25 @@ const HERO_IMAGES = [
     src: 'https://cdn.21st.dev/assets/mirror/e7/e758e9c35a8360f201c40d0bf3e3433c2b6ff3f759763eb697cbc3803af80e18.png',
     alt: 'A slice of tomato',
     className: 'w-8 sm:w-10 top-3/4 left-1/4 animate-float',
+  },
+];
+
+// ── Mobile hero: small food images in a tidy top strip (no text collisions) ──
+const HERO_IMAGES_MOBILE = [
+  {
+    src: '/images/hero/salad-bowl.png',
+    alt: 'A fresh salad bowl',
+    className: 'w-16 top-5 left-6 opacity-90',
+  },
+  {
+    src: '/images/hero/avocado.png',
+    alt: 'Half an avocado',
+    className: 'w-14 top-9 left-1/2 -ml-7 opacity-90',
+  },
+  {
+    src: '/images/hero/salmon.png',
+    alt: 'A grilled salmon fillet',
+    className: 'w-16 top-5 right-6 opacity-90',
   },
 ];
 
@@ -160,9 +178,11 @@ export default function LandingPage() {
             <Link href="/" className="nav-link">Home</Link>
             <Link href="/about" className="nav-link">About</Link>
             <Link href="/blog" className="nav-link">Blog</Link>
+            <Link href="/privacy" className="nav-link">Privacy Policy</Link>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
+            <Link href="/privacy" className="nav-link nav-privacy-mobile" style={{ fontSize: '0.8rem' }}>Privacy</Link>
             <Link href="/auth?mode=signup" className="btn-primary" style={{ padding: '0.6rem 1.25rem', fontSize: '0.88rem' }}>
               Get started
             </Link>
@@ -174,8 +194,8 @@ export default function LandingPage() {
         title="Food that fits your body"
         description="Zaiq computes your daily calories with the Mifflin-St Jeor equation and builds a 7-day meal plan around the food you actually eat — macros, portions and all."
         badge="AI nutrition planner"
-        images={isMobile ? [] : HERO_IMAGES}
-        className={isMobile ? "min-h-[68svh]" : undefined}
+        images={isMobile ? HERO_IMAGES_MOBILE : HERO_IMAGES}
+        className={isMobile ? "min-h-[68svh] pt-24" : undefined}
       >
         <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.1rem' }}>
           Get started <ArrowRightIcon size={17} />
@@ -457,23 +477,10 @@ export default function LandingPage() {
           Designed &amp; Engineered by <strong style={{ color: 'var(--color-text)' }}>Salik Lone</strong>
           <br />Real math, Real food, and an unreasonable attention to detail.
         </p>
+        <p style={{ color: 'var(--color-faint)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+          For informational purposes only — not medical advice. © 2026 Zaiq.
+        </p>
       </section>
-
-      {/* ── Footer ──────────────────────────────────────── */}
-      <footer style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
-        <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <Link href="/" className="brand" style={{ fontSize: '1.1rem' }}>
-            <span className="brand-mark" style={{ width: 36, height: 36 }}><ZaiqIcon size={20} /></span>
-            Zaiq
-          </Link>
-          <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
-            <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
-          </nav>
-          <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
-            For informational purposes only — not medical advice. © 2026 Zaiq.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -681,6 +681,9 @@ input[type="range"]::-moz-range-thumb {
 /* ── Landing extras ─────────────────────────────────────────── */
 .nav-links { display: none; align-items: center; gap: 0.15rem; }
 @media (min-width: 900px) { .nav-links { display: flex; } }
+/* Privacy link: mobile-only compact version in the top bar (nav-links are desktop-only) */
+.nav-privacy-mobile { display: none; }
+@media (max-width: 899px) { .nav-privacy-mobile { display: inline-block; } }
 
 /* ── Floating hero: badge pill + staggered entrance ─────────────── */
 .hero-badge {
