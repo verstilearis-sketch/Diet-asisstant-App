@@ -13,6 +13,7 @@ import { FloatingFoodHero } from '@/components/ui/hero-section-7';
 import { ContainerScroll } from '@/components/ui/container-scroll';
 import { ZaiqAppPreview } from '@/components/ui/zaiq-app-preview';
 import { TiltOnScroll } from '@/components/ui/tilt-on-scroll';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 const HERO_IMAGES = [
   {
@@ -108,6 +109,7 @@ const FAQS = [
 
 export default function LandingPage() {
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     let cancelled = false;
@@ -172,6 +174,7 @@ export default function LandingPage() {
         title="Food that fits your body"
         description="Zaiq computes your daily calories with the Mifflin-St Jeor equation and builds a 7-day meal plan around the food you actually eat — macros, portions and all."
         images={HERO_IMAGES}
+        className={isMobile ? "min-h-[68svh]" : undefined}
       >
         <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.1rem' }}>
           Get started <ArrowRightIcon size={17} />
@@ -206,7 +209,22 @@ export default function LandingPage() {
         </div>
       </FloatingFoodHero>
 
-      {/* ── Container scroll: the app, in 3D ─────────────────── */}
+      {/* ── Container scroll: the app, in 3D (desktop) / static preview (mobile) ── */}
+      {isMobile ? (
+        <section className="container" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
+          <h2 style={{ fontSize: '1.7rem', fontWeight: 800, lineHeight: 1.15, letterSpacing: '-0.02em', textAlign: 'center', marginBottom: '0.6rem' }}>
+            Your body, <span style={{ color: 'var(--color-faint)' }}>computed.</span>
+          </h2>
+          <p style={{ color: 'var(--color-muted)', fontSize: '0.92rem', textAlign: 'center', marginBottom: '1.5rem', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+            Every meal, macro and number — computed from your body&apos;s math.
+          </p>
+          <div className="glass-card" style={{ padding: '0.6rem', overflow: 'hidden' }}>
+            <div style={{ height: 380, overflow: 'hidden', borderRadius: '0.9rem', border: '1px solid var(--color-border)' }}>
+              <ZaiqAppPreview />
+            </div>
+          </div>
+        </section>
+      ) : (
       <ContainerScroll
         titleComponent={
           <>
@@ -223,6 +241,7 @@ export default function LandingPage() {
       >
         <ZaiqAppPreview />
       </ContainerScroll>
+      )}
 
       {/* ── The math ────────────────────────────────────── */}
       <section id="math" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
@@ -258,7 +277,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Personalization (floating-food hero style) ────────── */}
+      {/* ── Personalization ───────────────────────────────────── */}
+      {isMobile ? (
+      <section className="container" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
+        <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Personalization</div>
+        <h2 style={{ textAlign: 'center', fontSize: '1.6rem', marginBottom: '0.6rem' }}>Eat your food. Hit your numbers.</h2>
+        <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '1.5rem', maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
+          Your plan isn\u2019t adapted from some generic template \u2014 it\u2019s generated from the dishes of your food culture.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {[
+            { n: '01', title: 'Tell us your city', example: '\u201CHyderabad, India\u201D' },
+            { n: '02', title: 'We match your food culture', example: 'Hyderabadi dishes & ingredients' },
+            { n: '03', title: 'Portions tuned to your goals', example: 'Biryani \u00B7 520 kcal \u00B7 32g protein' },
+          ].map((st) => (
+            <div key={st.n} className="glass-card" style={{ padding: '1rem 1.1rem' }}>
+              <div className="mono" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.25rem' }}>{st.n}</div>
+              <div style={{ fontSize: '0.92rem', fontWeight: 650, marginBottom: '0.15rem' }}>{st.title}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{st.example}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+      ) : (
       <FloatingFoodHero
         title="Eat your food. Hit your numbers."
         description="Your plan isn\u2019t adapted from some generic template \u2014 it\u2019s generated from the dishes and ingredients of your food culture, with portions tuned to your calorie and macro targets."
@@ -295,8 +336,24 @@ export default function LandingPage() {
           ))}
         </div>
       </FloatingFoodHero>
+      )}
 
       {/* ── How it works (floating-food hero style) ─────────────── */}
+      {isMobile ? (
+      <section className="container" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
+        <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>How it works</div>
+        <h2 style={{ textAlign: 'center', fontSize: '1.6rem', marginBottom: '1.5rem' }}>Four steps, zero guesswork.</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {STEPS.map((s) => (
+            <div key={s.n} className="glass-card" style={{ padding: '1rem 1.1rem' }}>
+              <div className="mono" style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent)', marginBottom: '0.25rem' }}>{s.n}</div>
+              <div style={{ fontSize: '0.92rem', fontWeight: 650, marginBottom: '0.15rem' }}>{s.title}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{s.desc}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+      ) : (
       <FloatingFoodHero
         title="How it works"
         description="Four steps from sign-up to supper. No guesswork, no generic meal templates \u2014 just your body\u2019s math turned into food you actually eat."
@@ -329,6 +386,7 @@ export default function LandingPage() {
           ))}
         </div>
       </FloatingFoodHero>
+      )}
 
       {/* ── FAQ ─────────────────────────────────────────── */}
       <section id="faq" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
