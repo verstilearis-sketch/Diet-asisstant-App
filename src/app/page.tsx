@@ -173,7 +173,7 @@ export default function LandingPage() {
       <FloatingFoodHero
         title="Food that fits your body"
         description="Zaiq computes your daily calories with the Mifflin-St Jeor equation and builds a 7-day meal plan around the food you actually eat — macros, portions and all."
-        images={HERO_IMAGES}
+        images={isMobile ? [] : HERO_IMAGES}
         className={isMobile ? "min-h-[68svh]" : undefined}
       >
         <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.1rem' }}>
@@ -257,13 +257,13 @@ export default function LandingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {FORMULAS.map((f) => (
                 <div key={f.name} style={{
-                  display: 'grid', gridTemplateColumns: '64px 1fr', gap: '1rem', alignItems: 'baseline',
+                  display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '64px 1fr', gap: isMobile ? '0.35rem' : '1rem', alignItems: 'baseline',
                   padding: '0.9rem 1.1rem', background: 'var(--color-bg)',
-                  border: '1px solid var(--color-border)', borderRadius: '0.75rem',
+                  border: '1px solid var(--color-border)', borderRadius: '0.75rem', minWidth: 0,
                 }}>
                   <span className="mono" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-accent)' }}>{f.name}</span>
-                  <div>
-                    <div className="mono formula-scroll" style={{ fontSize: '0.9rem', marginBottom: '0.15rem' }}>{f.formula}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="mono formula-scroll" style={{ fontSize: '0.9rem', marginBottom: '0.15rem', overflowWrap: 'anywhere' }}>{f.formula}</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{f.note}</div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--color-muted)', marginTop: '0.45rem', paddingTop: '0.45rem', borderTop: '1px dashed var(--color-border)', lineHeight: 1.6 }}>
                       <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>The science: </span>{f.science}
@@ -283,7 +283,7 @@ export default function LandingPage() {
         <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Personalization</div>
         <h2 style={{ textAlign: 'center', fontSize: '1.6rem', marginBottom: '0.6rem' }}>Eat your food. Hit your numbers.</h2>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '1.5rem', maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
-          Your plan isn\u2019t adapted from some generic template \u2014 it\u2019s generated from the dishes of your food culture.
+          Your plan isn’t adapted from some generic template — it’s generated from the dishes of your food culture.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           {[

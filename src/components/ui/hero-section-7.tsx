@@ -38,7 +38,7 @@ export function FloatingFoodHero({
     <section
       aria-label="Introduction"
       className={cn(
-        "relative flex min-h-[92svh] w-full items-center justify-center overflow-hidden",
+        "floating-hero relative flex min-h-[92svh] w-full items-center justify-center overflow-hidden",
         className,
       )}
     >
