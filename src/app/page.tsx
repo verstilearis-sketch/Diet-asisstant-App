@@ -10,7 +10,8 @@ import {
   WheatIcon,
 } from '@/components/icons';
 import { FloatingFoodHero } from '@/components/ui/hero-section-7';
-import { CircularCarousel } from '@/components/ui/circular-carousel';
+import { ContainerScroll } from '@/components/ui/container-scroll';
+import { ZaiqAppPreview } from '@/components/ui/zaiq-app-preview';
 
 const HERO_IMAGES = [
   {
@@ -101,194 +102,6 @@ const FAQS = [
   {
     q: 'Where is my data stored?',
     a: 'In your Zaiq cloud account — your profile, plans, logs and chat history are saved to your secure database, so they follow you across devices. The Reset data button on the dashboard deletes your cloud data as well and signs you out.',
-  },
-];
-
-// ── Wheel card shells ─────────────────────────────────────────
-// Compact content cards for the WorksWheel. Kept tight so they read
-// on phone-sized cards as well as desktop.
-const wheelCard: React.CSSProperties = {
-  padding: '1.2em 1.3em',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'hidden',
-  fontSize: '1em',
-};
-const wheelEyebrow: React.CSSProperties = {
-  marginBottom: '0.25em',
-  fontSize: '0.72em',
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
-  color: 'var(--color-faint)',
-  fontWeight: 700,
-};
-const wheelTitle: React.CSSProperties = {
-  fontSize: '1.1em',
-  fontWeight: 700,
-  marginBottom: '0.6em',
-  lineHeight: 1.25,
-};
-const wheelRow: React.CSSProperties = {
-  padding: '0.5em 0.7em',
-  background: 'var(--color-bg)',
-  border: '1px solid var(--color-border)',
-  borderRadius: '0.6em',
-};
-
-function FaqWheelCard() {
-  const [open, setOpen] = React.useState<number | null>(null);
-  return (
-    <div style={wheelCard}>
-      <div style={wheelEyebrow}>FAQ</div>
-      <div style={wheelTitle}>Questions, answered.</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.28em' }}>
-        {FAQS.map((f, i) => (
-          <div key={f.q} style={{ ...wheelRow, padding: 0 }}>
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => setOpen(open === i ? null : i)}
-              style={{
-                width: '100%', textAlign: 'left', padding: '0.42em 0.6rem',
-                fontSize: '0.72em', fontWeight: 600, display: 'flex',
-                justifyContent: 'space-between', alignItems: 'center', gap: '0.5em',
-                background: 'none', border: 'none', color: 'var(--color-text)', cursor: 'pointer',
-              }}
-            >
-              <span>{f.q}</span>
-              <span style={{ color: 'var(--color-accent)', flexShrink: 0, fontSize: '0.85em' }}>{open === i ? '−' : '+'}</span>
-            </button>
-            {open === i && (
-              <div style={{ padding: '0 0.6em 0.5rem', fontSize: '0.7em', color: 'var(--color-muted)', lineHeight: 1.55 }}>{f.a}</div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const PERSONALIZATION = [
-  { n: '01', title: 'Tell us your city', example: '“Hyderabad, India”' },
-  { n: '02', title: 'We match your food culture', example: 'Hyderabadi dishes & ingredients' },
-  { n: '03', title: 'Portions tuned to your goals', example: 'Biryani · 520 kcal · 32g protein' },
-];
-
-function buildCarouselItems(): import('@/components/ui/circular-carousel').CarouselItem[] {
-  return [
-    {
-      id: 'taste',
-      title: 'A taste of the plan',
-      description: 'Every meal placed for a reason.',
-      content: (
-        <div style={wheelCard}>
-          <div style={wheelEyebrow}>A taste of the plan</div>
-          <div style={wheelTitle}>Every meal placed for a reason.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
-            {ANNOTATED_DAY.map((m) => (
-              <div key={m.meal} style={{ ...wheelRow, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5em' }}>
-                <span style={{ fontSize: '0.72em', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--color-accent)', fontSize: '0.64em', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.meal}</span>
-                  {' · '}{m.name}
-                </span>
-                <span className="mono" style={{ fontSize: '0.7em', fontWeight: 700, flexShrink: 0 }}>{m.kcal} kcal</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: '0.55em', textAlign: 'right', fontSize: '0.76em', fontWeight: 700 }}>
-            <span className="mono" style={{ color: 'var(--color-accent)' }}>2,050 / 2,100 kcal</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'math',
-      title: 'The math, shown',
-      description: 'No black box.',
-      content: (
-        <div style={wheelCard}>
-          <div style={wheelEyebrow}>The math, shown</div>
-          <div style={wheelTitle}>No black box.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
-            {FORMULAS.map((f) => (
-              <div key={f.name} style={wheelRow}>
-                <div className="mono" style={{ fontSize: '0.68em', fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '0.06em' }}>{f.name}</div>
-                <div className="mono" style={{ fontSize: '0.72em', marginTop: '0.1em' }}>{f.formula}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'food',
-      title: 'Eat your food',
-      description: 'Hit your numbers.',
-      content: (
-        <div style={wheelCard}>
-          <div style={wheelEyebrow}>Personalization</div>
-          <div style={wheelTitle}>Eat your food. Hit your numbers.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
-            {PERSONALIZATION.map((s) => (
-              <div key={s.n} style={wheelRow}>
-                <div className="mono" style={{ fontSize: '0.66em', fontWeight: 700, color: 'var(--color-accent)' }}>{s.n}</div>
-                <div style={{ fontSize: '0.76em', fontWeight: 650, marginTop: '0.1em' }}>{s.title}</div>
-                <div style={{ fontSize: '0.7em', color: 'var(--color-muted)' }}>{s.example}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'how',
-      title: 'How it works',
-      description: 'From sign-up to supper.',
-      content: (
-        <div style={wheelCard}>
-          <div style={wheelEyebrow}>How it works</div>
-          <div style={wheelTitle}>From sign-up to supper.</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3em', flex: 1 }}>
-            {STEPS.map((s) => (
-              <div key={s.n} style={wheelRow}>
-                <div className="mono" style={{ fontSize: '0.66em', fontWeight: 700, color: 'var(--color-accent)' }}>{s.n}</div>
-                <div style={{ fontSize: '0.76em', fontWeight: 650, marginTop: '0.1em' }}>{s.title}</div>
-                <div style={{ fontSize: '0.7em', color: 'var(--color-muted)', lineHeight: 1.45 }}>{s.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'faq',
-      title: 'FAQ',
-      description: 'Questions, answered.',
-      content: <FaqWheelCard />,
-    },
-  ];
-}
-
-// ── Annotated day ──
-// A Tuesday from a sample plan, with the reasoning shown. The "why" lines are
-// the point: the plan shows its work instead of handing you a menu.
-const ANNOTATED_DAY = [
-  {
-    meal: 'Breakfast', name: '3-egg bhurji, 2 toast, glass of milk', kcal: 480, protein: 28,
-    why: 'Big day ahead — front-loading protein keeps you full till lunch.',
-  },
-  {
-    meal: 'Lunch', name: 'Grilled chicken, brown rice, dal', kcal: 680, protein: 52,
-    why: 'Leg day. Carbs timed before your workout, protein after.',
-  },
-  {
-    meal: 'Snack', name: 'Greek yogurt, roasted makhana', kcal: 240, protein: 18,
-    why: 'You’ll be at 98g of your 128g protein — this closes the gap without spoiling dinner.',
-  },
-  {
-    meal: 'Dinner', name: 'Paneer tikka, 2 rotis, salad', kcal: 650, protein: 30,
-    why: 'Light enough to land you at 2,050 of your 2,100 kcal.',
   },
 ];
 
@@ -392,9 +205,124 @@ export default function LandingPage() {
         </div>
       </FloatingFoodHero>
 
-      {/* ── Explore carousel: the sections, orbiting ────────────── */}
-      <section style={{ paddingTop: '3rem', paddingBottom: '3rem', overflow: 'hidden' }} aria-label="Explore Zaiq">
-        <CircularCarousel items={buildCarouselItems()} />
+      {/* ── Container scroll: the app, in 3D ─────────────────── */}
+      <ContainerScroll
+        titleComponent={
+          <>
+            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+              Your body, <br />
+              <span style={{ color: 'var(--color-faint)' }}>computed.</span>
+            </h2>
+            <p style={{ color: 'var(--color-muted)', fontSize: '1rem', marginTop: '1rem', maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}>
+              Scroll to watch your plan take shape — every meal, macro and number,
+              computed from your body&apos;s math.
+            </p>
+          </>
+        }
+      >
+        <ZaiqAppPreview />
+      </ContainerScroll>
+
+      {/* ── The math ────────────────────────────────────── */}
+      <section id="math" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+          <div className="glass-card" style={{ padding: '2rem' }}>
+            <div className="eyebrow">The math, shown</div>
+            <h2 style={{ marginBottom: '0.6rem' }}>No black box.</h2>
+            <p style={{ color: 'var(--color-muted)', fontSize: '0.95rem', marginBottom: '1.75rem', maxWidth: 640 }}>
+              Every number on your dashboard traces back to these four equations. We show the
+              working because a plan you can’t audit is a plan you can’t trust.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+              {FORMULAS.map((f) => (
+                <div key={f.name} style={{
+                  display: 'grid', gridTemplateColumns: '64px 1fr', gap: '1rem', alignItems: 'baseline',
+                  padding: '0.9rem 1.1rem', background: 'var(--color-bg)',
+                  border: '1px solid var(--color-border)', borderRadius: '0.75rem',
+                }}>
+                  <span className="mono" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-accent)' }}>{f.name}</span>
+                  <div>
+                    <div className="mono formula-scroll" style={{ fontSize: '0.9rem', marginBottom: '0.15rem' }}>{f.formula}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{f.note}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--color-muted)', marginTop: '0.45rem', paddingTop: '0.45rem', borderTop: '1px dashed var(--color-border)', lineHeight: 1.6 }}>
+                      <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>The science: </span>{f.science}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Personalization ─────────────────────────────── */}
+      <section className="container" style={{ paddingTop: '1rem', paddingBottom: '3.5rem' }}>
+        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+              background: 'var(--color-accent-soft)', color: 'var(--color-accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <WheatIcon size={20} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1.1rem' }}>Eat your food. Hit your numbers.</h3>
+              <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
+                Your plan isn’t adapted from some generic template — it’s generated from the
+                dishes and ingredients of your food culture, with portions tuned to your calorie
+                and macro targets. Progress that tastes like dinner, not discipline.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+            {[
+              { n: '01', title: 'Tell us your city', example: '“Hyderabad, India”' },
+              { n: '02', title: 'We match your food culture', example: 'Hyderabadi dishes & ingredients' },
+              { n: '03', title: 'Portions tuned to your goals', example: 'Biryani · 520 kcal · 32g protein' },
+            ].map((s) => (
+              <div key={s.n} style={{ padding: '1rem 1.1rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.75rem' }}>
+                <div className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.35rem' }}>{s.n}</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 650, marginBottom: '0.25rem' }}>{s.title}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{s.example}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ────────────────────────────────── */}
+      <section id="how-it-works" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
+        <div className="section-head">
+          <div className="eyebrow">How it works</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1rem' }}>
+          {STEPS.map((s) => (
+            <div key={s.n} className="glass-card" style={{ padding: '1.5rem' }}>
+              <div className="mono" style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent)', marginBottom: '0.7rem' }}>{s.n}</div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '0.35rem' }}>{s.title}</h3>
+              <p style={{ color: 'var(--color-muted)', fontSize: '0.87rem', lineHeight: 1.6 }}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── FAQ ─────────────────────────────────────────── */}
+      <section id="faq" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
+        <div className="section-head">
+          <div className="eyebrow">FAQ</div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', maxWidth: 780 }}>
+          {FAQS.map((f) => (
+            <details key={f.q} className="faq-item">
+              <summary>
+                {f.q}
+                <ChevronDownIcon size={17} className="faq-chevron" />
+              </summary>
+              <div className="faq-body">{f.a}</div>
+            </details>
+          ))}
+        </div>
       </section>
 
       {/* ── CTA ─────────────────────────────────────────── */}
