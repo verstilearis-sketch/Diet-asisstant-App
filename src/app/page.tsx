@@ -343,12 +343,12 @@ export default function LandingPage() {
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section className="container" style={{ paddingTop: '3rem', paddingBottom: '6rem' }}>
-        <div className="glass-card" style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', background: 'var(--color-text)', borderColor: 'var(--color-text)' }}>
+        <div className="glass-card" style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', background: 'var(--color-accent)', borderColor: 'var(--color-accent)' }}>
           <h2 style={{ fontSize: '1.9rem', marginBottom: '0.75rem', color: '#fff' }}>See your numbers.</h2>
-          <p style={{ color: 'rgba(255,255,255,0.72)', marginBottom: '1.75rem', fontSize: '1rem' }}>
+          <p style={{ color: 'rgba(255,255,255,0.85)', marginBottom: '1.75rem', fontSize: '1rem' }}>
             Answer four short steps of questions and get a plan built on your body’s math.
           </p>
-          <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.5rem', background: '#fff', color: 'var(--color-text)', boxShadow: 'none' }}>
+          <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.5rem', background: '#fff', color: '#0d3d24', boxShadow: 'none' }}>
             Get started <ArrowRightIcon size={17} />
           </Link>
           <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', marginTop: '1.5rem', flexWrap: 'wrap' }}>
