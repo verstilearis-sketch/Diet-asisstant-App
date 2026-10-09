@@ -39,7 +39,6 @@ export function FloatingFoodHero({
       aria-label="Introduction"
       className={cn(
         "relative flex min-h-[92svh] w-full items-center justify-center overflow-hidden",
-        "bg-[var(--color-bg)]",
         className,
       )}
     >

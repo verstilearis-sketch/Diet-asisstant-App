@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
 import { GlobalChrome } from '@/components/GlobalChrome';
+import { VortexBackground } from '@/components/ui/vortex-background';
 
 export const viewport: Viewport = {
   themeColor: '#177245',
@@ -29,8 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body suppressHydrationWarning>
+        <VortexBackground />
         <GlobalChrome />
-        <main id="main-content">
+        <main id="main-content" className="vortex-content">
           {children}
         </main>
         <Analytics />
