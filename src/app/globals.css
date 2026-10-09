@@ -56,6 +56,24 @@
   --radius-2xl: 1.25rem;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── shadcn-style token bridge (for /components/ui primitives) ── */
+  /* Maps the conventional shadcn variable names onto this app's theme
+     so ui/ components work without a separate token set. Follows the
+     app's own light/dark values automatically. */
+  --background: var(--color-bg);
+  --foreground: var(--color-text);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-text);
+  --muted: var(--color-surface2);
+  --muted-foreground: var(--color-muted);
+  --border: var(--color-border);
+  --input: var(--color-border-strong);
+  --primary: var(--color-accent);
+  --primary-foreground: #ffffff;
+  --ring: var(--color-accent);
+  --chart-1: var(--color-accent);
+  --chart-2: var(--color-accent2);
 }
 
 /* ── Dark mode ─────────────────────────────────────────────────── */
