@@ -28,6 +28,7 @@
 
   /* Brand — deep botanical green */
   --color-accent: #177245;
+  --color-brand: #177245; /* logo green — stays colored in monochrome theme */
   --color-accent-hover: #125c37;
   --color-accent-active: #0e4a2d;
   --color-accent-soft: #e9f4ec;
@@ -508,7 +509,7 @@ input[type="range"]::-moz-range-thumb {
 .brand:hover { text-decoration: none; }
 .brand-mark {
   width: 50px; height: 50px; border-radius: 15px;
-  background: var(--color-accent); color: #131311;
+  background: var(--color-brand); color: #fff;
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -534,7 +535,7 @@ input[type="range"]::-moz-range-thumb {
 .auth-card { width: 100%; max-width: 440px; padding: 2.25rem; position: relative; z-index: 1; }
 .auth-logo {
   width: 64px; height: 64px; border-radius: 18px;
-  background: var(--color-accent); color: #131311;
+  background: var(--color-brand); color: #fff;
   display: inline-flex; align-items: center; justify-content: center;
   margin-bottom: 1.25rem;
 }
