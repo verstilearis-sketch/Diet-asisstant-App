@@ -5,7 +5,7 @@ import { useState } from 'react';
 // ── Floating contact button ───────────────────────────────────────
 // Opens the user's mail app to contact support.
 
-const SUPPORT_EMAIL = 'support@nutriq.app';
+const SUPPORT_EMAIL = 'xycicdoctor@gmail.com';
 
 export function FloatingContact() {
   const [hover, setHover] = useState(false);
