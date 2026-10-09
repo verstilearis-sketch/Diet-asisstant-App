@@ -258,61 +258,77 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Personalization ─────────────────────────────── */}
-      <section className="container" style={{ paddingTop: '1rem', paddingBottom: '3.5rem' }}>
-        <TiltOnScroll>
-        <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-              background: 'var(--color-accent-soft)', color: 'var(--color-accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <WheatIcon size={20} />
+      {/* ── Personalization (floating-food hero style) ────────── */}
+      <FloatingFoodHero
+        title="Eat your food. Hit your numbers."
+        description="Your plan isn\u2019t adapted from some generic template \u2014 it\u2019s generated from the dishes and ingredients of your food culture, with portions tuned to your calorie and macro targets."
+        images={[
+          {
+            src: '/images/hero/salmon.png',
+            alt: 'A grilled salmon fillet',
+            className: 'w-28 sm:w-40 md:w-52 top-8 left-4 sm:left-10 md:top-16 md:left-16 animate-float',
+          },
+          {
+            src: '/images/hero/salad-bowl.png',
+            alt: 'A fresh salad bowl',
+            className: 'w-32 sm:w-44 md:w-56 top-8 right-4 sm:right-10 md:top-16 md:right-16 animate-float',
+          },
+          {
+            src: '/images/hero/avocado.png',
+            alt: 'Half an avocado',
+            className: 'w-24 sm:w-32 md:w-44 bottom-10 left-6 sm:left-12 md:bottom-20 md:left-24 animate-float',
+          },
+        ]}
+        className="min-h-[82svh]"
+      >
+        <div style={{ display: 'flex', gap: '0.7rem', flexWrap: 'wrap', justifyContent: 'center', width: '100%', marginTop: '0.75rem' }}>
+          {[
+            { n: '01', title: 'Tell us your city', example: '\u201CHyderabad, India\u201D' },
+            { n: '02', title: 'We match your food culture', example: 'Hyderabadi dishes & ingredients' },
+            { n: '03', title: 'Portions tuned to your goals', example: 'Biryani \u00B7 520 kcal \u00B7 32g protein' },
+          ].map((s) => (
+            <div key={s.n} className="glass-card" style={{ padding: '0.9rem 1.05rem', flex: '1 1 170px', maxWidth: 250, textAlign: 'left' }}>
+              <div className="mono" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.25rem' }}>{s.n}</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 650, marginBottom: '0.2rem' }}>{s.title}</div>
+              <div style={{ fontSize: '0.76rem', color: 'var(--color-muted)' }}>{s.example}</div>
             </div>
-            <div>
-              <h3 style={{ fontSize: '1.1rem' }}>Eat your food. Hit your numbers.</h3>
-              <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
-                Your plan isn’t adapted from some generic template — it’s generated from the
-                dishes and ingredients of your food culture, with portions tuned to your calorie
-                and macro targets. Progress that tastes like dinner, not discipline.
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
-            {[
-              { n: '01', title: 'Tell us your city', example: '“Hyderabad, India”' },
-              { n: '02', title: 'We match your food culture', example: 'Hyderabadi dishes & ingredients' },
-              { n: '03', title: 'Portions tuned to your goals', example: 'Biryani · 520 kcal · 32g protein' },
-            ].map((s) => (
-              <div key={s.n} style={{ padding: '1rem 1.1rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.75rem' }}>
-                <div className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.35rem' }}>{s.n}</div>
-                <div style={{ fontSize: '0.88rem', fontWeight: 650, marginBottom: '0.25rem' }}>{s.title}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{s.example}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        </TiltOnScroll>
-      </section>
-
-      {/* ── How it works ────────────────────────────────── */}
-      <section id="how-it-works" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
-        <div className="section-head">
-          <div className="eyebrow">How it works</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1rem' }}>
-          {STEPS.map((s) => (
-            <TiltOnScroll key={s.n}>
-            <div className="glass-card" style={{ padding: '1.5rem', height: '100%' }}>
-              <div className="mono" style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent)', marginBottom: '0.7rem' }}>{s.n}</div>
-              <h3 style={{ fontSize: '1rem', marginBottom: '0.35rem' }}>{s.title}</h3>
-              <p style={{ color: 'var(--color-muted)', fontSize: '0.87rem', lineHeight: 1.6 }}>{s.desc}</p>
-            </div>
-            </TiltOnScroll>
           ))}
         </div>
-      </section>
+      </FloatingFoodHero>
+
+      {/* ── How it works (floating-food hero style) ─────────────── */}
+      <FloatingFoodHero
+        title="How it works"
+        description="Four steps from sign-up to supper. No guesswork, no generic meal templates \u2014 just your body\u2019s math turned into food you actually eat."
+        images={[
+          {
+            src: '/images/hero/avocado.png',
+            alt: 'Half an avocado',
+            className: 'w-28 sm:w-40 md:w-52 top-8 right-4 sm:right-10 md:top-16 md:right-16 animate-float',
+          },
+          {
+            src: '/images/hero/salmon.png',
+            alt: 'A grilled salmon fillet',
+            className: 'w-32 sm:w-44 md:w-56 top-8 left-4 sm:left-10 md:top-16 md:left-16 animate-float',
+          },
+          {
+            src: '/images/hero/salad-bowl.png',
+            alt: 'A fresh salad bowl',
+            className: 'w-24 sm:w-32 md:w-44 bottom-10 right-6 sm:right-12 md:bottom-20 md:right-24 animate-float',
+          },
+        ]}
+        className="min-h-[82svh]"
+      >
+        <div style={{ display: 'flex', gap: '0.7rem', flexWrap: 'wrap', justifyContent: 'center', width: '100%', marginTop: '0.75rem' }}>
+          {STEPS.map((s) => (
+            <div key={s.n} className="glass-card" style={{ padding: '0.9rem 1.05rem', flex: '1 1 160px', maxWidth: 240, textAlign: 'left' }}>
+              <div className="mono" style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent)', marginBottom: '0.3rem' }}>{s.n}</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 650, marginBottom: '0.2rem' }}>{s.title}</div>
+              <div style={{ fontSize: '0.76rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{s.desc}</div>
+            </div>
+          ))}
+        </div>
+      </FloatingFoodHero>
 
       {/* ── FAQ ─────────────────────────────────────────── */}
       <section id="faq" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
