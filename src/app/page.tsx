@@ -9,6 +9,7 @@ import {
   ZaiqIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
   WheatIcon,
 } from '@/components/icons';
+import { SiteNav } from '@/components/SiteNav';
 import { FloatingFoodHero } from '@/components/ui/hero-section-7';
 import { ContainerScroll } from '@/components/ui/container-scroll';
 import { ZaiqAppPreview } from '@/components/ui/zaiq-app-preview';
@@ -168,27 +169,7 @@ export default function LandingPage() {
       />
 
       {/* ── Nav ─────────────────────────────────────────── */}
-      <nav className="site-nav">
-        <div className="site-nav-inner">
-          <Link href="/" className="brand">
-            <span className="brand-mark"><ZaiqIcon size={29} /></span>
-            Zaiq
-          </Link>
-          <div className="nav-links">
-            <Link href="/" className="nav-link">Home</Link>
-            <Link href="/about" className="nav-link">About</Link>
-            <Link href="/blog" className="nav-link">Blog</Link>
-            <Link href="/privacy" className="nav-link">Privacy Policy</Link>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
-            <Link href="/privacy" className="nav-link nav-privacy-mobile" style={{ fontSize: '0.8rem' }}>Privacy</Link>
-            <Link href="/auth?mode=signup" className="btn-primary" style={{ padding: '0.6rem 1.25rem', fontSize: '0.88rem' }}>
-              Get started
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       <FloatingFoodHero
         title="Food that fits your body"

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SiteNav } from '@/components/SiteNav';
 import { notFound } from 'next/navigation';
 import { ZaiqIcon } from '@/components/icons';
 import { ARTICLES, getArticle, type ArticleBlock } from '@/data/articles';
@@ -90,20 +91,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     <div className="page-shell">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <nav className="site-nav">
-        <div className="site-nav-inner">
-          <Link href="/" className="brand">
-            <span className="brand-mark"><ZaiqIcon size={29} /></span>
-            Zaiq
-          </Link>
-          <div className="nav-links">
-            <Link href="/blog" className="nav-link">Blog</Link>
-            <Link href="/auth?mode=signup" className="btn-primary" style={{ padding: '0.55rem 1.2rem' }}>
-              Get started
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       <div className="article-layout container">
         <ArticleSidebar article={article} articles={ARTICLES} />

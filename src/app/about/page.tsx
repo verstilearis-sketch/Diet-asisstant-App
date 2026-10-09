@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ZaiqIcon } from '@/components/icons';
+import { SiteNav } from '@/components/SiteNav';
 
 export const metadata: Metadata = {
   title: 'About — Zaiq',
@@ -12,27 +13,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="page-shell">
-      <nav className="site-nav">
-        <div className="site-nav-inner">
-          <Link href="/" className="brand">
-            <span className="brand-mark">
-              <ZaiqIcon size={29} />
-            </span>
-            Zaiq
-          </Link>
-          <div className="nav-links">
-            <Link href="/" className="nav-link">
-              Home
-            </Link>
-            <Link href="/blog" className="nav-link">
-              Blog
-            </Link>
-            <Link href="/auth?mode=signup" className="btn-primary" style={{ padding: '0.55rem 1.2rem' }}>
-              Get started
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteNav />
 
       <main className="container" style={{ maxWidth: 720, paddingTop: '3rem', paddingBottom: '4rem' }}>
         <div className="eyebrow" style={{ marginBottom: '1rem' }}>
