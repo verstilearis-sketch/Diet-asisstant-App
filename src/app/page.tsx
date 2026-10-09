@@ -352,17 +352,17 @@ export default function LandingPage() {
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section className="container" style={{ paddingTop: '3rem', paddingBottom: '6rem' }}>
-        <div className="glass-card" style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 2rem', textAlign: 'center', background: 'var(--color-accent)', borderColor: 'var(--color-accent)' }}>
-          <h2 style={{ fontSize: '1.9rem', marginBottom: '0.75rem', color: '#131311' }}>See your numbers.</h2>
-          <p style={{ color: 'rgba(19,19,17,0.72)', marginBottom: '1.75rem', fontSize: '1rem' }}>
+        <div className="glass-card" style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 2rem', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.9rem', marginBottom: '0.75rem' }}>See your numbers.</h2>
+          <p style={{ color: 'var(--color-muted)', marginBottom: '1.75rem', fontSize: '1rem' }}>
             Answer four short steps of questions and get a plan built on your body’s math.
           </p>
-          <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.5rem', background: '#131311', color: '#fff', boxShadow: 'none' }}>
+          <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.5rem' }}>
             Get started <ArrowRightIcon size={17} />
           </Link>
           <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', marginTop: '1.5rem', flexWrap: 'wrap' }}>
             {['Free', '2-minute setup', 'No credit card'].map((t) => (
-              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'rgba(19,19,17,0.7)' }}>
+              <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem', color: 'var(--color-muted)' }}>
                 <CheckIcon size={14} /> {t}
               </span>
             ))}
