@@ -12,6 +12,7 @@ import {
 import { FloatingFoodHero } from '@/components/ui/hero-section-7';
 import { ContainerScroll } from '@/components/ui/container-scroll';
 import { ZaiqAppPreview } from '@/components/ui/zaiq-app-preview';
+import { TiltOnScroll } from '@/components/ui/tilt-on-scroll';
 
 const HERO_IMAGES = [
   {
@@ -226,6 +227,7 @@ export default function LandingPage() {
       {/* ── The math ────────────────────────────────────── */}
       <section id="math" className="container scroll-mt" style={{ paddingTop: '3.5rem', paddingBottom: '3.5rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
+          <TiltOnScroll>
           <div className="glass-card" style={{ padding: '2rem' }}>
             <div className="eyebrow">The math, shown</div>
             <h2 style={{ marginBottom: '0.6rem' }}>No black box.</h2>
@@ -252,11 +254,13 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
+          </TiltOnScroll>
         </div>
       </section>
 
       {/* ── Personalization ─────────────────────────────── */}
       <section className="container" style={{ paddingTop: '1rem', paddingBottom: '3.5rem' }}>
+        <TiltOnScroll>
         <div className="glass-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
             <div style={{
@@ -289,6 +293,7 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
+        </TiltOnScroll>
       </section>
 
       {/* ── How it works ────────────────────────────────── */}
@@ -298,11 +303,13 @@ export default function LandingPage() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1rem' }}>
           {STEPS.map((s) => (
-            <div key={s.n} className="glass-card" style={{ padding: '1.5rem' }}>
+            <TiltOnScroll key={s.n}>
+            <div className="glass-card" style={{ padding: '1.5rem', height: '100%' }}>
               <div className="mono" style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent)', marginBottom: '0.7rem' }}>{s.n}</div>
               <h3 style={{ fontSize: '1rem', marginBottom: '0.35rem' }}>{s.title}</h3>
               <p style={{ color: 'var(--color-muted)', fontSize: '0.87rem', lineHeight: 1.6 }}>{s.desc}</p>
             </div>
+            </TiltOnScroll>
           ))}
         </div>
       </section>
@@ -314,13 +321,15 @@ export default function LandingPage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', maxWidth: 780 }}>
           {FAQS.map((f) => (
-            <details key={f.q} className="faq-item">
+            <TiltOnScroll key={f.q}>
+            <details className="faq-item">
               <summary>
                 {f.q}
                 <ChevronDownIcon size={17} className="faq-chevron" />
               </summary>
               <div className="faq-body">{f.a}</div>
             </details>
+            </TiltOnScroll>
           ))}
         </div>
       </section>
