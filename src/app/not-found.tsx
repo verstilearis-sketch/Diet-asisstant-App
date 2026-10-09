@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { NutriqIcon } from '@/components/icons';
+import { ZaiqIcon } from '@/components/icons';
 
 // ── Custom 404 ────────────────────────────────────────────────────
 
@@ -17,7 +17,7 @@ export default function NotFound() {
     >
       <div style={{ textAlign: 'center', maxWidth: '26rem' }}>
         <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-          <NutriqIcon size={56} />
+          <ZaiqIcon size={56} />
         </div>
         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', marginBottom: '0.75rem', color: 'var(--color-text)' }}>
           Page not found

@@ -17,7 +17,7 @@ export function captureUtmParams(): UtmParams {
   if (typeof window === 'undefined') return {};
   try {
     const params = new URLSearchParams(window.location.search);
-    const existing = JSON.parse(localStorage.getItem('nutriq-utm') || '{}') as UtmParams;
+    const existing = JSON.parse(localStorage.getItem('zaiq-utm') || '{}') as UtmParams;
     // Only capture on first visit — don't overwrite the original source.
     if (existing.utm_source) return existing;
 
@@ -32,7 +32,7 @@ export function captureUtmParams(): UtmParams {
     }
     if (found) {
       utm.first_seen = new Date().toISOString();
-      localStorage.setItem('nutriq-utm', JSON.stringify(utm));
+      localStorage.setItem('zaiq-utm', JSON.stringify(utm));
       return utm;
     }
     return existing;
@@ -44,7 +44,7 @@ export function captureUtmParams(): UtmParams {
 export function getUtmParams(): UtmParams {
   if (typeof window === 'undefined') return {};
   try {
-    return JSON.parse(localStorage.getItem('nutriq-utm') || '{}') as UtmParams;
+    return JSON.parse(localStorage.getItem('zaiq-utm') || '{}') as UtmParams;
   } catch {
     return {};
   }

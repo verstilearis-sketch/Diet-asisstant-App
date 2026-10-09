@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabase } from '@/lib/supabase';
-import { NutriqIcon, AlertIcon } from '@/components/icons';
+import { ZaiqIcon, AlertIcon } from '@/components/icons';
 
 // ── OAuth callback ──────────────────────────────────────────────
 // Direct Google OAuth (not via Supabase Auth) lands here with the ID token
@@ -36,10 +36,10 @@ function CallbackHandler() {
         return;
       }
       // New flow: ID token from our own Google OAuth, passed via cookie.
-      const idToken = document.cookie.match(/(?:^|;\s*)nutriq_id_token=([^;]+)/)?.[1];
+      const idToken = document.cookie.match(/(?:^|;\s*)zaiq_id_token=([^;]+)/)?.[1];
       if (idToken) {
         // Clear it immediately — it must not linger.
-        document.cookie = 'nutriq_id_token=; path=/; max-age=0';
+        document.cookie = 'zaiq_id_token=; path=/; max-age=0';
         try {
           const { error } = await sb.auth.signInWithIdToken({
             provider: 'google',
@@ -110,7 +110,7 @@ function CallbackHandler() {
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
       <div className="glass-card auth-card fade-in-up" style={{ textAlign: 'center' }}>
-        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><NutriqIcon size={33} /></span>
+        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><ZaiqIcon size={33} /></span>
         {error ? (
           <>
             <div className="error-box" style={{ textAlign: 'left', marginBottom: '1.25rem' }}>

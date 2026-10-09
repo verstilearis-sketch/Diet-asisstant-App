@@ -9,7 +9,7 @@ export function DarkModeToggle() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('nutriq-theme');
+    const saved = localStorage.getItem('zaiq-theme');
     const isDark = saved === 'dark' ||
       (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setDark(isDark);
@@ -20,7 +20,7 @@ export function DarkModeToggle() {
     const next = !dark;
     setDark(next);
     document.documentElement.dataset.theme = next ? 'dark' : 'light';
-    localStorage.setItem('nutriq-theme', next ? 'dark' : 'light');
+    localStorage.setItem('zaiq-theme', next ? 'dark' : 'light');
   };
 
   return (

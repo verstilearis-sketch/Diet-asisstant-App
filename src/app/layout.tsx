@@ -9,14 +9,14 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://diet-asisstant-app.vercel.app'),
-  title: 'Nutriq — AI-Powered Nutrition & Fitness Planner',
+  title: 'Zaiq — AI-Powered Nutrition & Fitness Planner',
   description: 'Get a personalized diet plan based on your goals, lifestyle, and location. Powered by smart AI nutrition science.',
   keywords: ['diet plan', 'nutrition', 'weight loss', 'meal plan', 'BMI calculator', 'fitness', 'calorie tracker'],
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'Nutriq',
+    title: 'Zaiq',
     description: 'Your personal AI nutrition coach',
     type: 'website',
   },

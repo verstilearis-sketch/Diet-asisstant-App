@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSession } from '@/lib/storage';
 import Link from 'next/link';
 import {
-  NutriqIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
+  ZaiqIcon, ArrowRightIcon, CheckIcon, ChevronDownIcon,
   WheatIcon,
 } from '@/components/icons';
 
@@ -48,7 +48,7 @@ const STEPS = [
 const FAQS = [
   {
     q: 'Is this medical advice?',
-    a: 'No. Nutriq is an informational tool: it computes calorie and macro targets from standard nutrition equations and suggests meals around them. If you have a medical condition, are pregnant, or have a history of eating disorders, talk to a clinician or registered dietitian first.',
+    a: 'No. Zaiq is an informational tool: it computes calorie and macro targets from standard nutrition equations and suggests meals around them. If you have a medical condition, are pregnant, or have a history of eating disorders, talk to a clinician or registered dietitian first.',
   },
   {
     q: 'Do I need to create an account?',
@@ -64,7 +64,7 @@ const FAQS = [
   },
   {
     q: 'Where is my data stored?',
-    a: 'In your Nutriq cloud account — your profile, plans, logs and chat history are saved to your secure database, so they follow you across devices. The Reset data button on the dashboard deletes your cloud data as well and signs you out.',
+    a: 'In your Zaiq cloud account — your profile, plans, logs and chat history are saved to your secure database, so they follow you across devices. The Reset data button on the dashboard deletes your cloud data as well and signs you out.',
   },
 ];
 
@@ -111,7 +111,7 @@ export default function LandingPage() {
             '@graph': [
               {
                 '@type': 'SoftwareApplication',
-                name: 'Nutriq',
+                name: 'Zaiq',
                 applicationCategory: 'HealthApplication',
                 operatingSystem: 'Web',
                 offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -135,8 +135,8 @@ export default function LandingPage() {
       <nav className="site-nav">
         <div className="site-nav-inner">
           <Link href="/" className="brand">
-            <span className="brand-mark"><NutriqIcon size={29} /></span>
-            Nutriq
+            <span className="brand-mark"><ZaiqIcon size={29} /></span>
+            Zaiq
           </Link>
           <div className="nav-links">
             <a href="#math" className="nav-link">The math</a>
@@ -161,7 +161,7 @@ export default function LandingPage() {
               A diet plan computed from your body, not copied from a template.
             </h1>
             <p style={{ fontSize: '1.06rem', color: 'var(--color-muted)', lineHeight: 1.75, maxWidth: 520, marginBottom: '2rem' }}>
-              Answer a short set of questions about your body, goals and lifestyle. Nutriq
+              Answer a short set of questions about your body, goals and lifestyle. Zaiq
               computes your calorie target with the Mifflin–St Jeor equation, matches meals
               to your local cuisine, and builds a 7-day plan — macros, milestones,
               hydration and all.
@@ -340,7 +340,7 @@ export default function LandingPage() {
       <section className="container" style={{ paddingBottom: '4rem', textAlign: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
           <span style={{ width: 44, height: 1, background: 'var(--color-border-strong)' }} />
-          <span className="brand-mark" style={{ width: 38, height: 38 }}><NutriqIcon size={22} /></span>
+          <span className="brand-mark" style={{ width: 38, height: 38 }}><ZaiqIcon size={22} /></span>
           <span style={{ width: 44, height: 1, background: 'var(--color-border-strong)' }} />
         </div>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.92rem', maxWidth: 560, margin: '0 auto', lineHeight: 1.7 }}>
@@ -353,8 +353,8 @@ export default function LandingPage() {
       <footer style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
         <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link href="/" className="brand" style={{ fontSize: '1.1rem' }}>
-            <span className="brand-mark" style={{ width: 36, height: 36 }}><NutriqIcon size={20} /></span>
-            Nutriq
+            <span className="brand-mark" style={{ width: 36, height: 36 }}><ZaiqIcon size={20} /></span>
+            Zaiq
           </Link>
           <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
             <Link href="/" className="nav-link" style={{ fontSize: '0.85rem' }}>Home</Link>
@@ -364,7 +364,7 @@ export default function LandingPage() {
             <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
           </nav>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
-            For informational purposes only — not medical advice. © 2026 Nutriq.
+            For informational purposes only — not medical advice. © 2026 Zaiq.
           </p>
         </div>
       </footer>

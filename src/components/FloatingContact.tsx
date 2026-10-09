@@ -12,7 +12,7 @@ export function FloatingContact() {
 
   return (
     <a
-      href={`mailto:${SUPPORT_EMAIL}?subject=Nutriq%20support`}
+      href={`mailto:${SUPPORT_EMAIL}?subject=Zaiq%20support`}
       aria-label="Contact support"
       title="Contact support"
       onMouseOver={() => setHover(true)}

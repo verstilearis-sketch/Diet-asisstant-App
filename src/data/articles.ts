@@ -35,7 +35,7 @@ export const ARTICLES: Article[] = [
       { type: 'p', text: 'The older Harris-Benedict equation (1919) was derived from a small, homogenous sample. Multiple validation studies since the 1990s have found Mifflin-St Jeor predicts measured resting metabolic rate within about 10% for most adults — closer than Harris-Benedict, Owen, or WHO equations. It is the equation the American Dietetic Association recommends.' },
       { type: 'h2', text: 'BMR is only the start' },
       { type: 'p', text: 'Your BMR is not your calorie target. Multiply it by an activity factor (1.2 for sedentary up to 1.9 for very active) to get your TDEE — total daily energy expenditure. Then adjust for your goal: roughly −500 kcal/day for steady fat loss, +300–400 for lean gain.' },
-      { type: 'callout', text: 'Nutriq runs this exact calculation for you — plus TDEE, macros, and a full meal plan — in about two minutes. No spreadsheet required.' },
+      { type: 'callout', text: 'Zaiq runs this exact calculation for you — plus TDEE, macros, and a full meal plan — in about two minutes. No spreadsheet required.' },
       { type: 'h2', text: 'Limitations to know' },
       {
         type: 'ul',
@@ -81,7 +81,7 @@ export const ARTICLES: Article[] = [
           'It is a screening tool, not a diagnosis. No single number defines your health.',
         ],
       },
-      { type: 'callout', text: 'Nutriq shows your BMI alongside BMR, TDEE, and your calorie target — so one number never tells the whole story alone.' },
+      { type: 'callout', text: 'Zaiq shows your BMI alongside BMR, TDEE, and your calorie target — so one number never tells the whole story alone.' },
     ],
   },
   {
@@ -119,7 +119,7 @@ export const ARTICLES: Article[] = [
       },
       { type: 'h2', text: 'Why aggressive deficits backfire' },
       { type: 'p', text: 'Cutting 1,000+ kcal below TDEE triggers disproportionate hunger, muscle loss, and metabolic adaptation. The research consistently favors moderate deficits you can sustain for months over extreme ones you abandon in two weeks.' },
-      { type: 'callout', text: 'Nutriq computes your TDEE from your actual inputs and sets the deficit for you — then builds meals that hit the number.' },
+      { type: 'callout', text: 'Zaiq computes your TDEE from your actual inputs and sets the deficit for you — then builds meals that hit the number.' },
     ],
   },
   {
@@ -132,7 +132,7 @@ export const ARTICLES: Article[] = [
     keywords: ['1800 calorie Indian diet plan', 'North Indian meal plan weight loss', 'Indian diet chart'],
     blocks: [
       { type: 'p', text: 'Weight loss does not require giving up the food you grew up with. This 7-day sample keeps you near 1,800 kcal/day using standard North Indian home cooking — with protein anchored at every meal so you lose fat, not muscle.' },
-      { type: 'callout', text: 'This is a sample template. Your ideal target depends on your body — Nutriq computes it from your weight, height, age, and activity.' },
+      { type: 'callout', text: 'This is a sample template. Your ideal target depends on your body — Zaiq computes it from your weight, height, age, and activity.' },
       { type: 'h2', text: 'The daily framework (~1,800 kcal)' },
       {
         type: 'ul',
@@ -210,7 +210,7 @@ export const ARTICLES: Article[] = [
           'Buffer: ~150 kcal for chai or a small extra',
         ],
       },
-      { type: 'callout', text: 'Nutriq includes deep Kashmiri food coverage — wazwan dishes, everyday curries, and Srinagar/Jammu portion norms — so your plan speaks your food.' },
+      { type: 'callout', text: 'Zaiq includes deep Kashmiri food coverage — wazwan dishes, everyday curries, and Srinagar/Jammu portion norms — so your plan speaks your food.' },
     ],
   },
 ];

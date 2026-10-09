@@ -37,7 +37,7 @@ export default function OpengraphImage() {
         </svg>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ fontSize: 118, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1 }}>
-            Nutriq
+            Zaiq
           </div>
           <div style={{ fontSize: 34, lineHeight: 1.45, opacity: 0.88, maxWidth: 640 }}>
             A diet plan computed from your body, not copied from a template.

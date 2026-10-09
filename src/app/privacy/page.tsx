@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { NutriqIcon } from '@/components/icons';
+import { ZaiqIcon } from '@/components/icons';
 
 export const metadata = {
-  title: 'Privacy Policy — Nutriq',
-  description: 'How Nutriq collects, uses, and protects your data.',
+  title: 'Privacy Policy — Zaiq',
+  description: 'How Zaiq collects, uses, and protects your data.',
 };
 
 const SECTIONS: { title: string; body: string[] }[] = [
@@ -18,7 +18,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'How we use it',
     body: [
-      'Your data is used only to operate Nutriq for you: generating your meal plans, tracking your progress, and powering the health coach.',
+      'Your data is used only to operate Zaiq for you: generating your meal plans, tracking your progress, and powering the health coach.',
       'We never sell your personal information and never share it with advertisers.',
     ],
   },
@@ -32,7 +32,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: 'Nutrition data sources',
     body: [
-      'Nutriq looks up real nutrition values from published food-composition databases where possible: the ICMR National Institute of Nutrition\'s Indian Food Composition Tables (2017), the Anuvaad Indian Nutrient Databank, Open Food Facts (ODbL license), and the U.S. Department of Agriculture\'s FoodData Central.',
+      'Zaiq looks up real nutrition values from published food-composition databases where possible: the ICMR National Institute of Nutrition\'s Indian Food Composition Tables (2017), the Anuvaad Indian Nutrient Databank, Open Food Facts (ODbL license), and the U.S. Department of Agriculture\'s FoodData Central.',
       'When a food isn\'t in these databases, our AI estimates its nutrition from your description — those entries are marked as estimates in the app.',
     ],
   },
@@ -40,7 +40,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: 'Your control',
     body: [
       'You can delete your account and all associated data at any time from the dashboard (Reset data), or by contacting us at the email below.',
-      'Google sign-in users can also revoke Nutriq\'s access at any time from their Google Account security settings.',
+      'Google sign-in users can also revoke Zaiq\'s access at any time from their Google Account security settings.',
     ],
   },
   {
@@ -57,8 +57,8 @@ export default function PrivacyPage() {
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
       <div className="glass-card fade-in-up" style={{ maxWidth: 720, width: '100%', padding: '2.5rem' }}>
-        <Link href="/" style={{ display: 'inline-block', marginBottom: '1.5rem' }} aria-label="Nutriq home">
-          <span className="auth-logo" style={{ marginBottom: 0 }}><NutriqIcon size={33} /></span>
+        <Link href="/" style={{ display: 'inline-block', marginBottom: '1.5rem' }} aria-label="Zaiq home">
+          <span className="auth-logo" style={{ marginBottom: 0 }}><ZaiqIcon size={33} /></span>
         </Link>
         <h1 style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>Privacy Policy</h1>
         <p style={{ color: 'var(--color-muted)', fontSize: '0.88rem', marginBottom: '2rem' }}>

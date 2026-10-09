@@ -46,8 +46,8 @@ export function GoogleIcon({ size = 20, style }: IconProps) {
 }
 
 export const SaladIcon = ic(<><path d="M4 12h16" /><path d="M6 12a6 6 0 0 0 12 0" /><path d="M12 12c0-3.5 2.5-6 6-6-.5 3.5-2.5 6-6 6Z" /><path d="M9 21h6" /></>);
-/** Nutriq brand mark — solid circuit leaf: smart nutrition. */
-export const NutriqIcon = ic(<>
+/** Zaiq brand mark — solid circuit leaf: smart nutrition. */
+export const ZaiqIcon = ic(<>
   <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" fill="currentColor" stroke="none" />
   <g style={{ stroke: 'var(--color-accent)' }} strokeWidth={1.7} fill="none">
     <path d="M12 18.6v-5.2" />

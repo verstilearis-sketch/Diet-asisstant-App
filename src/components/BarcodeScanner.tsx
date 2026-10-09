@@ -25,7 +25,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
       try {
         const { Html5Qrcode } = await import('html5-qrcode');
         if (cancelled || !mountRef.current) return;
-        const id = 'nutriq-barcode-reader';
+        const id = 'zaiq-barcode-reader';
         const scanner = new Html5Qrcode(id, { verbose: false });
         scannerRef.current = scanner;
         await scanner.start(
@@ -83,7 +83,7 @@ export default function BarcodeScanner({ onScan, onClose }: Props) {
           <div className="error-box" style={{ textAlign: 'left', marginBottom: '1rem' }}>{error}</div>
         ) : (
           <div
-            id="nutriq-barcode-reader"
+            id="zaiq-barcode-reader"
             ref={mountRef}
             style={{ width: '100%', borderRadius: '0.75rem', overflow: 'hidden', background: '#000', minHeight: 220 }}
           />

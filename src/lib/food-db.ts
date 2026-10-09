@@ -232,7 +232,7 @@ export function estimateFromDb(text: string): { meal: { name: string; calories: 
 }
 
 // ── Open Food Facts (live) ────────────────────────────────────
-const OFF_UA = 'Nutriq/1.0 (https://diet-asisstant-app.vercel.app; nutrition lookup)';
+const OFF_UA = 'Zaiq/1.0 (https://diet-asisstant-app.vercel.app; nutrition lookup)';
 const offCache = new Map<string, { at: number; entry: FoodEntry | null }>();
 
 function nutrimentsToMacros(n: Record<string, number | undefined>): FoodMacros | null {

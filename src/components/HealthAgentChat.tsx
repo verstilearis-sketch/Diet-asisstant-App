@@ -71,7 +71,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
         .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         .replace(/-/g, '[-_]')
         .replace(/ /g, '\\s+');
-      out = out.replace(new RegExp(`\\b${pattern}\\b`, 'gi'), 'Nutriq');
+      out = out.replace(new RegExp(`\\b${pattern}\\b`, 'gi'), 'Zaiq');
     }
     return out;
   };

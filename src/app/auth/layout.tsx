@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Sign in — Nutriq',
-  description: 'Sign in to Nutriq with Google to access your personalized diet plan, meal tracker, and AI nutrition coach.',
+  title: 'Sign in — Zaiq',
+  description: 'Sign in to Zaiq with Google to access your personalized diet plan, meal tracker, and AI nutrition coach.',
   alternates: {
     canonical: '/auth',
   },

@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Nutriq — AI Nutrition Planner',
-    short_name: 'Nutriq',
+    name: 'Zaiq — AI Nutrition Planner',
+    short_name: 'Zaiq',
     description:
       'Get a personalized diet plan based on your goals, lifestyle, and location. Powered by smart AI nutrition science.',
     start_url: '/',

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 // ── Direct Google OAuth callback ────────────────────────────────
 // We run Google OAuth ourselves (instead of via Supabase Auth) so the
 // Google consent screen shows the user's own domain ("to continue to
-// nutriq.app") instead of the Supabase project hostname.
+// zaiq.app") instead of the Supabase project hostname.
 //
 // Flow: Google redirects here with ?code=…&state=…. We exchange the code
 // for tokens server-side (client secret never leaves the server), then
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   if (!code) return fail('Google did not return a sign-in code');
 
   // CSRF check: state must match the cookie set when the flow started.
-  const expectedState = req.headers.get('cookie')?.match(/(?:^|;\s*)nutriq_oauth_state=([^;]+)/)?.[1];
+  const expectedState = req.headers.get('cookie')?.match(/(?:^|;\s*)zaiq_oauth_state=([^;]+)/)?.[1];
   if (!state || !expectedState || state !== decodeURIComponent(expectedState)) {
     return fail('Sign-in request expired. Please try again.');
   }
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
     // reliable than a URL fragment across the redirect). The client reads
     // it, signs in, and clears it immediately.
     const res = NextResponse.redirect(new URL('/auth/callback', url.origin));
-    res.cookies.set('nutriq_id_token', idToken, {
+    res.cookies.set('zaiq_id_token', idToken, {
       httpOnly: false, // client JS must read it
       secure: true,
       sameSite: 'lax',
@@ -76,7 +76,7 @@ export async function GET(req: Request) {
       path: '/',
     });
     // Clear the one-time state cookie.
-    res.cookies.set('nutriq_oauth_state', '', { maxAge: 0, path: '/' });
+    res.cookies.set('zaiq_oauth_state', '', { maxAge: 0, path: '/' });
     return res;
   } catch (e) {
     console.error('Google OAuth callback error:', e);

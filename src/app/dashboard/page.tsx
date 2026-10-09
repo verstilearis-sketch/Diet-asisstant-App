@@ -34,7 +34,7 @@ const MacroDonut = dynamic(
 import { ChatErrorBoundary } from '@/components/ChatErrorBoundary';
 const BarcodeScanner = dynamic(() => import('@/components/BarcodeScanner'), { ssr: false });
 import {
-  NutriqIcon, DashboardIcon, UtensilsIcon, ClipboardIcon, CartIcon,
+  ZaiqIcon, DashboardIcon, UtensilsIcon, ClipboardIcon, CartIcon,
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
@@ -767,8 +767,8 @@ export default function DashboardPage() {
       <nav className="site-nav">
         <div className="site-nav-inner">
           <span className="brand">
-            <span className="brand-mark"><NutriqIcon size={29} /></span>
-            Nutriq
+            <span className="brand-mark"><ZaiqIcon size={29} /></span>
+            Zaiq
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <span style={{ fontSize: '0.86rem', color: 'var(--color-muted)', marginRight: '0.5rem' }}>

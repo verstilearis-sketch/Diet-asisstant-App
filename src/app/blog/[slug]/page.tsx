@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { NutriqIcon } from '@/components/icons';
+import { ZaiqIcon } from '@/components/icons';
 import { ARTICLES, getArticle, type ArticleBlock } from '@/data/articles';
 
 export async function generateStaticParams() {
@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const article = getArticle(slug);
   if (!article) return {};
   return {
-    title: `${article.title} — Nutriq`,
+    title: `${article.title} — Zaiq`,
     description: article.description,
     keywords: article.keywords,
     alternates: { canonical: `/blog/${article.slug}` },
@@ -87,8 +87,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <nav className="site-nav">
         <div className="site-nav-inner">
           <Link href="/" className="brand">
-            <span className="brand-mark"><NutriqIcon size={29} /></span>
-            Nutriq
+            <span className="brand-mark"><ZaiqIcon size={29} /></span>
+            Zaiq
           </Link>
           <div className="nav-links">
             <Link href="/blog" className="nav-link">Blog</Link>
@@ -149,8 +149,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <footer style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
         <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link href="/" className="brand" style={{ fontSize: '1.1rem' }}>
-            <span className="brand-mark" style={{ width: 36, height: 36 }}><NutriqIcon size={20} /></span>
-            Nutriq
+            <span className="brand-mark" style={{ width: 36, height: 36 }}><ZaiqIcon size={20} /></span>
+            Zaiq
           </Link>
           <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
             <Link href="/" className="nav-link" style={{ fontSize: '0.85rem' }}>Home</Link>
@@ -160,7 +160,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
           </nav>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
-            For informational purposes only — not medical advice. © 2026 Nutriq.
+            For informational purposes only — not medical advice. © 2026 Zaiq.
           </p>
         </div>
       </footer>

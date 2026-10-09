@@ -9,7 +9,7 @@ export function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem('nutriq-cookie-consent')) {
+    if (!localStorage.getItem('zaiq-cookie-consent')) {
       // Small delay so it doesn't flash on first paint
       const t = setTimeout(() => setVisible(true), 800);
       return () => clearTimeout(t);
@@ -17,7 +17,7 @@ export function CookieBanner() {
   }, []);
 
   const choose = (value: string) => {
-    localStorage.setItem('nutriq-cookie-consent', value);
+    localStorage.setItem('zaiq-cookie-consent', value);
     setVisible(false);
   };
 

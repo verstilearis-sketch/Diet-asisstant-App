@@ -171,7 +171,7 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 export async function signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
   try {
     // Direct Google OAuth (not via Supabase Auth): the Google consent screen
-    // shows our own domain ("to continue to nutriq.app") instead of the
+    // shows our own domain ("to continue to zaiq.app") instead of the
     // Supabase project hostname. The client ID is public by design.
     // Falls back to Supabase-hosted OAuth until the direct flow is configured.
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -180,7 +180,7 @@ export async function signInWithGoogle(): Promise<{ success: boolean; error?: st
       // CSRF state: random value, verified by the callback route via cookie.
       const state = [...crypto.getRandomValues(new Uint8Array(16))]
         .map((b) => b.toString(16).padStart(2, '0')).join('');
-      document.cookie = `nutriq_oauth_state=${encodeURIComponent(state)}; path=/; max-age=600; SameSite=Lax`;
+      document.cookie = `zaiq_oauth_state=${encodeURIComponent(state)}; path=/; max-age=600; SameSite=Lax`;
       const params = new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirectUri,

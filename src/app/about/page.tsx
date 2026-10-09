@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { NutriqIcon } from '@/components/icons';
+import { ZaiqIcon } from '@/components/icons';
 
 export const metadata: Metadata = {
-  title: 'About — Nutriq',
+  title: 'About — Zaiq',
   description:
-    'Nutriq is a personalized nutrition planner built by Salik Lone. Real nutritional science, your local cuisine, no generic templates.',
+    'Zaiq is a personalized nutrition planner built by Salik Lone. Real nutritional science, your local cuisine, no generic templates.',
   alternates: { canonical: '/about' },
 };
 
@@ -16,9 +16,9 @@ export default function AboutPage() {
         <div className="site-nav-inner">
           <Link href="/" className="brand">
             <span className="brand-mark">
-              <NutriqIcon size={29} />
+              <ZaiqIcon size={29} />
             </span>
-            Nutriq
+            Zaiq
           </Link>
           <div className="nav-links">
             <Link href="/" className="nav-link">
@@ -44,7 +44,7 @@ export default function AboutPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', color: 'var(--color-text)', lineHeight: 1.75, fontSize: '1.02rem' }}>
           <p>
-            I&apos;m <strong>Salik Lone</strong>. I built Nutriq because every diet app I tried handed me the same
+            I&apos;m <strong>Salik Lone</strong>. I built Zaiq because every diet app I tried handed me the same
             copy-pasted meal plan — grilled chicken and broccoli, as if everyone on earth eats the same food.
           </p>
           <p>
@@ -53,7 +53,7 @@ export default function AboutPage() {
             haakh is doing more for you than imported kale ever will.
           </p>
           <p>
-            So Nutriq starts from your body — your weight, height, age, activity — runs it through validated
+            So Zaiq starts from your body — your weight, height, age, activity — runs it through validated
             nutritional science (the Mifflin-St&nbsp;Jeor equation for metabolic rate, standard TDEE activity
             multipliers), and then builds your meals from the food culture you actually live in. Over 50
             regional cuisine profiles, with deep coverage of Jammu &amp; Kashmir and India.
@@ -65,7 +65,7 @@ export default function AboutPage() {
           </p>
         </div>
 
-        <h2 style={{ fontSize: '1.5rem', marginTop: '3rem', marginBottom: '1.25rem' }}>What Nutriq is not</h2>
+        <h2 style={{ fontSize: '1.5rem', marginTop: '3rem', marginBottom: '1.25rem' }}>What Zaiq is not</h2>
         <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', color: 'var(--color-muted)', lineHeight: 1.7 }}>
           <li>— Not medical advice. It&apos;s an informational tool. If you have a health condition, talk to a clinician.</li>
           <li>— Not a template. Two people with the same goal get different plans if their bodies or cuisines differ.</li>
@@ -98,9 +98,9 @@ export default function AboutPage() {
         >
           <Link href="/" className="brand" style={{ fontSize: '1.1rem' }}>
             <span className="brand-mark" style={{ width: 36, height: 36 }}>
-              <NutriqIcon size={20} />
+              <ZaiqIcon size={20} />
             </span>
-            Nutriq
+            Zaiq
           </Link>
           <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
             <Link href="/" className="nav-link" style={{ fontSize: '0.85rem' }}>Home</Link>
@@ -110,7 +110,7 @@ export default function AboutPage() {
             <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
           </nav>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
-            For informational purposes only — not medical advice. © 2026 Nutriq.
+            For informational purposes only — not medical advice. © 2026 Zaiq.
           </p>
         </div>
       </footer>

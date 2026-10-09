@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { NutriqIcon } from '@/components/icons';
+import { ZaiqIcon } from '@/components/icons';
 import { ARTICLES } from '@/data/articles';
 
 export const metadata: Metadata = {
-  title: 'Blog — Nutriq',
+  title: 'Blog — Zaiq',
   description:
     'Practical nutrition guides: BMR, TDEE, BMI, Indian meal plans, and Kashmiri diet strategies — all backed by real science.',
   alternates: { canonical: '/blog' },
@@ -17,9 +17,9 @@ export default function BlogIndex() {
         <div className="site-nav-inner">
           <Link href="/" className="brand">
             <span className="brand-mark">
-              <NutriqIcon size={29} />
+              <ZaiqIcon size={29} />
             </span>
-            Nutriq
+            Zaiq
           </Link>
           <div className="nav-links">
             <Link href="/" className="nav-link">Home</Link>
@@ -72,8 +72,8 @@ export default function BlogIndex() {
       <footer style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
         <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link href="/" className="brand" style={{ fontSize: '1.1rem' }}>
-            <span className="brand-mark" style={{ width: 36, height: 36 }}><NutriqIcon size={20} /></span>
-            Nutriq
+            <span className="brand-mark" style={{ width: 36, height: 36 }}><ZaiqIcon size={20} /></span>
+            Zaiq
           </Link>
           <nav style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }} aria-label="Footer">
             <Link href="/" className="nav-link" style={{ fontSize: '0.85rem' }}>Home</Link>
@@ -83,7 +83,7 @@ export default function BlogIndex() {
             <Link href="/privacy" className="nav-link" style={{ fontSize: '0.85rem' }}>Privacy Policy</Link>
           </nav>
           <p style={{ color: 'var(--color-muted)', fontSize: '0.8rem', maxWidth: 480 }}>
-            For informational purposes only — not medical advice. © 2026 Nutriq.
+            For informational purposes only — not medical advice. © 2026 Zaiq.
           </p>
         </div>
       </footer>
