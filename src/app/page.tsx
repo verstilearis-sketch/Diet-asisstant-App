@@ -48,22 +48,32 @@ const HERO_IMAGES = [  {
   },
 ];
 
-// ── Mobile hero: small food images in a tidy top strip (no text collisions) ──
+// ── Mobile hero: food images spread top-to-bottom like desktop ──
 const HERO_IMAGES_MOBILE = [
   {
     src: '/images/hero/salad-bowl.png',
     alt: 'A fresh salad bowl',
-    className: 'w-16 top-5 left-6 opacity-90',
+    className: 'w-16 top-20 left-3 opacity-90',
   },
   {
     src: '/images/hero/avocado.png',
     alt: 'Half an avocado',
-    className: 'w-14 top-9 left-1/2 -ml-7 opacity-90',
+    className: 'w-14 top-[32%] right-3 opacity-90',
   },
   {
     src: '/images/hero/salmon.png',
     alt: 'A grilled salmon fillet',
-    className: 'w-16 top-5 right-6 opacity-90',
+    className: 'w-16 top-[48%] left-2 opacity-90',
+  },
+  {
+    src: '/images/hero/avocado.png',
+    alt: '',
+    className: 'w-10 top-[64%] right-8 opacity-70',
+  },
+  {
+    src: '/images/hero/salad-bowl.png',
+    alt: '',
+    className: 'w-12 top-[80%] left-6 opacity-70',
   },
 ];
 
@@ -296,29 +306,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Personalization ───────────────────────────────────── */}
-      {isMobile ? (
-      <section className="container" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
-        <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Personalization</div>
-        <h2 style={{ textAlign: 'center', fontSize: '1.6rem', marginBottom: '0.6rem' }}>Eat your food. Hit your numbers.</h2>
-        <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '1.5rem', maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
-          Your plan isn’t adapted from some generic template — it’s generated from the dishes of your food culture.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {[
-            { n: '01', title: 'Tell us your city', example: '\u201CHyderabad, India\u201D' },
-            { n: '02', title: 'We match your food culture', example: 'Hyderabadi dishes & ingredients' },
-            { n: '03', title: 'Portions tuned to your goals', example: 'Biryani \u00B7 520 kcal \u00B7 32g protein' },
-          ].map((st) => (
-            <div key={st.n} className="glass-card" style={{ padding: '1rem 1.1rem' }}>
-              <div className="mono" style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.25rem' }}>{st.n}</div>
-              <div style={{ fontSize: '0.92rem', fontWeight: 650, marginBottom: '0.15rem' }}>{st.title}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--color-muted)' }}>{st.example}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-      ) : (
+      {/* ── Personalization (desktop only) ──────────────────────── */}
+      {!isMobile && (
       <FloatingFoodHero
         title="Eat your food. Hit your numbers."
         description="Your plan isn\u2019t adapted from some generic template \u2014 it\u2019s generated from the dishes and ingredients of your food culture, with portions tuned to your calorie and macro targets."
@@ -361,7 +350,7 @@ export default function LandingPage() {
       {isMobile ? (
       <section className="container" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
         <div className="eyebrow" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>How it works</div>
-        <h2 style={{ textAlign: 'center', fontSize: '1.6rem', marginBottom: '1.5rem' }}>Four steps, zero guesswork.</h2>
+        <h2 style={{ textAlign: 'center', fontSize: '1.6rem', marginBottom: '1.5rem', textDecoration: 'underline', textUnderlineOffset: '0.35rem', textDecorationThickness: '2px' }}>Four steps, zero guesswork.</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           {STEPS.map((s) => (
             <div key={s.n} className="glass-card" style={{ padding: '1rem 1.1rem' }}>

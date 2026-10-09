@@ -9,6 +9,7 @@ const SUPPORT_EMAIL = 'xycicdoctor@gmail.com';
 
 export function FloatingContact() {
   const [hover, setHover] = useState(false);
+  const [active, setActive] = useState(false);
 
   return (
     <a
@@ -17,27 +18,30 @@ export function FloatingContact() {
       title="Contact support"
       onMouseOver={() => setHover(true)}
       onMouseOut={() => setHover(false)}
+      onTouchStart={() => setActive(true)}
+      onTouchEnd={() => setActive(false)}
       style={{
         position: 'fixed',
         bottom: '4.5rem',
         right: '1.25rem',
         zIndex: 9000,
-        width: '2.75rem',
-        height: '2.75rem',
+        width: '3rem',
+        height: '3rem',
         borderRadius: '50%',
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
+        background: 'var(--color-brand)',
+        border: 'none',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '1.2rem',
         textDecoration: 'none',
-        boxShadow: 'var(--shadow-card)',
-        transform: hover ? 'translateY(-2px)' : 'translateY(0)',
+        boxShadow: '0 8px 24px rgba(23, 114, 69, 0.45)',
+        transform: active ? 'scale(0.92)' : hover ? 'translateY(-2px)' : 'translateY(0)',
         transition: 'transform 0.15s ease',
       }}
     >
-      ✉️
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+      </svg>
     </a>
   );
 }
