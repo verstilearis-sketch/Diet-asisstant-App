@@ -173,6 +173,7 @@ export default function LandingPage() {
       <FloatingFoodHero
         title="Food that fits your body"
         description="Zaiq computes your daily calories with the Mifflin-St Jeor equation and builds a 7-day meal plan around the food you actually eat — macros, portions and all."
+        badge="AI nutrition planner"
         images={isMobile ? [] : HERO_IMAGES}
         className={isMobile ? "min-h-[68svh]" : undefined}
       >
