@@ -12,18 +12,18 @@ import { FloatingFoodHero } from '@/components/ui/hero-section-7';
 
 const HERO_IMAGES = [
   {
-    src: 'https://cdn.21st.dev/assets/mirror/cc/cc7d7fbb538d93322e189b55ae4c6eed95aab7da267a9a095b39216070ef65b0.png',
-    alt: 'A delicious cheeseburger',
+    src: '/images/hero/salad-bowl.png',
+    alt: 'A fresh salad bowl',
     className: 'w-40 sm:w-56 md:w-64 lg:w-72 top-10 left-4 sm:left-10 md:top-20 md:left-20 animate-float',
   },
   {
-    src: 'https://cdn.21st.dev/assets/mirror/95/95bc0d9d69e76d3729ca42f9525bafd449fd27fa41c9393d1deccb85d79b0639.png',
-    alt: 'A bamboo steamer with dumplings',
+    src: '/images/hero/avocado.png',
+    alt: 'Half an avocado',
     className: 'w-28 sm:w-36 md:w-48 top-10 right-4 sm:right-10 md:top-16 md:right-16 animate-float',
   },
   {
-    src: 'https://cdn.21st.dev/assets/mirror/6e/6e4600ac05444d9dc0396906da4174dcfe42a64c14082d939f0f57cb2ed8113d.png',
-    alt: 'A slice of pizza',
+    src: '/images/hero/salmon.png',
+    alt: 'A grilled salmon fillet',
     className: 'w-32 sm:w-40 md:w-56 bottom-8 right-5 sm:right-10 md:bottom-16 md:right-20 animate-float',
   },
   {
