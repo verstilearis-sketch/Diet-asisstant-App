@@ -65,7 +65,7 @@ const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Weight Loss', gain_weight: 'Muscle Gain', maintain: 'Maintenance',
   improve_health: 'Health', athletic: 'Athletic Performance',
 };
-const MACRO_COLORS = { protein: '#177245', carbs: '#d97706', fat: '#2563eb' };
+const MACRO_COLORS = { protein: '#f5f5f3', carbs: '#a3a29c', fat: '#4a4a46' };
 
 const MEAL_META = [
   { key: 'breakfast', label: 'Breakfast', time: '7:00 – 9:00 AM', icon: CoffeeIcon },
@@ -757,7 +757,7 @@ export default function DashboardPage() {
     { name: 'Fat', value: calcs.fatG, color: MACRO_COLORS.fat },
   ];
 
-  const bmiColor = calcs.bmi < 18.5 ? '#4f46e5' : calcs.bmi < 25 ? '#177245' : calcs.bmi < 30 ? '#d97706' : '#dc2626';
+  const bmiColor = calcs.bmi < 18.5 ? '#a3a29c' : calcs.bmi < 25 ? '#f5f5f3' : calcs.bmi < 30 ? '#d97706' : '#dc2626';
   const caloriePct = Math.min(100, Math.round((calsConsumed / calcs.dailyCalorieGoal) * 100));
 
   return (
@@ -889,7 +889,7 @@ export default function DashboardPage() {
                   {[
                     { icon: FlameIcon, l: 'BMR', v: `${calcs.bmr.toLocaleString()} kcal`, d: 'Burned at rest', c: '#d97706' },
                     { icon: ActivityIcon, l: 'TDEE', v: `${calcs.tdee.toLocaleString()} kcal`, d: 'Total daily burn', c: '#4f46e5' },
-                    { icon: TargetIcon, l: 'Daily target', v: `${calcs.dailyCalorieGoal.toLocaleString()} kcal`, d: GOAL_LABELS[profile.goal] || 'Your goal', c: '#177245' },
+                    { icon: TargetIcon, l: 'Daily target', v: `${calcs.dailyCalorieGoal.toLocaleString()} kcal`, d: GOAL_LABELS[profile.goal] || 'Your goal', c: '#f5f5f3' },
                   ].map((s) => (
                     <div key={s.l} style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                       <span style={{
@@ -1433,7 +1433,7 @@ export default function DashboardPage() {
                             </span>
                           )}
                           {m.verified && (
-                            <span className="badge" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0, background: 'rgba(23,114,69,0.12)', color: '#177245', border: '1px solid rgba(23,114,69,0.25)' }} title="Nutrition from a published food-composition database">
+                            <span className="badge" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0, background: 'rgba(245,245,243,0.10)', color: '#f5f5f3', border: '1px solid rgba(245,245,243,0.25)' }} title="Nutrition from a published food-composition database">
                               verified nutrition
                             </span>
                           )}

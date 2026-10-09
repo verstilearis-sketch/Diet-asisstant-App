@@ -5,7 +5,7 @@ import { GlobalChrome } from '@/components/GlobalChrome';
 import { VortexBackground } from '@/components/ui/vortex-background';
 
 export const viewport: Viewport = {
-  themeColor: '#177245',
+  themeColor: '#131311',
 };
 
 export const metadata: Metadata = {

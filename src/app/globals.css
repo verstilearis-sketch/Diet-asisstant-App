@@ -45,7 +45,7 @@
   --color-info: #1d4ed8;
 
   /* Chart palette */
-  --chart-protein: #177245;
+  --chart-protein: #f5f5f3;
   --chart-carbs: #b45309;
   --chart-fat: #1d4ed8;
 
@@ -70,7 +70,7 @@
   --border: var(--color-border);
   --input: var(--color-border-strong);
   --primary: var(--color-accent);
-  --primary-foreground: #ffffff;
+  --primary-foreground: #131311;
   --ring: var(--color-accent);
   --chart-1: var(--color-accent);
   --chart-2: var(--color-accent2);
@@ -92,13 +92,13 @@
   --color-border: #2e2e2b;
   --color-border-strong: #3d3d39;
 
-  /* Brand — brightened for dark backgrounds */
-  --color-accent: #2da36b;
-  --color-accent-hover: #38b878;
-  --color-accent-active: #2da36b;
-  --color-accent-soft: #1a2e23;
-  --color-accent-ink: #d4edde;
-  --color-accent2: #2dd4bf;
+  /* Brand — monochrome (black & white) */
+  --color-accent: #f5f5f3;
+  --color-accent-hover: #ffffff;
+  --color-accent-active: #cfceca;
+  --color-accent-soft: #262624;
+  --color-accent-ink: #131311;
+  --color-accent2: #a3a29c;
 
   /* Legacy gradient tokens */
   --gradient-primary: var(--color-bg);
@@ -111,7 +111,7 @@
   --color-info: #60a5fa;
 
   /* Chart palette */
-  --chart-protein: #2da36b;
+  --chart-protein: #f5f5f3;
   --chart-carbs: #f59e0b;
   --chart-fat: #60a5fa;
 
@@ -183,7 +183,7 @@ button, [role="button"] { touch-action: manipulation; -webkit-tap-highlight-colo
   background:
     linear-gradient(180deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,.07) 42%, rgba(0,0,0,.10) 100%),
     color-mix(in srgb, var(--color-accent) 90%, transparent);
-  color: #fff;
+  color: var(--color-accent-ink);
   border: 1px solid rgba(255,255,255,.38);
   border-radius: 0.75rem;
   padding: 0.8rem 1.75rem;
