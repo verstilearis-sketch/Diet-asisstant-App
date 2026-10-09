@@ -594,6 +594,21 @@ input[type="range"]::-moz-range-thumb {
 /* ── Landing extras ─────────────────────────────────────────── */
 .nav-links { display: none; align-items: center; gap: 0.15rem; }
 @media (min-width: 900px) { .nav-links { display: flex; } }
+
+/* ── Mobile-first refinements ─────────────────────────────────── */
+@media (max-width: 640px) {
+  .container { padding-left: 1rem; padding-right: 1rem; }
+  .site-nav-inner { padding: 0.75rem 1rem; }
+  .brand { font-size: 1.35rem; }
+  .brand-mark { width: 40px; height: 40px; }
+  .hero-grid { gap: 2rem; }
+  .section-head { margin-bottom: 1.5rem; }
+  .faq-item summary { padding: 1rem; font-size: 0.9rem; }
+  .faq-item .faq-body { padding: 0 1rem 1rem; font-size: 0.87rem; }
+  .glass-card { border-radius: 1rem; }
+  /* Tame desktop-sized section padding on phones */
+  .page-shell section.container { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+}
 .nav-link {
   padding: 0.5rem 0.8rem; border-radius: 0.5rem;
   font-size: 0.87rem; font-weight: 550; color: var(--color-muted);
