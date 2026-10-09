@@ -529,8 +529,63 @@ input[type="range"]::-moz-range-thumb {
 
 /* ── Auth ───────────────────────────────────────────────────── */
 .auth-wrap {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  padding: 2rem 1.25rem; position: relative;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 2rem 1.25rem; position: relative; gap: 1.5rem;
+}
+/* ── Modern sign-in card (dark, centered) ─────────────────────────── */
+.signin-card {
+  width: 100%; max-width: 400px; position: relative; z-index: 1;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.5rem;
+  padding: 2.5rem 2rem 2rem;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+.signin-logo {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--color-brand); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 24px rgba(23, 114, 69, 0.35);
+}
+.signin-title {
+  font-size: 1.65rem; font-weight: 700; letter-spacing: -0.02em;
+  margin: 1.1rem 0 0.45rem; color: var(--color-text);
+}
+.signin-sub {
+  color: var(--color-muted); font-size: 0.9rem; line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+.signin-google {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  gap: 0.6rem; padding: 0.9rem; font-size: 0.95rem;
+}
+.signin-agree {
+  display: flex; align-items: flex-start; gap: 0.6rem; margin-top: 1.25rem;
+  cursor: pointer; font-size: 0.82rem; color: var(--color-muted);
+  line-height: 1.55; text-align: left;
+}
+.signin-agree input {
+  margin-top: 0.2rem; width: 17px; height: 17px; flex-shrink: 0;
+  accent-color: var(--color-brand); cursor: pointer;
+}
+.signin-agree-needed { color: var(--color-text); }
+.signin-agree-needed input { outline: 2px solid var(--color-brand); outline-offset: 2px; border-radius: 4px; }
+.signin-agree-hint {
+  font-size: 0.8rem; color: var(--color-brand); margin-top: 0.5rem; font-weight: 600; text-align: left;
+}
+.signin-toggle {
+  margin-top: 1.5rem; padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 0.85rem; color: var(--color-muted);
+}
+.signin-toggle a { color: var(--color-text); text-decoration: underline; font-weight: 600; }
+.signin-proof {
+  position: relative; z-index: 1;
+  color: var(--color-faint); font-size: 0.82rem; text-align: center; margin: 0;
+}
+@media (max-width: 480px) {
+  .signin-card { padding: 2rem 1.5rem 1.75rem; border-radius: 1.25rem; }
 }
 .auth-card { width: 100%; max-width: 440px; padding: 2.25rem; position: relative; z-index: 1; }
 .auth-logo {

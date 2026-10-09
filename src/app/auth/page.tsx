@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSession, signInWithGoogle } from '@/lib/storage';
 import { ZaiqIcon, AlertIcon, GoogleIcon } from '@/components/icons';
 
 function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isSignup = searchParams.get('mode') === 'signup';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -48,27 +50,36 @@ function AuthForm() {
     <div className="auth-wrap">
       <div className="bg-orb bg-orb-1" />
       <div className="bg-orb bg-orb-2" />
-      <div className="glass-card auth-card fade-in-up">
-        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-          <Link href="/" style={{ display: 'inline-block' }} aria-label="Zaiq home">
-            <span className="auth-logo" style={{ marginBottom: 0 }}><ZaiqIcon size={33} /></span>
-          </Link>
-          <h1 style={{ fontSize: '1.5rem', margin: '1rem 0 0.4rem' }}>
-            Welcome to Zaiq
-          </h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>
-            Sign in to get your personalized nutrition plan.
-          </p>
-        </div>
+      <div className="signin-card fade-in-up">
+        <Link href="/" aria-label="Zaiq home" style={{ display: 'inline-block' }}>
+          <span className="signin-logo"><ZaiqIcon size={30} /></span>
+        </Link>
+        <h1 className="signin-title">Zaiq</h1>
+        <p className="signin-sub">
+          {isSignup
+            ? 'Create your account — your personalized nutrition plan is 2 minutes away.'
+            : 'Welcome back — sign in to continue to your nutrition plan.'}
+        </p>
 
-        {error && <div className="error-box" style={{ marginBottom: '1rem' }}><AlertIcon size={16} /> {error}</div>}
+        {error && <div className="error-box" style={{ marginBottom: '1rem', textAlign: 'left' }}><AlertIcon size={16} /> {error}</div>}
 
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginTop: '1.25rem', cursor: 'pointer', fontSize: '0.84rem', color: needAgree && !agreed ? 'var(--color-text)' : 'var(--color-muted)', lineHeight: 1.55 }}>
+        <button
+          type="button" className="btn-primary signin-google" onClick={handleGoogle} disabled={loading}
+          style={{ opacity: loading ? 0.65 : 1 }}
+        >
+          {loading ? (
+            <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
+          ) : (
+            <GoogleIcon size={19} />
+          )}
+          {loading ? 'Redirecting to Google…' : 'Continue with Google'}
+        </button>
+
+        <label className={'signin-agree' + (needAgree && !agreed ? ' signin-agree-needed' : '')}>
           <input
             type="checkbox"
             checked={agreed}
             onChange={(e) => { setAgreed(e.target.checked); if (e.target.checked) setNeedAgree(false); }}
-            style={{ marginTop: '0.2rem', width: 18, height: 18, accentColor: 'var(--color-accent)', flexShrink: 0, cursor: 'pointer', outline: needAgree && !agreed ? '2px solid var(--color-accent)' : 'none', outlineOffset: 2, borderRadius: 4 }}
           />
           <span>
             I&apos;ve read and agree to the{' '}
@@ -79,23 +90,20 @@ function AuthForm() {
           </span>
         </label>
         {needAgree && !agreed && (
-          <p style={{ fontSize: '0.8rem', color: 'var(--color-accent)', marginTop: '0.5rem', fontWeight: 600 }}>
+          <p className="signin-agree-hint">
             Please tick the box above first — one tap, then continue.
           </p>
         )}
 
-        <button
-          type="button" className="btn-secondary" onClick={handleGoogle} disabled={loading}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', padding: '0.8rem', marginTop: '1rem', opacity: loading ? 0.6 : 1 }}
-        >
-          {loading ? (
-            <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }} />
+        <p className="signin-toggle">
+          {isSignup ? (
+            <>Already have an account? <Link href="/auth?mode=signin">Sign in</Link></>
           ) : (
-            <GoogleIcon size={19} />
+            <>New to Zaiq? <Link href="/auth?mode=signup">Create an account, it&apos;s free</Link></>
           )}
-          {loading ? 'Redirecting to Google…' : 'Continue with Google'}
-        </button>
+        </p>
       </div>
+      <p className="signin-proof">Free · 2-minute setup · No credit card</p>
     </div>
   );
 }
