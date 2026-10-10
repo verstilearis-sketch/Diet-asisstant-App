@@ -69,7 +69,7 @@ const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Weight Loss', gain_weight: 'Muscle Gain', maintain: 'Maintenance',
   improve_health: 'Health', athletic: 'Athletic Performance',
 };
-const MACRO_COLORS = { protein: '#f5f5f3', carbs: '#a3a29c', fat: '#4a4a46' };
+const MACRO_COLORS = { protein: '#2fa866', carbs: '#f0a63c', fat: '#6aa8e8' };
 
 const MEAL_META = [
   { key: 'breakfast', label: 'Breakfast', time: '7:00 – 9:00 AM', icon: CoffeeIcon },
