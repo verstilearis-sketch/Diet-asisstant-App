@@ -446,6 +446,12 @@ select.input {
 .badge-amber { background: #fef6e7; color: #92400e; border-color: #f5e3bd; }
 .badge-red { background: #fdecea; color: #991b1b; border-color: #f5c9c4; }
 .badge-grey { background: var(--color-surface2); color: var(--color-muted); border-color: var(--color-border); }
+/* Dark-theme badge variants: light text on tinted backgrounds */
+[data-theme="dark"] .badge-green { background: rgba(47,168,102,0.16); color: #63d68f; border-color: rgba(47,168,102,0.4); }
+[data-theme="dark"] .badge-indigo { background: rgba(99,102,241,0.16); color: #a5b4fc; border-color: rgba(99,102,241,0.4); }
+[data-theme="dark"] .badge-amber { background: rgba(240,166,60,0.16); color: #f5c26b; border-color: rgba(240,166,60,0.4); }
+[data-theme="dark"] .badge-red { background: rgba(220,38,38,0.16); color: #f87171; border-color: rgba(220,38,38,0.4); }
+[data-theme="dark"] .badge-grey { color: var(--color-text); border-color: var(--color-border-strong); }
 
 /* ── Background orbs (legacy) → barely-there wash ───────────── */
 .bg-orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; filter: blur(100px); }
