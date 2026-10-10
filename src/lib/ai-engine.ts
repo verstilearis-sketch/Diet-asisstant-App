@@ -1757,28 +1757,26 @@ function shuffled<T>(arr: T[], rng: Rng): T[] {
 
 type PoolSet = Record<MealType, { regional: FoodItem[]; international: FoodItem[] }>;
 
-function buildMealPools(region: string, rng: Rng): PoolSet {
+function buildMealPools(region: string): PoolSet {
   const globalDb = REGIONAL_DB['global'];
-  const otherKeys = shuffled(Object.keys(REGIONAL_DB).filter((k) => k !== 'global' && k !== region), rng).slice(0, 4);
   const db = REGIONAL_DB[region];
   const pools = {} as PoolSet;
   (['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).forEach((mt) => {
     pools[mt] = {
       regional: db[mt] || [],
-      international: [
-        ...(globalDb[mt] || []),
-        ...otherKeys.flatMap((k) => REGIONAL_DB[k][mt] || []),
-      ],
+      // No more random foreign regions — the "international" pool is only the
+      // universal global foods (eggs, oats, salads…). Place of the user first.
+      international: [...(globalDb[mt] || [])],
     };
   });
   return pools;
 }
 
 function rollSource(cuisineMix: CuisineMix, rng: Rng): 'regional' | 'international' {
-  const r = rng();
-  if (cuisineMix === 'local') return r < 0.8 ? 'regional' : 'international';
-  if (cuisineMix === 'international') return r < 0.8 ? 'international' : 'regional';
-  return r < 0.45 ? 'regional' : 'international'; // mixed — the default
+  // Strict place-based diets: 'local' is 100% the user's region, never random.
+  if (cuisineMix === 'local') return 'regional';
+  if (cuisineMix === 'international') return 'international';
+  return rng() < 0.75 ? 'regional' : 'international'; // mixed — place-first
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1893,11 +1891,14 @@ function pickSmart(
 
   // Fresh + budget-respecting first (primary source preferred via penalty on secondary).
   collect(primary, true, true, 0);
-  collect(secondary, true, true, 0.06);
+  // 'local' = strictly the user's place: the international pool only competes
+  // when nothing regional works at all (last resort, avoids empty plans).
+  const strictLocal = cuisineMix === 'local';
+  if (!strictLocal) collect(secondary, true, true, 0.06);
   // Then allow repeats, still budget-respecting.
   if (scored.length < 4) {
     collect(primary, false, true, 0.01);
-    collect(secondary, false, true, 0.07);
+    if (!strictLocal) collect(secondary, false, true, 0.07);
   }
   // Budget is the hardest constraint: relax it only when nothing else works.
   if (scored.length < 2) {
@@ -1972,7 +1973,7 @@ export async function generateDietPlan(
   // Deterministic plan: the RNG is seeded from the profile, so identical
   // details always produce the identical plan.
   const rng = mulberry32(planSeedFor(profile));
-  const pools = buildMealPools(region, rng);
+  const pools = buildMealPools(region);
   // High-protein goals get extra protein weighting in meal scoring
   const proteinWeight = profile.goal === 'lose_weight' ? 0.36
     : (profile.goal === 'gain_weight' || profile.goal === 'athletic') ? 0.38 : 0.30;
@@ -2131,7 +2132,7 @@ export function getMealAlternatives(
   const region = resolveRegion(detectRegion(profile.location));
   const budget = profile.budget || 'moderate';
   const rng = mulberry32(planSeedFor(profile));
-  const pools = buildMealPools(region, rng);
+  const pools = buildMealPools(region);
   const seen = new Set<string>([current.name]);
   const candidates: FoodItem[] = [];
   // Regional first, then international — same priority as plan generation.

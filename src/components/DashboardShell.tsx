@@ -146,8 +146,12 @@ export function DashboardShell({
           </button>
           <span className="dash-crumb">
             <strong>Zaiq</strong>
-            <span className="dash-crumb-sep">/</span>
-            <span>{breadcrumb}</span>
+            {breadcrumb !== 'Home' && (
+              <>
+                <span className="dash-crumb-sep">/</span>
+                <span>{breadcrumb}</span>
+              </>
+            )}
           </span>
           <span className="dash-date">{today}</span>
         </header>
