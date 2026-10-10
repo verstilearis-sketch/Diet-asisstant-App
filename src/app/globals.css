@@ -482,6 +482,10 @@ select.input {
   .loader-svg-lg { width: 60px; height: 60px; }
   .loader-title { font-size: 0.98rem; }
   .loader-subtitle { font-size: 0.84rem; }
+  /* Formulas wrap instead of clipping on phones */
+  .formula-scroll { white-space: normal; overflow-x: visible; }
+  /* Keep footer links clear of the fixed chat/contact buttons */
+  footer > .container { padding-bottom: 7rem !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .loader-svg, .spinner { animation-duration: 2.5s; }

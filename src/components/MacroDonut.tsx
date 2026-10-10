@@ -24,7 +24,9 @@ function MacroDonutInner({ data }: { data: MacroDatum[] }) {
           {data.map((e, i) => <Cell key={i} fill={e.color} />)}
         </Pie>
         <Tooltip
-          contentStyle={{ background: '#fff', border: '1px solid #e6e5e0', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 14px rgba(0,0,0,0.08)' }}
+          contentStyle={{ background: '#1a1a18', border: '1px solid #2e2e2a', borderRadius: 8, fontSize: 12, color: '#f5f5f3', boxShadow: '0 4px 14px rgba(0,0,0,0.4)' }}
+          labelStyle={{ color: '#f5f5f3' }}
+          itemStyle={{ color: '#f5f5f3' }}
         />
       </PieChart>
     </ResponsiveContainer>

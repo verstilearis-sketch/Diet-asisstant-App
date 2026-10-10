@@ -32,17 +32,17 @@ const HERO_IMAGES = [  {
     className: 'w-32 sm:w-40 md:w-56 bottom-8 right-5 sm:right-10 md:bottom-16 md:right-20 animate-float',
   },
   {
-    src: 'https://cdn.21st.dev/assets/mirror/8e/8ec4fbab8445c1769d3200d674cd3731a0550b21c87bb8bc6938cb3a05932e5b.png',
+    src: '/images/hero/basil-leaf.png',
     alt: 'A basil leaf',
     className: 'w-8 sm:w-12 top-1/4 left-1/3 animate-float',
   },
   {
-    src: 'https://cdn.21st.dev/assets/mirror/e7/e758e9c35a8360f201c40d0bf3e3433c2b6ff3f759763eb697cbc3803af80e18.png',
+    src: '/images/hero/tomato-slice.png',
     alt: 'A slice of tomato',
     className: 'w-8 sm:w-10 top-1/2 right-1/4 animate-float',
   },
   {
-    src: 'https://cdn.21st.dev/assets/mirror/e7/e758e9c35a8360f201c40d0bf3e3433c2b6ff3f759763eb697cbc3803af80e18.png',
+    src: '/images/hero/tomato-slice.png',
     alt: 'A slice of tomato',
     className: 'w-8 sm:w-10 top-3/4 left-1/4 animate-float',
   },
@@ -310,7 +310,7 @@ export default function LandingPage() {
       {!isMobile && (
       <FloatingFoodHero
         title="Eat your food. Hit your numbers."
-        description="Your plan isn\u2019t adapted from some generic template \u2014 it\u2019s generated from the dishes and ingredients of your food culture, with portions tuned to your calorie and macro targets."
+        description="Your plan isn’t adapted from some generic template — it’s generated from the dishes and ingredients of your food culture, with portions tuned to your calorie and macro targets."
         images={[
           {
             src: '/images/hero/salmon.png',
@@ -363,7 +363,7 @@ export default function LandingPage() {
       ) : (
       <FloatingFoodHero
         title="How it works"
-        description="Four steps from sign-up to supper. No guesswork, no generic meal templates \u2014 just your body\u2019s math turned into food you actually eat."
+        description="Four steps from sign-up to supper. No guesswork, no generic meal templates — just your body’s math turned into food you actually eat."
         images={[
           {
             src: '/images/hero/avocado.png',
