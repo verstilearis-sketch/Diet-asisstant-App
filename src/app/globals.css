@@ -502,9 +502,23 @@ input[type="range"]::-moz-range-thumb {
   border-bottom: 1px solid var(--color-border);
 }
 .site-nav-inner {
-  max-width: 1120px; margin: 0 auto; padding: 1rem 1.5rem;
+  max-width: 1280px; margin: 0 auto; padding: 0.7rem 1.5rem;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  min-height: 60px;
 }
+.nav-left { display: flex; align-items: center; gap: 2rem; }
+.nav-right { display: flex; align-items: center; gap: 0.6rem; }
+/* Solid primary CTA (header style) — dark-mode mirror of a solid dark button */
+.nav-cta-solid {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #f5f5f3; color: #131311;
+  font-weight: 650; font-size: 0.88rem;
+  padding: 0.6rem 1.25rem; border-radius: 0.6rem;
+  text-decoration: none; white-space: nowrap;
+  transition: background 120ms ease, transform 120ms ease;
+}
+.nav-cta-solid:hover { background: #ffffff; text-decoration: none; }
+.nav-cta-solid:active { transform: scale(0.97); }
 .brand { display: inline-flex; align-items: center; gap: 0.7rem; font-weight: 800; font-size: 1.7rem; letter-spacing: -0.03em; color: var(--color-text); }
 .brand:hover { text-decoration: none; }
 .brand-mark {
@@ -734,7 +748,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ── Landing extras ─────────────────────────────────────────── */
-.nav-links { display: none; align-items: center; gap: 0.15rem; }
+.nav-links { display: none; align-items: center; gap: 1.4rem; }
 @media (min-width: 900px) { .nav-links { display: flex; } }
 /* Privacy link: mobile-only compact version in the top bar (nav-links are desktop-only) */
 .nav-privacy-mobile { display: none; }
@@ -757,8 +771,6 @@ input[type="range"]::-moz-range-thumb {
 }
 @media (max-width: 899px) {
   .nav-menu-btn { display: inline-flex; }
-  /* One Get started is enough on phones — the hero has its own */
-  .nav-cta { display: none; }
   .nav-menu-panel {
     display: flex;
     flex-direction: column;
@@ -766,6 +778,8 @@ input[type="range"]::-moz-range-thumb {
     padding: 0.6rem 1rem 1rem;
     border-top: 1px solid var(--color-border);
     background: var(--color-surface);
+    animation: nav-drop 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-origin: top center;
   }
   .nav-menu-link {
     padding: 0.7rem 0.25rem;
@@ -773,6 +787,20 @@ input[type="range"]::-moz-range-thumb {
     border-bottom: 1px solid var(--color-border);
   }
   .nav-menu-link:last-child { border-bottom: none; }
+  .nav-menu-actions {
+    display: flex; gap: 0.6rem; margin-top: 0.75rem;
+  }
+  .nav-menu-actions .btn-ghost,
+  .nav-menu-actions .nav-cta-solid { flex: 1; }
+  /* Keep the top bar to logo + hamburger on phones */
+  .nav-right .nav-cta-solid { display: none; }
+}
+@keyframes nav-drop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-menu-panel { animation: none; }
 }
 
 /* ── Floating hero: badge pill + staggered entrance ─────────────── */

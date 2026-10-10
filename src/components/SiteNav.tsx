@@ -36,8 +36,8 @@ function MenuIcon({ open }: { open: boolean }) {
 }
 
 /**
- * Shared site navigation: logo + links + auth actions on desktop,
- * logo + Get started + hamburger menu on phones.
+ * Site header — full-width bar: brand + links on the left,
+ * Sign in + Get Started on the right; hamburger drawer on phones.
  */
 export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
   const [open, setOpen] = useState(false);
@@ -45,17 +45,22 @@ export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
   return (
     <nav className="site-nav">
       <div className="site-nav-inner">
-        <Link href="/" className="brand">
-          <span className="brand-mark"><ZaiqIcon size={29} /></span>
-          Zaiq
-        </Link>
-        <div className="nav-links">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} className="nav-link">{l.label}</Link>
-          ))}
+        <div className="nav-left">
+          <Link href="/" className="brand">
+            <span className="brand-mark"><ZaiqIcon size={26} /></span>
+            Zaiq
+          </Link>
+          <div className="nav-links">
+            {links.map((l) => (
+              <Link key={l.href} href={l.href} className="nav-link">{l.label}</Link>
+            ))}
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div className="nav-right">
           <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
+          <Link href="/auth?mode=signup" className="nav-cta-solid">
+            Get Started
+          </Link>
           <button
             type="button"
             className="nav-menu-btn"
@@ -74,6 +79,10 @@ export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
               {l.label}
             </Link>
           ))}
+          <div className="nav-menu-actions">
+            <Link href="/auth?mode=signin" className="btn-ghost" onClick={() => setOpen(false)}>Sign in</Link>
+            <Link href="/auth?mode=signup" className="nav-cta-solid" onClick={() => setOpen(false)}>Get Started</Link>
+          </div>
         </div>
       )}
     </nav>
