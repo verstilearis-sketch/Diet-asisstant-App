@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { CookieBanner } from '@/components/CookieBanner';
-import { BackToTop } from '@/components/BackToTop';
 import { ScrollProgress } from '@/components/ScrollProgress';
 import { FloatingContact } from '@/components/FloatingContact';
 import { captureUtmParams } from '@/lib/utm';
@@ -44,7 +43,6 @@ export function GlobalChrome() {
       </a>
       <ScrollProgress />
       <CookieBanner />
-      <BackToTop />
       <FloatingContact />
     </>
   );

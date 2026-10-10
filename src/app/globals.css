@@ -594,7 +594,15 @@ button.heat-cal-selected:hover { background: var(--color-accent); }
   padding: 1.1rem 0.8rem 0.9rem;
   z-index: 60;
 }
-.dash-ws { display: flex; align-items: center; gap: 0.7rem; padding: 0.2rem 0.5rem 1rem; }
+.dash-ws {
+  display: flex; align-items: center; gap: 0.7rem; width: 100%;
+  padding: 0.2rem 0.5rem 1rem; margin: 0;
+  background: none; border: none; cursor: pointer;
+  color: inherit; font: inherit; text-align: left;
+  border-radius: 0.7rem;
+}
+.dash-ws:hover { background: var(--color-surface2); }
+.dash-ws:active { transform: scale(0.98); }
 .dash-ws-text { display: flex; flex-direction: column; min-width: 0; }
 .dash-ws-text strong { font-size: 0.92rem; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dash-ws-text small { font-size: 0.74rem; color: var(--color-muted); }

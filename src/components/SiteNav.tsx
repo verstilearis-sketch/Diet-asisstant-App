@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ZaiqIcon } from '@/components/icons';
 
 export interface NavLink {
@@ -41,12 +42,21 @@ function MenuIcon({ open }: { open: boolean }) {
  */
 export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Tapping the logo scrolls to top (replaces the old back-to-top button)
+  const onLogoClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <nav className="site-nav">
       <div className="site-nav-inner">
         <div className="nav-left">
-          <Link href="/" className="brand">
+          <Link href="/" className="brand" onClick={onLogoClick} aria-label="Zaiq home">
             <span className="brand-mark"><ZaiqIcon size={26} /></span>
             Zaiq
           </Link>

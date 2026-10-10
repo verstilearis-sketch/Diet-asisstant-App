@@ -70,7 +70,13 @@ export function DashboardShell({
         aria-hidden="true"
       />
       <aside className={`dash-sidebar ${drawerOpen ? 'dash-sidebar-open' : ''}`} aria-label="Dashboard navigation">
-        <div className="dash-ws">
+        <button
+          type="button"
+          className="dash-ws"
+          onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setDrawerOpen(false); }}
+          aria-label="Back to top"
+          title="Back to top"
+        >
           <span className="brand-mark" style={{ width: 40, height: 40, borderRadius: 12 }}>
             <ZaiqIcon size={22} />
           </span>
@@ -78,7 +84,7 @@ export function DashboardShell({
             <strong>{workspaceTitle}</strong>
             <small>{workspaceSubtitle}</small>
           </span>
-        </div>
+        </button>
 
         <nav className="dash-nav">
           {nav.map((item) => (
