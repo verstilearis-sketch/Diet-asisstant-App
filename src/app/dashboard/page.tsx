@@ -20,6 +20,7 @@ import MiniCalendar from '@/components/MiniCalendar';
 import { LoadingScreen } from '@/components/ZaiqLoader';
 import { DashboardShell } from '@/components/DashboardShell';
 import { HealthStatsCard } from '@/components/HealthStatsCard';
+import { InventoryTab } from '@/components/InventoryTab';
 import { FestivalMode, type FestivalModeValue } from '@/components/FestivalMode';
 import { MacroDonutPlaceholder, type MacroDatum } from '@/components/MacroDonut';
 // HealthAgentChat pulls in react-markdown (heavy) but isn't visible until the
@@ -1462,22 +1463,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === 'inventory' && (
-          <div className="fade-in-up">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', marginBottom: '0.2rem' }}>Weekly inventory</h3>
-                <p style={{ color: 'var(--color-muted)', fontSize: '0.86rem' }}>
-                  Tick off what you already have stocked for your plan
-                </p>
-              </div>
-              <span className="badge badge-green">{plan.shoppingList.length} items</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.6rem' }}>
-              {plan.shoppingList.map((item, i) => (
-                <InventoryItem key={i} item={item} />
-              ))}
-            </div>
-          </div>
+          <InventoryTab items={plan.shoppingList} />
         )}
     </DashboardShell>
 
@@ -1665,35 +1651,5 @@ function MealCard({
         </div>
       )}
     </div>
-  );
-}
-
-function InventoryItem({ item }: { item: string }) {
-  const [checked, setChecked] = useState(false);
-  return (
-    <button
-      onClick={() => setChecked((c) => !c)}
-      className="glass-card"
-      style={{
-        all: 'unset', cursor: 'pointer', boxSizing: 'border-box', width: '100%',
-        padding: '0.8rem 1.1rem', display: 'flex', alignItems: 'center', gap: '0.8rem',
-        opacity: checked ? 0.55 : 1, transition: 'opacity 140ms ease',
-      }}>
-      <span style={{
-        width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-        border: `1.5px solid ${checked ? 'var(--color-accent)' : 'var(--color-border-strong)'}`,
-        background: checked ? 'var(--color-accent)' : 'transparent',
-        color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {checked && <CheckIcon size={12} />}
-      </span>
-      <span style={{
-        fontSize: '0.87rem',
-        textDecoration: checked ? 'line-through' : 'none',
-        color: checked ? 'var(--color-faint)' : 'var(--color-text)',
-      }}>
-        {item}
-      </span>
-    </button>
   );
 }
