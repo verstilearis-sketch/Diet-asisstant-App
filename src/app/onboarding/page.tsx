@@ -11,6 +11,7 @@ import {
   CheckIcon, ArrowRightIcon, ArrowLeftIcon, BrainIcon, AlertIcon, PlusIcon, MinusIcon,
 } from '@/components/icons';
 import { LoaderRing } from '@/components/ZaiqLoader';
+import { LocationPicker } from '@/components/LocationPicker';
 
 // ── Step definitions ──────────────────────────────────────────
 
@@ -496,12 +497,10 @@ export default function OnboardingPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
               <div>
-                <label className="input-label" htmlFor="pref-location">Country / city / region</label>
-                <input id="pref-location" className="input-field"
-                  value={profile.location || ''} onChange={(e) => update('location', e.target.value)} />
-                <p style={{ fontSize: '0.78rem', color: 'var(--color-faint)', marginTop: '0.4rem' }}>
-                  Used only to personalize meal suggestions — never shared.
-                </p>
+                <span className="input-label" id="pref-location-label">Country / city / region</span>
+                <div role="group" aria-labelledby="pref-location-label" style={{ marginTop: '0.45rem' }}>
+                  <LocationPicker value={profile.location || ''} onChange={(v) => update('location', v)} />
+                </div>
               </div>
 
               <div>

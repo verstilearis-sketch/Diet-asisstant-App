@@ -91,6 +91,7 @@ export const ChevronRightIcon = ic(<><path d="m9 18 6-6-6-6" /></>);
 export const SendIcon = ic(<><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></>);
 export const PartyIcon = ic(<><path d="M12 3 19 21H5L12 3Z" /><circle cx="12" cy="3" r="1.2" /><path d="M9.5 14h5" /><path d="M4.5 5.5l1 1M19.5 6.5l-1 1M3.5 11.5H5M19 12.5h1.5" /></>);
 export const SearchIcon = ic(<><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>);
+export const PencilIcon = ic(<><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></>);
 export const ChatIcon = ic(<><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" /></>);
 export const LogoutIcon = ic(<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></>);
 export const CoffeeIcon = ic(<><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /><path d="M7 2v2M11 2v2M15 2v2" /></>);

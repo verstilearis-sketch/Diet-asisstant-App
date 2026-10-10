@@ -42,10 +42,17 @@ function ProgressRing({ pct }: { pct: number }) {
   return (
     <div style={{ position: 'relative', width: 68, height: 68, flexShrink: 0 }}>
       <svg width={68} height={68} viewBox="0 0 68 68" style={{ transform: 'rotate(-90deg)' }}>
+        <defs>
+          <linearGradient id="inv-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#2fa866" />
+            <stop offset="55%" stopColor="#f0a63c" />
+            <stop offset="100%" stopColor="#6aa8e8" />
+          </linearGradient>
+        </defs>
         <circle cx={34} cy={34} r={r} fill="none" stroke="var(--color-surface2)" strokeWidth={7} />
         <circle
           cx={34} cy={34} r={r} fill="none"
-          stroke="var(--color-accent)" strokeWidth={7} strokeLinecap="round"
+          stroke="url(#inv-ring-grad)" strokeWidth={7} strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c * (1 - pct)}
           style={{ transition: 'stroke-dashoffset 0.6s var(--ease-out)' }}
         />
