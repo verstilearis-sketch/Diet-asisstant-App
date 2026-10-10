@@ -143,6 +143,7 @@ export default function DashboardPage() {
   const [todayStr] = useState(getTodayString());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+  const [showNewPlanConfirm, setShowNewPlanConfirm] = useState(false);
   const [recipeMeal, setRecipeMeal] = useState<Meal | null>(null);
 
   useEffect(() => {
@@ -613,13 +614,13 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    if (!showResetConfirm) return;
+    if (!showResetConfirm && !showNewPlanConfirm) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowResetConfirm(false);
+      if (e.key === 'Escape') { setShowResetConfirm(false); setShowNewPlanConfirm(false); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showResetConfirm]);
+  }, [showResetConfirm, showNewPlanConfirm]);
 
   // Adaptive targets: once per plan, learn the real TDEE from logged intake + weight.
   useEffect(() => {
@@ -756,7 +757,7 @@ export default function DashboardPage() {
       activeId={activeTab}
       onNavigate={(id) => setActiveTab(id as typeof activeTab)}
       planActions={[
-        { label: 'New plan', icon: RefreshIcon, onClick: () => router.push('/onboarding') },
+        { label: 'New plan', icon: RefreshIcon, onClick: () => setShowNewPlanConfirm(true) },
       ]}
       bottomActions={[
         { label: 'Reset data', icon: TrashIcon, onClick: () => setShowResetConfirm(true) },
@@ -849,7 +850,7 @@ export default function DashboardPage() {
                 tdee={calcs.tdee}
                 target={calcs.dailyCalorieGoal}
                 goalLabel={GOAL_LABELS[profile.goal] || 'Your goal'}
-                onRecalculate={() => router.push('/onboarding')}
+                onRecalculate={() => setShowNewPlanConfirm(true)}
               />
 
               <div className="glass-card" style={{ padding: '1.4rem' }}>
@@ -1480,6 +1481,35 @@ export default function DashboardPage() {
         />
       )}
 
+      {showNewPlanConfirm && (
+        <div className="modal-overlay" onClick={() => setShowNewPlanConfirm(false)} role="dialog" aria-modal="true" aria-label="Confirm new plan">
+          <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, padding: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <span style={{
+                width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+                background: 'var(--color-accent-soft)', color: 'var(--color-accent)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <RefreshIcon size={18} />
+              </span>
+              <div>
+                <h3 style={{ fontSize: '1.02rem', marginBottom: '0.35rem' }}>Start a new plan?</h3>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
+                  This will replace your current diet plan with a freshly generated one. Are you sure?
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setShowNewPlanConfirm(false)} style={{ padding: '0.65rem 1.3rem' }}>
+                Keep my plan
+              </button>
+              <button className="btn-primary" onClick={() => { setShowNewPlanConfirm(false); router.push('/onboarding'); }} style={{ padding: '0.65rem 1.3rem' }}>
+                Yes, start new
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showResetConfirm && (
         <div className="modal-overlay" onClick={() => setShowResetConfirm(false)} role="dialog" aria-modal="true" aria-label="Confirm data reset">
           <div className="glass-card" onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, padding: '1.5rem' }}>
