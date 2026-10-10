@@ -1166,6 +1166,16 @@ input[type="range"]::-moz-range-thumb {
   .hac-panel { max-height: calc(100dvh - 2rem); }
   /* Meal cards: roomier on phones */
   .meal-card { padding: 1.15rem 1.1rem !important; margin-bottom: 0.85rem !important; }
+  /* Dashboard topbar: solid background on phones — the sticky blur
+     repaints on every scroll frame and is a major scroll-jank source */
+  .dash-topbar {
+    background: var(--color-bg) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  /* Below-fold landing sections: let the browser skip rendering off-screen
+     content on phones — faster initial paint, smoother scroll */
+  .page-shell .container { content-visibility: auto; contain-intrinsic-size: auto 800px; }
   /* Kill liquid-glass blur on phones — it re-renders every frame and makes taps feel laggy */
   .btn-primary, .btn-secondary, .btn-ghost {
     backdrop-filter: none !important;
@@ -1371,4 +1381,8 @@ thead.sticky-header th {
   .vortex-bg {
     display: none;
   }
+}
+/* Phones never run the full-screen particle canvas (see vortex-background.tsx) */
+@media (max-width: 640px) {
+  .vortex-bg { display: none; }
 }

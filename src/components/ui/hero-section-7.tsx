@@ -54,6 +54,7 @@ export function FloatingFoodHero({
           src={img.src}
           alt={img.alt}
           loading={i < 2 ? "eager" : "lazy"}
+          decoding="async"
           draggable={false}
           className={cn(
             "animate-float pointer-events-none absolute select-none",

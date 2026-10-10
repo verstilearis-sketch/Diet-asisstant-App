@@ -37,6 +37,10 @@ export function VortexBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Phones skip the full-screen canvas entirely — a 60fps repaint loop
+    // over the whole viewport is the single biggest mobile perf cost.
+    // (CSS also hides .vortex-bg under 640px as a backstop.)
+    if (window.matchMedia("(max-width: 640px)").matches) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
