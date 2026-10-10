@@ -514,25 +514,19 @@ select.input {
 }
 
 /* ── Body energy-flow animation ─────────────────────────────────── */
-.energy-dot { animation: energy-drop 2.1s ease-in infinite; }
-@keyframes energy-drop {
-  0% { transform: translateY(0); opacity: 0; }
-  25% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { transform: translateY(52px); opacity: 0; }
+.ring-draw { animation: ring-draw 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes ring-draw {
+  from { stroke-dashoffset: var(--ring-c); }
+  to { stroke-dashoffset: var(--ring-target); }
 }
-.core-pulse {
+.ring-orbit {
   transform-box: fill-box; transform-origin: center;
-  animation: core-pulse 2.4s ease-in-out infinite;
+  animation: ring-spin 9s linear infinite;
 }
-@keyframes core-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.55; }
-  50% { transform: scale(1.6); opacity: 0.18; }
-}
-.flow-dash { animation: flow-dash 1.1s linear infinite; }
-@keyframes flow-dash { to { stroke-dashoffset: -30; } }
+@keyframes ring-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .energy-dot, .core-pulse, .flow-dash { animation: none; }
+  .ring-draw, .ring-orbit { animation: none; }
+  .ring-draw { stroke-dashoffset: var(--ring-target); }
 }
 
 /* ── Tracker card (health stats) ──────────────────────────────── */

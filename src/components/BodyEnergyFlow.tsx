@@ -1,8 +1,8 @@
 'use client';
 
-/* ── Animated body: shows where your calories go ─────────────────────
-   A stylized figure with flowing energy — food in, BMR burn at the core,
-   movement burn along the limbs — plus the user's real numbers as steps.
+/* ── Daily burn, visualized as professional activity rings ────────────
+   Three concentric rings: resting burn (amber), movement (blue),
+   and your target vs total burn (green) — with your real numbers.
 ---------------------------------------------------------------------- */
 
 interface BodyEnergyFlowProps {
@@ -14,9 +14,39 @@ interface BodyEnergyFlowProps {
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-IN');
 
+function Ring({
+  r, pct, gradientId, trackOpacity = 1, delay = 0,
+}: {
+  r: number; pct: number; gradientId: string; trackOpacity?: number; delay?: number;
+}) {
+  const c = 2 * Math.PI * r;
+  return (
+    <g style={{ transform: 'rotate(-90deg)', transformOrigin: '100px 100px' }}>
+      <circle cx={100} cy={100} r={r} fill="none" stroke="var(--color-surface2)"
+        strokeWidth={13} opacity={trackOpacity} />
+      <circle
+        cx={100} cy={100} r={r} fill="none" stroke={`url(#${gradientId})`}
+        strokeWidth={13} strokeLinecap="round"
+        strokeDasharray={c} strokeDashoffset={c}
+        className="ring-draw"
+        style={{ '--ring-c': c, '--ring-target': c * (1 - pct), animationDelay: `${delay}s` } as React.CSSProperties}
+      />
+      {/* slow orbiting highlight */}
+      <circle
+        cx={100} cy={100} r={r} fill="none" stroke="#ffffff"
+        strokeWidth={13} strokeLinecap="round" opacity={0.07}
+        strokeDasharray={`${c * 0.06} ${c * 0.94}`}
+        className="ring-orbit" style={{ animationDelay: `${delay}s` }}
+      />
+    </g>
+  );
+}
+
 export function BodyEnergyFlow({ bmr, tdee, target, goalLabel }: BodyEnergyFlowProps) {
   const movement = Math.max(0, tdee - bmr);
   const deficit = tdee - target;
+  const pct = (v: number) => Math.min(1, Math.max(0.04, v / tdee));
+
   const steps = [
     {
       color: '#f0a63c',
@@ -43,41 +73,35 @@ export function BodyEnergyFlow({ bmr, tdee, target, goalLabel }: BodyEnergyFlowP
     <div className="glass-card" style={{ padding: '1.4rem' }}>
       <h3 style={{ fontSize: '0.98rem', marginBottom: '0.25rem' }}>Where your calories go</h3>
       <p style={{ fontSize: '0.82rem', color: 'var(--color-muted)', margin: '0 0 1rem' }}>
-        Your plan, visualized on your body.
+        Your plan, visualized.
       </p>
       <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        {/* Animated figure */}
         <svg
-          viewBox="0 0 220 340" role="img" aria-label="Animated diagram of calorie flow through the body"
-          style={{ width: 150, height: 'auto', flexShrink: 0, overflow: 'visible' }}
+          viewBox="0 0 200 200" role="img" aria-label="Activity rings showing calorie burn breakdown"
+          style={{ width: 168, height: 'auto', flexShrink: 0, overflow: 'visible' }}
         >
-          {/* food intake dots */}
-          {[0, 1, 2].map((i) => (
-            <circle
-              key={i} cx={110} cy={8} r={4.5} fill="#2fa866"
-              className="energy-dot" style={{ animationDelay: `${i * 0.7}s` }}
-            />
-          ))}
-          {/* body */}
-          <g stroke="var(--color-text)" strokeLinecap="round" fill="none" opacity={0.88}>
-            <circle cx={110} cy={42} r={19} strokeWidth={10} />
-            <path d="M110 72 V186" strokeWidth={24} />
-            <path d="M110 104 L68 152 M110 104 L152 152" strokeWidth={12} />
-            <path d="M110 186 L86 296 M110 186 L134 296" strokeWidth={14} />
-          </g>
-          {/* BMR core pulse */}
-          <circle cx={110} cy={128} r={11} fill="#f0a63c" className="core-pulse" />
-          <circle cx={110} cy={128} r={5} fill="#f0a63c" opacity={0.95} />
-          {/* movement flow along limbs */}
-          <g fill="none" stroke="#6aa8e8" strokeWidth={3.5} strokeLinecap="round"
-             strokeDasharray="7 8" className="flow-dash" opacity={0.9}>
-            <path d="M110 104 L68 152" />
-            <path d="M110 104 L152 152" />
-            <path d="M110 186 L86 296" />
-            <path d="M110 186 L134 296" />
-          </g>
+          <defs>
+            <linearGradient id="ring-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#f0a63c" /><stop offset="100%" stopColor="#d97f2b" />
+            </linearGradient>
+            <linearGradient id="ring-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#6aa8e8" /><stop offset="100%" stopColor="#4a7fc9" />
+            </linearGradient>
+            <linearGradient id="ring-green" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#2fa866" /><stop offset="100%" stopColor="#1f7a48" />
+            </linearGradient>
+          </defs>
+          <Ring r={82} pct={pct(bmr)} gradientId="ring-amber" delay={0} />
+          <Ring r={63} pct={pct(movement)} gradientId="ring-blue" delay={0.25} />
+          <Ring r={44} pct={pct(target)} gradientId="ring-green" delay={0.5} />
+          <text x={100} y={96} textAnchor="middle" fill="var(--color-text)"
+            fontSize={21} fontWeight={800} fontVariantNumeric="tabular-nums">
+            {fmt(tdee)}
+          </text>
+          <text x={100} y={114} textAnchor="middle" fill="var(--color-muted)" fontSize={10.5}>
+            kcal burned daily
+          </text>
         </svg>
-        {/* Steps */}
         <ol style={{ flex: 1, minWidth: 200, margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
           {steps.map((s, i) => (
             <li key={i} style={{ display: 'flex', gap: '0.7rem', alignItems: 'flex-start' }}>
