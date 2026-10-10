@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabase } from '@/lib/supabase';
 import { ZaiqIcon, AlertIcon } from '@/components/icons';
+import { LoadingScreen } from '@/components/ZaiqLoader';
 
 // ── OAuth callback ──────────────────────────────────────────────
 // Direct Google OAuth (not via Supabase Auth) lands here with the ID token
@@ -126,10 +127,7 @@ function CallbackHandler() {
             </Link>
           </>
         ) : (
-          <>
-            <div className="spinner" style={{ margin: '0 auto 1rem' }} />
-            <p style={{ color: 'var(--color-muted)', fontSize: '0.9rem' }}>Finishing Google sign-in…</p>
-          </>
+          <LoadingScreen title="Finishing Google sign-in…" subtitle="You're almost in — setting things up." />
         )}
       </div>
     </div>
@@ -138,11 +136,7 @@ function CallbackHandler() {
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner" />
-      </div>
-    }>
+    <Suspense fallback={<LoadingScreen />}>
       <CallbackHandler />
     </Suspense>
   );

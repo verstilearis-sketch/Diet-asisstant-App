@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSession, signInWithGoogle } from '@/lib/storage';
 import { ZaiqIcon, AlertIcon, GoogleIcon } from '@/components/icons';
+import { LoadingScreen } from '@/components/ZaiqLoader';
 
 function AuthForm() {
   const router = useRouter();
@@ -110,11 +111,7 @@ function AuthForm() {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner" />
-      </div>
-    }>
+    <Suspense fallback={<LoadingScreen />}>
       <AuthForm />
     </Suspense>
   );
