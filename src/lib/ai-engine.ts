@@ -2047,7 +2047,7 @@ export async function generateDietPlan(
   });
 
   const { goal } = profile;
-  const tips = getTips(goal);
+  const tips = getTips(profile, calculations, region);
 
   // Honest protein-gap coaching: if the week's food can't fully reach a very high
   // protein target (e.g. vegetarian + budget constraints), say so and give the fix.
@@ -2162,39 +2162,113 @@ export function getMealAlternatives(
   return scored.slice(0, count).map(({ f }) => toMeal(f));
 }
 
-function getTips(goal: string): string[] {
-  if (goal === 'lose_weight') return [
-    '🥤 Drink a large glass of water 20–30 min before each meal to naturally reduce appetite by ~13%.',
-    '🍽️ Use a smaller plate — portion perception reduces intake by up to 30% without feeling deprived.',
-    '🚶 Post-dinner walk of 15–20 min improves insulin sensitivity and digestion significantly.',
-    '😴 Sleep 7–9 hours. Poor sleep raises ghrelin (hunger hormone) by 28% — sabotaging your diet.',
-    '📝 Track meals in a food diary — research shows this doubles weight-loss success rates.',
-    '🌶️ Add spices like chili, ginger, and cinnamon — they boost metabolism by 4–10%.',
-  ];
-  if (goal === 'gain_weight') return [
-    '🕐 Eat every 3–4 hours — missing meals makes hitting your calorie surplus nearly impossible.',
-    '💪 Focus on compound lifts: squats, deadlifts, bench press for maximum anabolic stimulus.',
-    '🥛 Consume protein within 30 min post-workout to maximize muscle protein synthesis.',
-    '🧈 Add healthy calorie-dense foods: nut butters, avocado, olive oil, whole milk, cheese.',
-    '📈 Progressive overload is critical — increase weight or reps weekly to keep muscles growing.',
-    '🌙 Eat a slow-digesting casein protein before bed (curd/cottage cheese) for overnight recovery.',
-  ];
-  if (goal === 'athletic') return [
-    '⚡ Carb-load 2–3 hours before intense training — prioritize complex carbs for sustained energy.',
-    '🔄 Cycle carbohydrates: higher on training days, lower on rest days for body recomposition.',
-    '🏃 Warm up 10 min with dynamic stretches — reduces injury risk by up to 50%.',
-    '🧴 Creatine monohydrate (5g/day) is the most proven performance supplement — consider it.',
-    '🛌 Aim for 8–9 hours of sleep on heavy training days — recovery is where gains are made.',
-    '🧃 Consume fast carbs (banana, sports drink) within 30 min post-workout for glycogen replenishment.',
-  ];
-  return [
-    '🌈 Eat the rainbow — different colored vegetables deliver different essential micronutrients.',
-    '🧘 Mindful eating: put your fork down between bites and chew 20–30 times per mouthful.',
-    '🫙 Meal prep on Sundays to ensure healthy choices when you\'re tired or busy.',
-    '🚫 Avoid ultra-processed foods 80% of the time — cook fresh as much as possible.',
-    '📊 The 80/20 rule: eat healthily 80% of the time and enjoy without guilt 20%.',
-    '🦠 Eat fermented foods (curd, kimchi, idli) daily — a healthy gut drives overall wellness.',
-  ];
+/**
+ * Personalized, detailed recommendations built from the user's actual
+ * profile — goal, numbers, region, activity, work, diet and budget —
+ * instead of generic one-size-fits-all advice.
+ */
+function getTips(profile: UserProfile, c: Calculations, region: string): string[] {
+  const tips: string[] = [];
+  const name = profile.name?.split(' ')[0] || 'you';
+  const kcal = c.dailyCalorieGoal.toLocaleString('en-IN');
+  const protein = c.proteinG;
+  const water = c.waterLiters;
+  const goal = profile.goal;
+  const regionName = (regionLabel(region) || 'your region').toLowerCase();
+
+  // ── Goal-specific core advice, personalized with real numbers ──
+  if (goal === 'lose_weight') {
+    const loss = profile.targetWeightKg && profile.weightKg > profile.targetWeightKg
+      ? ` — that's about ${(profile.weightKg - profile.targetWeightKg).toFixed(1)} kg to go`
+      : '';
+    tips.push(
+      `🎯 ${name}, your plan targets ${kcal} kcal/day${loss}. The single biggest lever is consistency, not perfection — hitting your target 5–6 days a week beats a perfect 3 days followed by a blowout weekend.`,
+      `🥤 Drink 500 ml of water 20–30 min before lunch and dinner. For your ${water} L daily goal, front-load hydration: 1 L before noon makes the afternoon far easier.`,
+      `🍽️ Use a smaller plate or katori for rice/roti — portion perception alone can cut 20–30% of intake without hunger. Serve seconds only after a 10-minute pause.`,
+      `🚶 A 15–20 min walk after your heaviest meal improves insulin sensitivity and digestion. With your ${activityLabel(profile.activityLevel)} routine, this walk is the highest-ROI habit you can add.`,
+    );
+    if ((profile.sleepHours ?? 8) < 7)
+      tips.push(`😴 You report ~${profile.sleepHours}h of sleep — under 7h raises ghrelin (hunger hormone) ~28% and tanks willpower. Fixing sleep will make the ${kcal} kcal target feel dramatically easier.`);
+    else
+      tips.push(`😴 Guard your 7–9h sleep window — poor sleep raises ghrelin (hunger hormone) ~28%, which quietly sabotages even a perfect meal plan.`);
+  } else if (goal === 'gain_weight') {
+    tips.push(
+      `🎯 ${name}, your surplus target is ${kcal} kcal/day with ${protein}g protein. The hard part isn't training — it's eating enough, every single day. Set phone reminders if meals slip.`,
+      `🕐 Eat every 3–4 hours across your day — with a ${kcal} kcal target, missing even one meal makes the surplus nearly impossible to recover.`,
+      `🧈 Make every meal calorie-dense: an extra spoon of ghee, a handful of peanuts, or a glass of whole milk adds 150–250 kcal without extra volume.`,
+      `💪 Train with compound lifts (squats, deadlifts, presses) 3–4x/week — without progressive overload, surplus calories become fat, not muscle.`,
+    );
+  } else if (goal === 'athletic') {
+    tips.push(
+      `🎯 ${name}, performance eating means fueling around training: your ${kcal} kcal and ${protein}g protein only work if timed right.`,
+      `⚡ Eat a carb-rich meal 2–3h before intense sessions (rice, oats, banana) — training fasted at your volume leaves 15–20% of performance on the table.`,
+      `🧃 Within 30 min post-workout: fast carbs + 25–30g protein (banana + whey, or chocolate milk). This window is when glycogen replenishes fastest.`,
+      `🛌 Sleep 8–9h on heavy training days — at ${profile.exerciseFrequency ?? 4}+ sessions/week, recovery is where the adaptation actually happens.`,
+    );
+  } else {
+    tips.push(
+      `🎯 ${name}, your maintenance target is ${kcal} kcal/day with ${protein}g protein — enough to hold weight while steadily improving body composition.`,
+      `🌈 Eat the rainbow across the week: different colored vegetables (greens, reds, oranges) cover different micronutrients your ${regionName} meals might otherwise miss.`,
+      `🧘 Slow down at meals — putting your fork down between bites and chewing 20–30 times improves satiety signals and digestion more than any supplement.`,
+    );
+  }
+
+  // ── Region-aware food guidance ──
+  const regionTips: Record<string, string> = {
+    'north-india': `🫓 In ${regionName} cooking, keep your rotis and swap half the white rice for brown rice or dalia — same comfort, steadier blood sugar across your ${kcal} kcal day.`,
+    'south-india': `🥥 Your ${regionName} staples (rice, coconut) are energy-dense — measure oil/coconut to 2 tsp per meal and lean on sambar/rasam volume to stay inside ${kcal} kcal.`,
+    'west-india': `🫘 With ${regionName} thalis, go heavy on dal/sabzi and light on the fried farsan — one extra katori of dal adds ~8g protein for barely 100 kcal.`,
+    'east-india': `🐟 Your ${regionName} fish + rice base is excellent — keep the mustard oil to 2–3 tsp/day and add a second vegetable to dinner for fiber.`,
+    'kashmir': `🍲 Kashmiri staples like haak, nadru and rajma are naturally diet-friendly — the trap is wazwan-style rich gravies and noon chai salt. Keep gravies tomato/yogurt-based and you'll hit ${protein}g protein without trying.`,
+  };
+  const rKey = region.toLowerCase().replace(/[^a-z-]/g, '');
+  if (regionTips[rKey]) tips.push(regionTips[rKey]);
+  else if (region && region !== 'global')
+    tips.push(`🍱 Lean on ${regionName} home cooking over restaurant versions — you control the oil, and restaurant portions run 30–50% larger than your ${kcal} kcal plan assumes.`);
+
+  // ── Work & lifestyle ──
+  if (profile.workType === 'desk' || profile.workMix === 'mostly_desk')
+    tips.push(`💺 Desk work silently erases calorie burn — stand or walk 5 min every hour. That NEAT movement can add 200–300 kcal/day, worth more than a workout for ${goal === 'lose_weight' ? 'fat loss' : 'staying lean'}.`);
+  else if (profile.workType === 'physical' || profile.workMix === 'mostly_physical')
+    tips.push(`🏗️ Physical work days demand extra fuel and electrolytes — add 300–500 ml water per hour of heavy work plus a pinch of salt, or fatigue will masquerade as hunger.`);
+  if ((profile.stressLevel ?? 0) >= 4)
+    tips.push(`🧠 High stress drives cortisol, which drives belly fat and cravings. A 10-min evening walk or 5 min of slow breathing protects your ${kcal} kcal target more than skipping dessert does.`);
+
+  // ── Diet & budget ──
+  const restrictions = (profile.dietaryRestrictions || []).map((r) => r.toLowerCase());
+  if (restrictions.includes('vegetarian') || restrictions.includes('vegan'))
+    tips.push(`🌱 Hitting ${protein}g protein on a vegetarian diet needs intention: combine dal + rice/roti at the same meal (complete aminos), and anchor each day with 200g curd/paneer or soy — that's 25–35g before you even try.`);
+  if (profile.budget === 'budget')
+    tips.push(`💰 Budget proteins that punch above their price: eggs (~₹7 for 6g), peanuts (~₹15 for 8g), soya chunks (~₹20 for 26g) and whole masoor dal. Your ${protein}g target is absolutely doable without expensive supplements.`);
+  if ((profile.allergies || []).length)
+    tips.push(`⚠️ Cooking around ${profile.allergies!.join(', ')}: read labels on packaged masalas and protein powders — cross-contamination warnings are common and easy to miss.`);
+
+  // ── Universal closers ──
+  tips.push(
+    `📝 Log everything for the first 2 weeks — people who track double their success rate, because the diary catches the "invisible" 300–400 kcal (oils, nibbles, sugary chai) that stall ${goal === 'lose_weight' ? 'fat loss' : 'progress'}.`,
+    `📊 Weigh yourself 3x/week (morning, after bathroom) and watch the weekly average, not daily noise — water alone swings 1–2 kg and means nothing.`,
+  );
+  if (profile.timeline)
+    tips.push(`📅 Your ${profile.timeline}-week timeline is realistic if you average ~0.5 kg/week — faster than that usually costs muscle, not just fat.`);
+
+  return tips;
+}
+
+function activityLabel(a: string): string {
+  const map: Record<string, string> = {
+    sedentary: 'low-activity', light: 'lightly active', moderate: 'moderately active',
+    active: 'active', very_active: 'very active',
+  };
+  return map[a] ?? 'moderately active';
+}
+
+function regionLabel(region: string): string {
+  const map: Record<string, string> = {
+    'north-india': 'North Indian', 'south-india': 'South Indian',
+    'west-india': 'West Indian', 'east-india': 'East Indian',
+    'jammu-kashmir': 'Kashmiri', 'kashmir': 'Kashmiri',
+  };
+  return map[region.toLowerCase().replace(/[^a-z-]/g, '')] ?? '';
 }
 
 function generateShoppingList(region: string, profile: UserProfile): string[] {

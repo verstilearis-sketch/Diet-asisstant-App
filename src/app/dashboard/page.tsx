@@ -20,6 +20,7 @@ import MiniCalendar from '@/components/MiniCalendar';
 import { LoadingScreen } from '@/components/ZaiqLoader';
 import { DashboardShell } from '@/components/DashboardShell';
 import { HealthStatsCard } from '@/components/HealthStatsCard';
+import { BodyEnergyFlow } from '@/components/BodyEnergyFlow';
 import { InventoryTab } from '@/components/InventoryTab';
 import { FestivalMode, type FestivalModeValue } from '@/components/FestivalMode';
 import { MacroDonutPlaceholder, type MacroDatum } from '@/components/MacroDonut';
@@ -851,6 +852,13 @@ export default function DashboardPage() {
                 target={calcs.dailyCalorieGoal}
                 goalLabel={GOAL_LABELS[profile.goal] || 'Your goal'}
                 onRecalculate={() => setShowNewPlanConfirm(true)}
+              />
+
+              <BodyEnergyFlow
+                bmr={calcs.bmr}
+                tdee={calcs.tdee}
+                target={calcs.dailyCalorieGoal}
+                goalLabel={GOAL_LABELS[profile.goal] || 'Your goal'}
               />
 
               <div className="glass-card" style={{ padding: '1.4rem' }}>
