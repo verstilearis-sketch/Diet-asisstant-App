@@ -85,6 +85,7 @@ export const XIcon = ic(<><path d="M18 6 6 18M6 6l12 12" /></>);
 export const CheckIcon = ic(<><path d="M20 6 9 17l-5-5" /></>);
 export const CheckCircleIcon = ic(<><circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.5 2.5 5-5" /></>);
 export const ChevronDownIcon = ic(<><path d="m6 9 6 6 6-6" /></>);
+export const ChevronUpIcon = ic(<><path d="m18 15-6-6-6 6" /></>);
 export const ChevronLeftIcon = ic(<><path d="m15 18-6-6 6-6" /></>);
 export const ChevronRightIcon = ic(<><path d="m9 18 6-6-6-6" /></>);
 export const SendIcon = ic(<><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></>);

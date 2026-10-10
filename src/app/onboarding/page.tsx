@@ -10,6 +10,7 @@ import {
   FlameIcon, DumbbellIcon, ScaleIcon, LeafIcon, TrophyIcon,
   CheckIcon, ArrowRightIcon, ArrowLeftIcon, BrainIcon, AlertIcon, PlusIcon, MinusIcon,
 } from '@/components/icons';
+import { LoaderRing } from '@/components/ZaiqLoader';
 
 // ── Step definitions ──────────────────────────────────────────
 
@@ -631,7 +632,9 @@ export default function OnboardingPage() {
               Analyzing your profile and crafting your 7-day meal plan.
             </p>
 
-            <div className="spinner" style={{ width: 34, height: 34, margin: '0 auto 1.25rem' }} />
+            <div style={{ margin: '0 auto 1.25rem', width: 34, height: 34 }}>
+              <LoaderRing size={34} />
+            </div>
             {generating && <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--color-muted)' }}>Putting your week together…</div>}
             {saveError && (
               <div className="error-box" style={{ maxWidth: 380, margin: '1.5rem auto 0', textAlign: 'left' }}>
