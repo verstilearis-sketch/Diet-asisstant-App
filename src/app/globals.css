@@ -927,11 +927,13 @@ input[type="range"]::-moz-range-thumb {
   background: var(--color-bg);
 }
 .hac-msg {
-  max-width: 86%; padding: 0.62rem 1rem; border-radius: 999px;
+  max-width: 86%; padding: 0.62rem 1rem; border-radius: 22px;
   font-size: 0.87rem; line-height: 1.55;
   animation: fadeInUp 180ms var(--ease-out) both;
   overflow-wrap: break-word;
 }
+/* Fully pill-shaped only for short, single-line-style messages */
+.hac-msg-pill { border-radius: 999px; }
 .hac-msg p { margin: 0 0 0.4rem; } .hac-msg p:last-child { margin-bottom: 0; }
 .hac-msg ul, .hac-msg ol { margin: 0.3rem 0 0.5rem; padding-left: 1.15rem; }
 .hac-msg li { margin-bottom: 0.2rem; }

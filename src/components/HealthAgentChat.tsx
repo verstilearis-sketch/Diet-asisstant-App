@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { SavedPlan } from '@/lib/storage';
 import { computeAll } from '@/lib/calculations';
-import { BotIcon, LeafIcon, XIcon, SendIcon } from './icons';
+import { ActivityIcon, LeafIcon, XIcon, SendIcon } from './icons';
 import { authedFetch } from '@/lib/api-client';
 
 interface Message {
@@ -213,7 +213,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
   if (!isOpen) {
     return (
       <button className="hac-fab" onClick={() => setIsOpen(true)} aria-label="Open health coach chat">
-        <BotIcon size={24} />
+        <ActivityIcon size={24} />
       </button>
     );
   }
@@ -244,7 +244,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`hac-msg ${msg.role === 'user' ? 'hac-msg-user' : 'hac-msg-agent'}`}
+            className={`hac-msg ${msg.role === 'user' ? 'hac-msg-user' : 'hac-msg-agent'}${msg.content.replace(/\s+/g, ' ').trim().length <= 70 ? ' hac-msg-pill' : ''}`}
           >
             <ReactMarkdown>{msg.content}</ReactMarkdown>
             {failedId === msg.id && (() => {
