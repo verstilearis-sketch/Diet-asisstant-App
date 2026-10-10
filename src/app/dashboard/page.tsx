@@ -18,6 +18,7 @@ import { buildTasteConstraints, hasTasteSignal, recordSwap } from '@/lib/taste';
 import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
 import { LoadingScreen } from '@/components/ZaiqLoader';
+import { DashboardShell } from '@/components/DashboardShell';
 import { MacroDonutPlaceholder, type MacroDatum } from '@/components/MacroDonut';
 // HealthAgentChat pulls in react-markdown (heavy) but isn't visible until the
 // user opens it — load it after the main page so first paint stays fast.
@@ -754,34 +755,32 @@ export default function DashboardPage() {
   const bmiColor = calcs.bmi < 18.5 ? '#a3a29c' : calcs.bmi < 25 ? '#f5f5f3' : calcs.bmi < 30 ? '#d97706' : '#dc2626';
   const caloriePct = Math.min(100, Math.round((calsConsumed / calcs.dailyCalorieGoal) * 100));
 
-  return (
-    <div className="page-shell">
-      {/* ── Nav ─────────────────────────────────────────── */}
-      <nav className="site-nav">
-        <div className="site-nav-inner">
-          <span className="brand">
-            <span className="brand-mark"><ZaiqIcon size={29} /></span>
-            Zaiq
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <span style={{ fontSize: '0.86rem', color: 'var(--color-muted)', marginRight: '0.5rem' }}>
-              Hi, <strong style={{ color: 'var(--color-text)' }}>{userName.split(' ')[0]}</strong>
-            </span>
-            <button className="btn-ghost" onClick={() => router.push('/onboarding')} style={{ fontSize: '0.85rem' }}>
-              <RefreshIcon size={15} /> New plan
-            </button>
-            <button className="btn-ghost" onClick={() => setShowResetConfirm(true)} style={{ fontSize: '0.85rem' }} title="Delete your profile, plans and logs from the cloud">
-              <TrashIcon size={15} /> Reset data
-            </button>
-            <button className="btn-ghost" onClick={() => setShowSignOutConfirm(true)} style={{ fontSize: '0.85rem', color: 'var(--color-danger)' }}>
-              <LogoutIcon size={15} /> Sign out
-            </button>
-          </div>
-        </div>
-      </nav>
+  const tabLabel = TABS.find((t) => t.id === activeTab)?.label ?? 'Home';
+  const mealsLeft = Math.max(0, 5 - mealsDoneCount);
 
-      <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem', position: 'relative', zIndex: 1 }}>
-        {/* ── Header ────────────────────────────────────── */}
+  return (
+    <>
+    <DashboardShell
+      workspaceTitle={firstName ? `${firstName}'s plan` : 'My plan'}
+      workspaceSubtitle={GOAL_LABELS[profile.goal] || 'Nutrition plan'}
+      nav={TABS.map((t) => ({
+        id: t.id,
+        label: t.label,
+        icon: t.icon,
+        ...(t.id === 'meals' && mealsLeft > 0 ? { badge: mealsLeft } : {}),
+      }))}
+      activeId={activeTab}
+      onNavigate={(id) => setActiveTab(id as typeof activeTab)}
+      planActions={[
+        { label: 'New plan', icon: RefreshIcon, onClick: () => router.push('/onboarding') },
+      ]}
+      bottomActions={[
+        { label: 'Reset data', icon: TrashIcon, onClick: () => setShowResetConfirm(true) },
+        { label: 'Sign out', icon: LogoutIcon, onClick: () => setShowSignOutConfirm(true), danger: true },
+      ]}
+      breadcrumb={tabLabel}
+    >
+      {/* ── Header ────────────────────────────────────── */}
         <div className="fade-in-up" style={{ marginBottom: '1.5rem' }}>
           <div>
             <h1 style={{ fontSize: 'clamp(1.4rem, 2.8vw, 1.9rem)', marginBottom: '0.3rem' }}>
@@ -794,22 +793,6 @@ export default function DashboardPage() {
               </p>
             )}
           </div>
-        </div>
-
-        {/* ── Tabs ──────────────────────────────────────── */}
-        <div className="fade-in-up delay-100" style={{
-          display: 'inline-flex', gap: '0.25rem', marginBottom: '1.5rem',
-          background: 'var(--color-surface)', padding: '0.3rem',
-          borderRadius: '0.875rem', border: '1px solid var(--color-border)',
-          maxWidth: '100%', overflowX: 'auto',
-        }}>
-          {TABS.map((t) => (
-            <button key={t.id}
-              className={`tab-btn ${activeTab === t.id ? 'tab-btn-active' : 'tab-btn-inactive'}`}
-              onClick={() => setActiveTab(t.id)}>
-              <t.icon size={16} /> {t.label}
-            </button>
-          ))}
         </div>
 
         {/* ── HOME ──────────────────────────────────────── */}
@@ -1651,7 +1634,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-      </div>
+    </DashboardShell>
 
       <ChatErrorBoundary>
         <HealthAgentChat plan={savedPlan} userName={userName} />
@@ -1727,7 +1710,7 @@ export default function DashboardPage() {
       {scanOpen && (
         <BarcodeScanner onScan={handleBarcode} onClose={() => setScanOpen(false)} />
       )}
-    </div>
+    </>
   );
 }
 
