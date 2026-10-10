@@ -95,7 +95,7 @@ export function BodyEnergyFlow({ bmr, tdee, target, goalLabel }: BodyEnergyFlowP
           <Ring r={63} pct={pct(movement)} gradientId="ring-blue" delay={0.25} />
           <Ring r={44} pct={pct(target)} gradientId="ring-green" delay={0.5} />
           <text x={100} y={96} textAnchor="middle" fill="var(--color-text)"
-            fontSize={21} fontWeight={800} fontVariantNumeric="tabular-nums">
+            fontSize={21} fontWeight={800} style={{ fontVariantNumeric: 'tabular-nums' }}>
             {fmt(tdee)}
           </text>
           <text x={100} y={114} textAnchor="middle" fill="var(--color-muted)" fontSize={10.5}>
