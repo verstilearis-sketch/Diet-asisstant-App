@@ -12,7 +12,7 @@ import type { Meal } from '@/lib/ai-engine';
 import { getMealAlternatives, generateDietPlan, mealWhy, type MealType } from '@/lib/ai-engine';
 import { checkAdaptation, type AdaptationCheck } from '@/lib/adaptive';
 import { buildWeeklyReview } from '@/lib/weekly-review';
-import { FESTIVALS, getFestival, CUSTOM_FEAST_TIPS, CUSTOM_FAST_TIPS, type FestivalFood } from '@/lib/festivals';
+import { type FestivalFood } from '@/lib/festivals';
 import type { TasteProfile } from '@/lib/taste';
 import { buildTasteConstraints, hasTasteSignal, recordSwap } from '@/lib/taste';
 import RecipeModal from '@/components/RecipeModal';
@@ -20,6 +20,7 @@ import MiniCalendar from '@/components/MiniCalendar';
 import { LoadingScreen } from '@/components/ZaiqLoader';
 import { DashboardShell } from '@/components/DashboardShell';
 import { HealthStatsCard } from '@/components/HealthStatsCard';
+import { FestivalMode, type FestivalModeValue } from '@/components/FestivalMode';
 import { MacroDonutPlaceholder, type MacroDatum } from '@/components/MacroDonut';
 // HealthAgentChat pulls in react-markdown (heavy) but isn't visible until the
 // user opens it — load it after the main page so first paint stays fast.
@@ -40,7 +41,7 @@ import {
   BulbIcon, DumbbellIcon, CoffeeIcon, AppleIcon,
   SunIcon, MoonIcon, CookieIcon, ChevronDownIcon, CheckIcon,
   LogoutIcon, RefreshIcon, LaughIcon, SmileIcon, MehIcon, FrownIcon,
-  FlameIcon, TrashIcon, PlusIcon, BarcodeIcon, SparklesIcon, ActivityIcon, TargetIcon,
+  FlameIcon, TrashIcon, PlusIcon, BarcodeIcon, SparklesIcon, ActivityIcon, TargetIcon, PartyIcon,
 } from '@/components/icons';
 
 // ── Estimate caches: avoid repeat AI calls for the same text ──────
@@ -83,6 +84,7 @@ const TABS = [
   { id: 'meals', label: 'Meal plan', icon: UtensilsIcon },
   { id: 'tracker', label: 'Daily tracker', icon: ClipboardIcon },
   { id: 'inventory', label: 'Inventory', icon: CartIcon },
+  { id: 'festival', label: 'Festival mode', icon: PartyIcon },
 ] as const;
 
 const MOODS = [
@@ -101,7 +103,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [savedPlan, setSavedPlan] = useState<SavedPlan | null>(null);
   const [activeDay, setActiveDay] = useState((new Date().getDay() + 6) % 7);
-  const [activeTab, setActiveTab] = useState<'home' | 'meals' | 'tracker' | 'inventory'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'meals' | 'tracker' | 'inventory' | 'festival'>('home');
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null);
@@ -120,11 +122,6 @@ export default function DashboardPage() {
   const [scanGrams, setScanGrams] = useState('');
   const [scanBusy, setScanBusy] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const [festivalOpen, setFestivalOpen] = useState(false);
-  const [festivalChoice, setFestivalChoice] = useState('diwali');
-  const [festivalDate, setFestivalDate] = useState(getFestival('diwali')?.defaultDate ?? '2026-11-08');
-  const [customName, setCustomName] = useState('');
-  const [customType, setCustomType] = useState<'feast' | 'fast'>('feast');
   const [learnBusy, setLearnBusy] = useState(false);
   const [learnings, setLearnings] = useState<string[] | null>(null);
   const [adaptation, setAdaptation] = useState<AdaptationCheck | null>(null);
@@ -509,28 +506,13 @@ export default function DashboardPage() {
   };
 
   // Festival mode: adapt the plan to feasts and fasts.
-  const activateFestival = async () => {
+  const activateFestival = async (mode: FestivalModeValue) => {
     if (!savedPlan) return;
-    let festivalId: string, name: string, type: 'feast' | 'fast';
-    if (festivalChoice === 'custom') {
-      const trimmed = customName.trim();
-      if (!trimmed) return;
-      festivalId = 'custom';
-      name = trimmed;
-      type = customType;
-    } else {
-      const f = getFestival(festivalChoice);
-      if (!f) return;
-      festivalId = f.id;
-      name = f.name;
-      type = f.type;
-    }
     const updated = {
       ...savedPlan.plan,
-      festivalMode: { festivalId, name, date: festivalDate, type },
+      festivalMode: mode,
     };
     setSavedPlan({ ...savedPlan, plan: updated });
-    setFestivalOpen(false);
     try {
       await updatePlan(savedPlan.id, updated);
     } catch (e) {
@@ -992,135 +974,6 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* ── Festival mode ──────────────────────────────── */}
-            {(() => {
-              const fm = plan.festivalMode;
-              const fest = fm ? getFestival(fm.festivalId) : undefined;
-              const isCustom = fm?.festivalId === 'custom';
-              if (fm && (fest || isCustom)) {
-                const blurb = isCustom
-                  ? (fm.type === 'fast'
-                      ? 'Your occasion, your rules — the plan adapts around your fast.'
-                      : 'Your occasion, your rules — enjoy it, fitted into your day.')
-                  : fest!.blurb;
-                const tips = isCustom
-                  ? (fm.type === 'fast' ? CUSTOM_FAST_TIPS : CUSTOM_FEAST_TIPS)
-                  : fest!.tips;
-                const foods = isCustom ? [] : fest!.foods;
-                return (
-                  <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem', marginBottom: '1rem', borderLeft: '4px solid var(--color-accent)' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
-                      <h3 style={{ fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ color: 'var(--color-accent)' }}><SparklesIcon size={17} /></span>
-                        {fm.name} mode
-                      </h3>
-                      <button type="button" className="btn-ghost" onClick={clearFestival} style={{ padding: '0.3rem 0.8rem', fontSize: '0.78rem' }}>
-                        End
-                      </button>
-                    </div>
-                    <p style={{ fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.65, margin: '0.4rem 0 0.9rem' }}>
-                      {blurb}
-                      <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--color-faint)', marginTop: '0.25rem' }}>
-                        {new Date(fm.date + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        {fm.type === 'fast' ? ' · fasting' : ' · feasting'}
-                      </span>
-                    </p>
-                    <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: '0 0 0.5rem' }}>How to enjoy it</p>
-                    <ul style={{ margin: '0 0 1rem', paddingLeft: '1.1rem', fontSize: '0.84rem', color: 'var(--color-muted)', lineHeight: 1.7 }}>
-                      {tips.map((t, i) => <li key={i}>{t}</li>)}
-                    </ul>
-                    {foods.length > 0 ? (
-                      <>
-                        <p style={{ fontSize: '0.82rem', fontWeight: 700, margin: '0 0 0.6rem' }}>Festive picks — log as you eat</p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                          {foods.map((food, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.8rem', background: 'var(--color-surface2)', borderRadius: '0.7rem', padding: '0.6rem 0.85rem' }}>
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: '0.86rem', fontWeight: 650 }}>{food.name}</div>
-                                <div style={{ fontSize: '0.74rem', color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                                  {food.portion} · {food.calories} kcal · {food.proteinG}g protein
-                                  {food.tip && <span style={{ display: 'block', fontStyle: 'italic' }}>{food.tip}</span>}
-                                </div>
-                              </div>
-                              <button type="button" className="btn-primary" onClick={() => logFestivalFood(food)} style={{ padding: '0.4rem 0.9rem', fontSize: '0.78rem', flexShrink: 0 }}>
-                                Log
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <p style={{ fontSize: '0.82rem', color: 'var(--color-muted)', fontStyle: 'italic', margin: 0 }}>
-                        Log what you eat from the tracker below — the coach will keep your targets in view.
-                      </p>
-                    )}
-                  </div>
-                );
-              }
-              return (
-                <div className="glass-card fade-in-up delay-100" style={{ padding: '1rem 1.4rem', marginBottom: '1rem' }}>
-                  <button
-                    type="button" className="btn-ghost"
-                    onClick={() => setFestivalOpen((v) => !v)}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.88rem', fontWeight: 650, padding: '0.5rem' }}
-                  >
-                    <span style={{ color: 'var(--color-accent)' }}><SparklesIcon size={16} /></span>
-                    Celebrating something? Turn on festival mode
-                  </button>
-                  {festivalOpen && (
-                    <div style={{ marginTop: '0.9rem', paddingTop: '0.9rem', borderTop: '1px solid var(--color-border)' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.7rem', alignItems: 'end' }}>
-                        <div>
-                          <label className="input-label" htmlFor="festival-select">Occasion</label>
-                          <select
-                            id="festival-select" className="input" value={festivalChoice}
-                            onChange={(e) => {
-                              setFestivalChoice(e.target.value);
-                              const d = getFestival(e.target.value)?.defaultDate;
-                              if (d) setFestivalDate(d);
-                            }}
-                          >
-                            {FESTIVALS.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
-                            <option value="custom">Custom occasion…</option>
-                          </select>
-                        </div>
-                        {festivalChoice === 'custom' && (
-                          <>
-                            <div>
-                              <label className="input-label" htmlFor="festival-custom-name">Occasion name</label>
-                              <input
-                                id="festival-custom-name" className="input" value={customName}
-                                onChange={(e) => setCustomName(e.target.value)}
-                                placeholder="e.g. Wedding, Birthday"
-                              />
-                            </div>
-                            <div>
-                              <label className="input-label" htmlFor="festival-custom-type">Type</label>
-                              <select
-                                id="festival-custom-type" className="input" value={customType}
-                                onChange={(e) => setCustomType(e.target.value as 'feast' | 'fast')}
-                              >
-                                <option value="feast">Feast — I’ll be eating</option>
-                                <option value="fast">Fast — I’ll be fasting</option>
-                              </select>
-                            </div>
-                          </>
-                        )}
-                        <div>
-                          <label className="input-label" htmlFor="festival-date">Date</label>
-                          <input id="festival-date" type="date" className="input" value={festivalDate} onChange={(e) => setFestivalDate(e.target.value)} />
-                        </div>
-                        <div>
-                          <button type="button" className="btn-primary" onClick={activateFestival} style={{ width: '100%', padding: '0.6rem' }}>
-                            Activate
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
             <div className="glass-card" style={{ padding: '1.4rem' }}>
@@ -1597,6 +1450,17 @@ export default function DashboardPage() {
         )}
 
         {/* ── SHOPPING ──────────────────────────────────── */}
+        {activeTab === 'festival' && (
+          <div className="fade-in-up">
+            <FestivalMode
+              festivalMode={plan.festivalMode}
+              onActivate={activateFestival}
+              onClear={clearFestival}
+              onLogFood={logFestivalFood}
+            />
+          </div>
+        )}
+
         {activeTab === 'inventory' && (
           <div className="fade-in-up">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
