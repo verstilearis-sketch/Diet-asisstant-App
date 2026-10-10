@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { SavedPlan } from '@/lib/storage';
 import { computeAll } from '@/lib/calculations';
-import { SparklesIcon, LeafIcon, XIcon, SendIcon } from './icons';
+import { BotIcon, LeafIcon, XIcon, SendIcon } from './icons';
 import { authedFetch } from '@/lib/api-client';
 
 interface Message {
@@ -213,7 +213,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
   if (!isOpen) {
     return (
       <button className="hac-fab" onClick={() => setIsOpen(true)} aria-label="Open health coach chat">
-        <SparklesIcon size={22} />
+        <BotIcon size={24} />
       </button>
     );
   }
