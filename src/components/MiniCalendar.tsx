@@ -2,31 +2,43 @@
 
 import { useEffect, useState } from 'react';
 import { getLoggedDates, fetchDailyLog, type DailyLog } from '@/lib/storage';
-import { ChevronLeftIcon, ChevronRightIcon, FlameIcon } from '@/components/icons';
+import { FlameIcon, ChevronDownIcon } from '@/components/icons';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const toKey = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
 const MOOD_LABELS: Record<string, string> = { great: 'Great', good: 'Good', okay: 'Okay', bad: 'Rough' };
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const DOWS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function prettyDate(key: string): string {
   const [y, m, d] = key.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-/** Mini tracking calendar: dots on days with a saved log, tap a day to see its summary. */
+/** Monthly heatmap calendar: green-tinted cells on tracked days, tap a day for its summary. */
 export default function MiniCalendar({ userId }: { userId: string }) {
   const now = new Date();
   const todayKey = toKey(now.getFullYear(), now.getMonth(), now.getDate());
+  const curY = now.getFullYear();
+  const curM = now.getMonth();
 
-  const [viewY, setViewY] = useState(now.getFullYear());
-  const [viewM, setViewM] = useState(now.getMonth());
+  const [viewY, setViewY] = useState(curY);
+  const [viewM, setViewM] = useState(curM);
   const [logged, setLogged] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string>(todayKey);
   const [detail, setDetail] = useState<DailyLog | null | undefined>(undefined);
   const [streak, setStreak] = useState(0);
 
   const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
-  const firstDow = new Date(viewY, viewM, 1).getDay();
+  // Monday-first offset
+  const leadOffset = (new Date(viewY, viewM, 1).getDay() + 6) % 7;
+  const prevMonthDays = new Date(viewY, viewM, 0).getDate();
+  const leading = Array.from({ length: leadOffset }, (_, i) => prevMonthDays - leadOffset + 1 + i);
+  const trailingCount = (7 - ((leadOffset + daysInMonth) % 7)) % 7;
+  const trailing = Array.from({ length: trailingCount }, (_, i) => i + 1);
 
   // Logged days for the visible month
   useEffect(() => {
@@ -86,23 +98,18 @@ export default function MiniCalendar({ userId }: { userId: string }) {
     };
   }, [userId, selected]);
 
-  const monthLabel = new Date(viewY, viewM, 1).toLocaleDateString('en-IN', {
-    month: 'long',
-    year: 'numeric',
-  });
-  const atPresentMonth = viewY === now.getFullYear() && viewM === now.getMonth();
+  const atPresentMonth = viewY === curY && viewM === curM;
 
-  const goMonth = (dir: -1 | 1) => {
-    const d = new Date(viewY, viewM + dir, 1);
-    if (d.getTime() > now.getTime()) return; // no future months
-    setViewY(d.getFullYear());
-    setViewM(d.getMonth());
+  const pickMonth = (m: number) => {
+    // No future months
+    if (viewY === curY && m > curM) return;
+    setViewM(m);
   };
-
-  const cells: (number | null)[] = [
-    ...Array<null>(firstDow).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
+  const pickYear = (y: number) => {
+    setViewY(y);
+    if (y === curY && viewM > curM) setViewM(curM);
+  };
+  const yearOptions = Array.from({ length: 6 }, (_, i) => curY - 5 + i);
 
   return (
     <div>
@@ -116,27 +123,38 @@ export default function MiniCalendar({ userId }: { userId: string }) {
       </div>
 
       <div style={{ display: 'flex', gap: '1.75rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: '0 1 290px', minWidth: 250 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <button type="button" className="btn-ghost" onClick={() => goMonth(-1)} aria-label="Previous month" style={{ padding: '0.4rem' }}>
-              <ChevronLeftIcon size={16} />
-            </button>
-            <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{monthLabel}</span>
-            <button
-              type="button" className="btn-ghost" onClick={() => goMonth(1)} aria-label="Next month"
-              disabled={atPresentMonth} style={{ padding: '0.4rem', opacity: atPresentMonth ? 0.3 : 1 }}
-            >
-              <ChevronRightIcon size={16} />
-            </button>
+        <div style={{ flex: '0 1 300px', minWidth: 250 }}>
+          <div className="heat-cal-head">
+            <label className="heat-cal-select">
+              <span className="sr-only">Month</span>
+              <select value={viewM} onChange={(e) => pickMonth(Number(e.target.value))} aria-label="Month">
+                {MONTHS.map((name, i) => (
+                  <option key={name} value={i} disabled={viewY === curY && i > curM}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon size={14} />
+            </label>
+            <label className="heat-cal-select heat-cal-select-year">
+              <span className="sr-only">Year</span>
+              <select value={viewY} onChange={(e) => pickYear(Number(e.target.value))} aria-label="Year">
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <ChevronDownIcon size={14} />
+            </label>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.15rem', textAlign: 'center' }}>
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-              <span key={i} style={{ fontSize: '0.66rem', color: 'var(--color-faint)', fontWeight: 700, padding: '0.2rem 0' }}>
-                {d}
-              </span>
+
+          <div className="heat-cal">
+            {DOWS.map((d) => (
+              <span key={d} className="heat-cal-dow">{d}</span>
             ))}
-            {cells.map((day, i) => {
-              if (day === null) return <span key={`e${i}`} />;
+            {leading.map((day) => (
+              <span key={`p${day}`} className="heat-cal-day heat-cal-adj" aria-hidden="true">{day}</span>
+            ))}
+            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
               const key = toKey(viewY, viewM, day);
               const isFuture = key > todayKey;
               const isToday = key === todayKey;
@@ -149,44 +167,28 @@ export default function MiniCalendar({ userId }: { userId: string }) {
                   disabled={isFuture}
                   onClick={() => setSelected(key)}
                   aria-label={prettyDate(key)}
-                  style={{
-                    aspectRatio: '1',
-                    borderRadius: '0.55rem',
-                    border: 'none',
-                    cursor: isFuture ? 'default' : 'pointer',
-                    background: isSel ? 'var(--color-accent)' : 'transparent',
-                    color: isSel ? '#fff' : isFuture ? 'var(--color-faint)' : 'var(--color-text)',
-                    opacity: isFuture ? 0.35 : 1,
-                    fontSize: '0.78rem',
-                    fontWeight: isToday || isSel ? 750 : 500,
-                    position: 'relative',
-                    boxShadow: isToday && !isSel ? 'inset 0 0 0 1.5px var(--color-accent)' : 'none',
-                  }}
+                  className={[
+                    'heat-cal-day',
+                    isLogged ? 'heat-cal-logged' : '',
+                    isToday ? 'heat-cal-today' : '',
+                    isSel ? 'heat-cal-selected' : '',
+                    isFuture ? 'heat-cal-future' : '',
+                  ].join(' ')}
                 >
                   {day}
-                  {isLogged && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: 3,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: 5,
-                        height: 5,
-                        borderRadius: '50%',
-                        background: isSel ? '#fff' : 'var(--color-accent)',
-                      }}
-                    />
-                  )}
                 </button>
               );
             })}
+            {trailing.map((day) => (
+              <span key={`n${day}`} className="heat-cal-day heat-cal-adj" aria-hidden="true">{day}</span>
+            ))}
           </div>
+
           {!atPresentMonth && (
             <button
               type="button" className="btn-ghost"
-              onClick={() => { setViewY(now.getFullYear()); setViewM(now.getMonth()); }}
-              style={{ fontSize: '0.78rem', marginTop: '0.5rem', padding: '0.35rem 0.8rem' }}
+              onClick={() => { setViewY(curY); setViewM(curM); }}
+              style={{ fontSize: '0.78rem', marginTop: '0.6rem', padding: '0.35rem 0.8rem' }}
             >
               Back to this month
             </button>
