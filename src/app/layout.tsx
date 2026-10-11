@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   verification: {
     google: '_O3jFaMKeggtCMbXhQ7ba6OVyuCQzc-p0sU7ar0Zilo',
   },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

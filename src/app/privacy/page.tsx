@@ -77,6 +77,9 @@ export default function PrivacyPage() {
         <Link href="/" className="btn-secondary" style={{ display: 'inline-block', textDecoration: 'none', marginTop: '0.5rem' }}>
           Back to home
         </Link>
+        <p style={{ marginTop: '1.5rem', fontSize: '0.82rem', color: 'var(--color-muted)' }}>
+          Also see our <Link href="/terms" style={{ color: 'var(--color-text)', textDecoration: 'underline' }}>Terms of Service</Link>.
+        </p>
       </div>
     </div>
   );

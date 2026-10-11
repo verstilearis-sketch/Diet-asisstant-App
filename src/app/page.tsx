@@ -14,6 +14,7 @@ import { FloatingFoodHero } from '@/components/ui/hero-section-7';
 import { ContainerScroll } from '@/components/ui/container-scroll';
 import { ZaiqAppPreview } from '@/components/ui/zaiq-app-preview';
 import { useIsMobile } from '@/hooks/use-is-mobile';
+import { StickyMobileCTA } from '@/components/StickyMobileCTA';
 import { FAQS } from '@/data/info-pages';
 
 const FADED: React.CSSProperties = { filter: 'saturate(0.5)' }; // muted, not dull
@@ -244,6 +245,7 @@ export default function LandingPage() {
           For informational purposes only — not medical advice. © 2026 Zaiq.
         </p>
       </section>
+      <StickyMobileCTA />
     </div>
   );
 }

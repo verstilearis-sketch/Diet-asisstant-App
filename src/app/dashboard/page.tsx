@@ -20,6 +20,7 @@ import MiniCalendar from '@/components/MiniCalendar';
 import MoodCalendar from '@/components/MoodCalendar';
 import { LoadingScreen } from '@/components/ZaiqLoader';
 import { SignInHandoffLoader, isSignInHandoff, clearSignInHandoff } from '@/components/SignInHandoffLoader';
+import { WeeklyReport } from '@/components/WeeklyReport';
 import { DashboardShell } from '@/components/DashboardShell';
 import { HealthStatsCard } from '@/components/HealthStatsCard';
 import { BodyEnergyFlow } from '@/components/BodyEnergyFlow';
@@ -1040,6 +1041,13 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
+
+            <WeeklyReport
+              userId={savedPlan.userId}
+              targetKcal={dailyGoal}
+              waterGoal={calcs.waterLiters}
+              goal={profile.goal}
+            />
 
             <div className="glass-card" style={{ padding: '1.4rem', gridColumn: '1 / -1' }}>
               <h3 style={{ marginBottom: '0.9rem', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
