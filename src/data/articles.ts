@@ -19,7 +19,7 @@ export interface Article {
 export const ARTICLES: Article[] = [
   {
     slug: 'mifflin-st-jeor-equation-explained',
-    title: 'The Mifflin-St Jeor Equation, Explained in Plain English',
+    title: 'The Mifflin-St Jeor Equation',
     description:
       'What the Mifflin-St Jeor equation is, how to calculate your BMR with it, and why it beats every other formula for accuracy.',
     date: '2026-10-08',
