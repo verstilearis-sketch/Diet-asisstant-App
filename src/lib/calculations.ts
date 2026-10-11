@@ -34,8 +34,8 @@ export interface UserProfile {
   favoriteCuisine?: string;
   dietaryRestrictions?: string[];
   allergies?: string[];
-  /** Longest the user will spend cooking one meal, in minutes — the engine only picks meals within this. */
-  maxPrepTime?: number;
+  /** Foods the user avoids (comma-separated) — the plan steers clear of these. */
+  foodsToAvoid?: string;
   location?: string;
   budget?: BudgetTier;       // cost preference for meal planning
   cuisineMix?: CuisineMix;   // how much regional vs international food

@@ -42,12 +42,6 @@ const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string }[] =
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'High-protein', 'Low-carb', 'Keto', 'Gluten-free'];
 const ALLERGY_OPTIONS = ['Nuts', 'Shellfish', 'Dairy', 'Eggs', 'Soy', 'Wheat', 'Fish', 'Peanuts'];
 
-const COOKING_TIME_OPTIONS: { value: number | null; label: string; desc: string }[] = [
-  { value: 15, label: 'Quick & easy', desc: 'Meals in 15 minutes or less' },
-  { value: 30, label: 'Standard', desc: 'Up to 30 minutes of cooking' },
-  { value: null, label: 'No limit', desc: 'I enjoy cooking — anything goes' },
-];
-
 const BUDGET_OPTIONS: { value: BudgetTier; label: string; desc: string }[] = [
   { value: 'budget', label: 'Budget-friendly', desc: 'Everyday staples, easy on the wallet' },
   { value: 'moderate', label: 'Moderate', desc: 'Balanced cost and variety' },
@@ -596,19 +590,11 @@ export default function OnboardingPage() {
 
               <div>
                 <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
-                  Cooking time <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— how long will you cook per meal?</span>
+                  Foods you avoid <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— comma separated</span>
                 </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {COOKING_TIME_OPTIONS.map((c) => (
-                    <button key={c.label} type="button"
-                      className={`option-card ${(profile.maxPrepTime ?? null) === c.value ? 'selected' : ''}`}
-                      onClick={() => update('maxPrepTime', c.value)}
-                      style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{c.label}</span>
-                      <span style={{ fontSize: '0.76rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{c.desc}</span>
-                    </button>
-                  ))}
-                </div>
+                <input id="habit-avoid" className="input-field" style={{ marginBottom: 0 }}
+                  value={profile.foodsToAvoid || ''} onChange={(e) => update('foodsToAvoid', e.target.value)}
+                  placeholder="e.g. mushroom, bitter gourd, prawns" maxLength={200} />
               </div>
 
               <div>

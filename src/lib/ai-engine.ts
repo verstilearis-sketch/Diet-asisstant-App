@@ -1828,7 +1828,7 @@ export function planSeedFor(profile: UserProfile): number {
     profile.usualBreakfast ?? '', profile.usualLunch ?? '', profile.usualDinner ?? '',
     profile.favoriteFoods ?? '', profile.favoriteCuisine ?? '',
     (profile.dietaryRestrictions ?? []).join(','), (profile.allergies ?? []).join(','),
-    profile.maxPrepTime ?? '',
+    profile.foodsToAvoid ?? '',
     profile.location ?? '', profile.budget ?? '', profile.cuisineMix ?? '',
     profile.gender,
   ];
@@ -1969,11 +1969,9 @@ function pickSmart(
         const rIdx = recent[type].indexOf(f.name);
         if (rIdx >= 0) s -= (rIdx + 1) * 1.5;
       }
-      // Cooking-time preference (soft): over-limit meals lose points so quick
-      // meals win when available — but the pool never starves into repetition.
-      const maxPrep = profile.maxPrepTime ?? Infinity;
-      const mins = parseInt(f.prepTime, 10);
-      if (!isNaN(mins) && mins > maxPrep) s -= 1.2;
+      // Foods to avoid: steered clear of, same as learned dislikes.
+      const avoids = (profile.foodsToAvoid || '').split(',').map((x) => x.trim()).filter(Boolean);
+      if (avoids.length && tasteMatchesAny(f.name, avoids)) s -= 2;
       // Same-day dedup: never serve the same dish twice in one day, even
       // across different slots (no oat-bowl for lunch AND dinner).
       if (dayUsed?.has(f.name)) s -= 3;
@@ -2272,16 +2270,15 @@ export function getMealAlternatives(
     }
   }
   // Closest macros to the current meal win — the swap shouldn't break the day.
-  // Regional dishes sort first; cooking-time preference applies as a nudge.
-  const maxPrep = profile.maxPrepTime ?? Infinity;
+  // Regional dishes sort first; avoided foods sink to the bottom.
+  const avoids = (profile.foodsToAvoid || '').split(',').map((x) => x.trim()).filter(Boolean);
   const scored = candidates
     .map(({ f, regional }) => {
       const calErr = Math.abs(f.cal - current.calories) / Math.max(current.calories, 1);
       const proErr = Math.abs(f.protein - current.protein) / Math.max(current.protein, 1);
       let s = calErr * 0.6 + proErr * 0.4;
       if (!regional) s += 0.25;
-      const mins = parseInt(f.prepTime, 10);
-      if (!isNaN(mins) && mins > maxPrep) s += 0.3;
+      if (avoids.length && tasteMatchesAny(f.name, avoids)) s += 1;
       return { f, s };
     })
     .sort((a, b) => a.s - b.s);
