@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.zaiq.diet",
+      "sha256_cert_fingerprints": [
+        "17:00:86:E9:96:B2:77:93:0F:37:B7:BD:4B:4C:57:65:B7:3F:70:96:5A:1F:76:16:F7:A6:2D:88:C2:1D:4E:6A"
+      ]
+    }
+  }
+]
