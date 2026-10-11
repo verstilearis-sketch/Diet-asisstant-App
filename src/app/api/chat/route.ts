@@ -162,34 +162,21 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 
   const order = rotatedOrder(PRIMARY);
 
-  // Stream the first working provider's response straight to the client, so
-  // the user sees words appearing instead of staring at a spinner. If every
-  // provider fails, fall through to the offline JSON reply.
+  // Race all ready providers in parallel — the first one to yield a real
+  // token wins, the losers are aborted. This is dramatically faster than
+  // the old sequential chain when the preferred provider is slow or cold.
   const failures: string[] = [];
-  for (const provider of order) {
-    try {
-      const rawStream =
-        provider === 'groq'
-          ? await streamGroq(typedMessages, systemPrompt)
-          : provider === 'gemini'
-            ? await streamGemini(typedMessages, systemPrompt)
-            : await streamOpenRouter(typedMessages, systemPrompt);
-      // Never hand the client an empty stream — fail over instead.
-      const stream = await ensureFirstToken(rawStream, provider);
-      lastGoodProvider = provider;
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-        },
-      });
-    } catch (err) {
-      const reason = String(err && typeof err === 'object' && 'message' in err ? (err as Error).message : err).slice(0, 120);
-      failures.push(`${provider} (${reason})`);
-      if (/429|rate.?limit|quota|resource.?exhausted/i.test(reason)) {
-        markCooldown(provider);
-      }
-    }
+  try {
+    const { provider, stream } = await raceProviders(order, typedMessages, systemPrompt, failures);
+    lastGoodProvider = provider;
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+      },
+    });
+  } catch {
+    // All racers failed — failures[] already populated. Fall through.
   }
 
   console.error('Health coach: streaming providers failed —', failures.join('; '));
@@ -226,7 +213,69 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 // A tight timeout on the first token keeps a hanging provider from
 // stalling the whole conversation.
 
-const FIRST_TOKEN_TIMEOUT_MS = 5000;
+const FIRST_TOKEN_TIMEOUT_MS = 3000;
+
+/** Race providers in parallel: first real token wins, losers get aborted. */
+async function raceProviders(
+  providers: ProviderName[],
+  messages: IncomingMessage[],
+  systemPrompt: string,
+  failures: string[],
+): Promise<{ provider: ProviderName; stream: ReadableStream<Uint8Array> }> {
+  return await new Promise((resolve, reject) => {
+    const controllers = new Map<ProviderName, AbortController>();
+    let settled = 0;
+    let won = false;
+
+    const fail = (provider: ProviderName, err: unknown) => {
+      const reason = String(
+        err && typeof err === 'object' && 'message' in err ? (err as Error).message : err,
+      ).slice(0, 120);
+      // Aborted losers are expected — don't log them as failures.
+      if (!/abort/i.test(reason)) {
+        failures.push(`${provider} (${reason})`);
+        if (/429|rate.?limit|quota|resource.?exhausted/i.test(reason)) {
+          markCooldown(provider);
+        }
+      }
+      settled++;
+      if (settled === providers.length && !won) {
+        reject(new Error('all providers failed'));
+      }
+    };
+
+    for (const provider of providers) {
+      const controller = new AbortController();
+      controllers.set(provider, controller);
+      (async () => {
+        const rawStream =
+          provider === 'groq'
+            ? await streamGroq(messages, systemPrompt, controller.signal)
+            : provider === 'gemini'
+              ? await streamGemini(messages, systemPrompt)
+              : await streamOpenRouter(messages, systemPrompt, controller.signal);
+        // Never hand the client an empty stream — fail over instead.
+        const stream = await ensureFirstToken(rawStream, provider);
+        return { stream, controller };
+      })().then(({ stream, controller }) => {
+        if (won) {
+          controller.abort();
+          stream.cancel().catch(() => {});
+          return;
+        }
+        won = true;
+        for (const [p, c] of controllers) {
+          if (p !== provider) c.abort();
+        }
+        resolve({ provider, stream });
+      }).catch((err) => fail(provider, err));
+    }
+
+    if (providers.length === 0) {
+      reject(new Error('no providers available'));
+    }
+  });
+}
 
 async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -382,6 +431,7 @@ async function tryGroqModel(
   messages: IncomingMessage[],
   systemPrompt: string,
   model: string,
+  outerSignal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -396,7 +446,9 @@ async function tryGroqModel(
       max_tokens: 600,
       stream: true,
     }),
-    signal: AbortSignal.timeout(15000),
+    signal: outerSignal
+      ? AbortSignal.any([outerSignal, AbortSignal.timeout(15000)])
+      : AbortSignal.timeout(15000),
   });
   if (!res.ok) {
     const errText = (await res.text()).slice(0, 200);
@@ -409,13 +461,14 @@ async function tryGroqModel(
 async function streamGroq(
   messages: IncomingMessage[],
   systemPrompt: string,
+  outerSignal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error('GROQ_API_KEY not set');
 
   const firstTry = preferredGroqModel ?? GROQ_MODEL_PREFERENCE[0];
   try {
-    const stream = await tryGroqModel(apiKey, messages, systemPrompt, firstTry);
+    const stream = await tryGroqModel(apiKey, messages, systemPrompt, firstTry, outerSignal);
     preferredGroqModel = firstTry;
     return stream;
   } catch (err) {
@@ -534,6 +587,7 @@ async function tryOpenRouterModel(
   messages: IncomingMessage[],
   systemPrompt: string,
   model: string,
+  outerSignal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -545,7 +599,9 @@ async function tryOpenRouterModel(
       max_tokens: 600,
       stream: true,
     }),
-    signal: AbortSignal.timeout(15000),
+    signal: outerSignal
+      ? AbortSignal.any([outerSignal, AbortSignal.timeout(15000)])
+      : AbortSignal.timeout(15000),
   });
   if (!res.ok) {
     const errText = (await res.text()).slice(0, 200);
@@ -558,13 +614,14 @@ async function tryOpenRouterModel(
 async function streamOpenRouter(
   messages: IncomingMessage[],
   systemPrompt: string,
+  outerSignal?: AbortSignal,
 ): Promise<ReadableStream<Uint8Array>> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
 
   const firstTry = preferredOpenRouterModel ?? OPENROUTER_MODEL_PREFERENCE[0];
   try {
-    const stream = await tryOpenRouterModel(apiKey, messages, systemPrompt, firstTry);
+    const stream = await tryOpenRouterModel(apiKey, messages, systemPrompt, firstTry, outerSignal);
     preferredOpenRouterModel = firstTry;
     return stream;
   } catch (err) {

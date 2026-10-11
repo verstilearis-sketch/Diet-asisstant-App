@@ -7,14 +7,20 @@ import { getSession, signInWithGoogle } from '@/lib/storage';
 import { ZaiqIcon, AlertIcon, GoogleIcon } from '@/components/icons';
 import { LoadingScreen } from '@/components/ZaiqLoader';
 
+/** Bump this whenever the privacy policy changes — users will be asked to accept again. */
+const PRIVACY_VERSION = '2026-10-11';
+
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isSignup = searchParams.get('mode') === 'signup';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Privacy acceptance is versioned: once accepted, the checkbox never shows
+  // again — unless the policy itself is updated (bump PRIVACY_VERSION).
   const [agreed, setAgreed] = useState(false);
   const [needAgree, setNeedAgree] = useState(false);
+  const [showCheckbox, setShowCheckbox] = useState(true);
   // Ref guard: React state hasn't re-rendered yet during a rapid double-tap,
   // so `loading` alone can't stop two OAuth flows from starting.
   const redirecting = useRef(false);
@@ -24,6 +30,14 @@ function AuthForm() {
     getSession().then((session) => {
       if (session && !cancelled) router.replace('/dashboard');
     });
+    // Returning users who already accepted the current privacy policy
+    // go straight through — no checkbox again.
+    try {
+      if (localStorage.getItem('zaiq_privacy_accepted') === PRIVACY_VERSION) {
+        setAgreed(true);
+        setShowCheckbox(false);
+      }
+    } catch { /* private mode */ }
     return () => { cancelled = true; };
   }, [router]);
 
@@ -37,6 +51,7 @@ function AuthForm() {
     redirecting.current = true;
     setError('');
     setLoading(true);
+    try { localStorage.setItem('zaiq_privacy_accepted', PRIVACY_VERSION); } catch { /* private mode */ }
     const result = await signInWithGoogle();
     // Success means the browser is leaving for Google — keep the spinner
     // until navigation happens. Failure stays on this page with an error.
@@ -76,6 +91,7 @@ function AuthForm() {
           {loading ? 'Redirecting to Google…' : 'Continue with Google'}
         </button>
 
+        {showCheckbox && (
         <label className={'signin-agree' + (needAgree && !agreed ? ' signin-agree-needed' : '')}>
           <input
             type="checkbox"
@@ -90,6 +106,7 @@ function AuthForm() {
             .
           </span>
         </label>
+        )}
         {needAgree && !agreed && (
           <p className="signin-agree-hint">
             Please tick the box above first — one tap, then continue.

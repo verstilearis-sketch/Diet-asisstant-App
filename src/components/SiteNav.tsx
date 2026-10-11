@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ZaiqIcon } from '@/components/icons';
+import { ZaiqIcon, HomeIcon, InfoIcon, BlogIcon, ShieldIcon } from '@/components/icons';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 export interface NavLink {
   href: string;
@@ -17,33 +17,22 @@ const DEFAULT_LINKS: NavLink[] = [
   { href: '/privacy', label: 'Privacy Policy' },
 ];
 
-function MenuIcon({ open }: { open: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      {open ? (
-        <>
-          <line x1="4" y1="4" x2="16" y2="16" />
-          <line x1="16" y1="4" x2="4" y2="16" />
-        </>
-      ) : (
-        <>
-          <line x1="3" y1="6" x2="17" y2="6" />
-          <line x1="3" y1="10" x2="17" y2="10" />
-          <line x1="3" y1="14" x2="17" y2="14" />
-        </>
-      )}
-    </svg>
-  );
-}
+/** Icon for each nav destination — shown as small tabs on phones. */
+const LINK_ICONS: Record<string, (p: { size?: number }) => React.ReactNode> = {
+  '/': HomeIcon,
+  '/about': InfoIcon,
+  '/blog': BlogIcon,
+  '/privacy': ShieldIcon,
+};
 
 /**
  * Site header — full-width bar: brand + links on the left,
  * Sign in + Get Started on the right; hamburger drawer on phones.
  */
 export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
-  const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const isMobile = useIsMobile();
   // Warm the signup chunk on finger-down so the tap feels instant on phones.
   const warmAuth = () => router.prefetch('/auth?mode=signup');
 
@@ -63,41 +52,47 @@ export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
             <span className="brand-mark"><ZaiqIcon size={26} /></span>
             Zaiq
           </Link>
-          <div className="nav-links">
-            {links.map((l) => (
-              <Link key={l.href} href={l.href} className="nav-link">{l.label}</Link>
-            ))}
-          </div>
+          {!isMobile && (
+            <div className="nav-links">
+              {links.map((l) => (
+                <Link key={l.href} href={l.href} className="nav-link">{l.label}</Link>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="nav-right">
-          <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
-          <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth} className="nav-cta-solid">
-            Get Started
-          </Link>
-          <button
-            type="button"
-            className="nav-menu-btn"
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <MenuIcon open={open} />
-          </button>
-        </div>
-      </div>
-      {open && (
-        <div className="nav-menu-panel">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} className="nav-link nav-menu-link" onClick={() => setOpen(false)}>
-              {l.label}
+        {isMobile ? (
+          <div className="nav-icon-tabs" role="tablist" aria-label="Site sections">
+            {links.map((l) => {
+              const Icon = LINK_ICONS[l.href];
+              const active = pathname === l.href;
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  role="tab"
+                  aria-selected={active}
+                  aria-label={l.label}
+                  title={l.label}
+                  className={`nav-icon-tab ${active ? 'nav-icon-tab-active' : ''}`}
+                >
+                  {Icon ? <Icon size={19} /> : null}
+                </Link>
+              );
+            })}
+            <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth}
+              className="nav-cta-solid nav-cta-compact" aria-label="Get started">
+              Get Started
             </Link>
-          ))}
-          <div className="nav-menu-actions">
-            <Link href="/auth?mode=signin" className="btn-ghost" onClick={() => setOpen(false)}>Sign in</Link>
-            <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth} className="nav-cta-solid" onClick={() => setOpen(false)}>Get Started</Link>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="nav-right">
+            <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
+            <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth} className="nav-cta-solid">
+              Get Started
+            </Link>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }

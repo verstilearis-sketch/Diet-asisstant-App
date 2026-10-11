@@ -1469,3 +1469,35 @@ thead.sticky-header th {
 @media (prefers-reduced-motion: reduce) {
   .desk-nav-pill, .desk-icon-btn { transition: none; }
 }
+
+/* ── Mobile icon tabs (replaces the hamburger menu) ─────────────── */
+.nav-icon-tabs {
+  display: flex; align-items: center; gap: 0.15rem;
+}
+.nav-icon-tab {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 999px;
+  color: var(--color-muted); text-decoration: none;
+  transition: all 0.18s ease;
+}
+.nav-icon-tab:hover { background: var(--color-surface2); color: var(--color-text); }
+.nav-icon-tab-active {
+  background: var(--color-text); color: var(--color-bg);
+}
+.nav-cta-compact {
+  font-size: 0.8rem !important; padding: 0.55rem 0.95rem !important;
+  margin-left: 0.25rem; white-space: nowrap;
+}
+
+/* Mobile hero: keep text readable over floating images */
+@media (max-width: 899px) {
+  .floating-hero h1, .floating-hero p {
+    text-shadow: 0 1px 12px var(--color-bg), 0 0 24px var(--color-bg);
+  }
+}
+
+/* Energy rings: centered and properly sized on phones */
+@media (max-width: 640px) {
+  .energy-flow-wrap { justify-content: center; }
+  .energy-rings { width: 190px !important; height: 190px !important; margin: 0 auto; }
+}

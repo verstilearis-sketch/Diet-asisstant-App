@@ -1037,15 +1037,28 @@ export default function DashboardPage() {
             </div>
 
             <div className="glass-card" style={{ padding: '1.4rem', gridColumn: '1 / -1' }}>
-              <h3 style={{ marginBottom: '1rem', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <BulbIcon size={17} style={{ color: 'var(--color-accent)' }} /> Recommendations
+              <h3 style={{ marginBottom: '0.9rem', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BulbIcon size={17} style={{ color: 'var(--color-accent)' }} /> Top tips
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
-                {plan.tips.slice(0, 4).map((tip, i) => (
-                  <div key={i} style={{ padding: '0.9rem 1rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.75rem', fontSize: '0.86rem', color: 'var(--color-muted)', lineHeight: 1.6 }}>
-                    {tip.replace(/^[^\s]+\s/, '')}
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {plan.tips.slice(0, 3).map((tip, i) => {
+                  // Keep it to one punchy sentence.
+                  const short = tip.replace(/^[^\s]+\s/, '').split(/\. (?=[A-Z])/)[0].trim();
+                  const text = short.endsWith('.') ? short : short + '.';
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: '0.7rem', alignItems: 'flex-start', padding: '0.8rem 0.9rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: '0.75rem' }}>
+                      <span style={{
+                        width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                        background: 'var(--color-accent-soft)', color: 'var(--color-accent)',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.75rem', fontWeight: 800,
+                      }}>
+                        {i + 1}
+                      </span>
+                      <span style={{ fontSize: '0.87rem', lineHeight: 1.55 }}>{text}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             </div>

@@ -75,10 +75,11 @@ export function BodyEnergyFlow({ bmr, tdee, target, goalLabel }: BodyEnergyFlowP
       <p style={{ fontSize: '0.82rem', color: 'var(--color-muted)', margin: '0 0 1rem' }}>
         Your plan, visualized.
       </p>
-      <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="energy-flow-wrap" style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <svg
           viewBox="0 0 200 200" role="img" aria-label="Activity rings showing calorie burn breakdown"
-          style={{ width: 168, height: 'auto', flexShrink: 0, overflow: 'visible' }}
+          className="energy-rings"
+          style={{ width: 168, height: 168, flexShrink: 0, overflow: 'visible' }}
         >
           <defs>
             <linearGradient id="ring-amber" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -94,12 +95,14 @@ export function BodyEnergyFlow({ bmr, tdee, target, goalLabel }: BodyEnergyFlowP
           <Ring r={82} pct={pct(bmr)} gradientId="ring-amber" delay={0} />
           <Ring r={63} pct={pct(movement)} gradientId="ring-blue" delay={0.25} />
           <Ring r={44} pct={pct(target)} gradientId="ring-green" delay={0.5} />
-          <text x={100} y={96} textAnchor="middle" fill="var(--color-text)"
-            fontSize={21} fontWeight={800} style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <text x={100} y={98} textAnchor="middle" fill="var(--color-text)"
+            fontSize={24} fontWeight={800}
+            style={{ fontVariantNumeric: 'tabular-nums', fontFamily: "'SF Pro Display', -apple-system, 'Segoe UI', Inter, system-ui, sans-serif", letterSpacing: '-0.02em' }}>
             {fmt(tdee)}
           </text>
-          <text x={100} y={114} textAnchor="middle" fill="var(--color-muted)" fontSize={10.5}>
-            kcal burned daily
+          <text x={100} y={116} textAnchor="middle" fill="var(--color-muted)" fontSize={10}
+            style={{ fontFamily: "'SF Pro Text', -apple-system, 'Segoe UI', Inter, system-ui, sans-serif", letterSpacing: '0.08em', textTransform: 'uppercase' } as React.CSSProperties}>
+            kcal / day
           </text>
         </svg>
         <ol style={{ flex: 1, minWidth: 200, margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>

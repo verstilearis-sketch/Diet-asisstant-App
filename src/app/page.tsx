@@ -70,41 +70,25 @@ const HERO_IMAGES = [  {
   },
 ];
 
-// ── Mobile hero: food images spread top-to-bottom like desktop ──
+// ── Mobile hero: minimal — 3 small images pinned to corners, text stays clear ──
 const HERO_IMAGES_MOBILE = [
   {
     src: '/images/hero/salad-bowl.png',
     alt: 'A fresh salad bowl',
-    className: 'w-12 top-20 left-3 opacity-90',
+    className: 'w-14 top-16 left-2 opacity-60',
     style: FADED,
   },
   {
     src: '/images/hero/avocado.png',
     alt: 'Half an avocado',
-    className: 'w-11 top-[32%] right-3 opacity-90',
-    style: FADED,
-  },
-  {
-    src: '/images/hero/salmon.png',
-    alt: 'A grilled salmon fillet',
-    className: 'w-16 top-[48%] left-2 opacity-90',
+    className: 'w-12 top-16 right-2 opacity-60',
     style: FADED,
   },
   {
     src: '/images/hero/blueberries.png',
     alt: 'Fresh blueberries',
-    className: 'w-12 top-[60%] right-6 opacity-90',
+    className: 'w-12 bottom-16 left-1/2 -ml-6 opacity-60',
     style: FADED,
-  },
-  {
-    src: '/images/hero/tomato-slice.png',
-    alt: 'A slice of tomato',
-    className: 'w-8 top-[74%] left-8 opacity-90',
-  },
-  {
-    src: '/images/hero/blueberries.png',
-    alt: '',
-    className: 'w-3 top-[71%] left-[22%] opacity-90',
   },
 ];
 
@@ -182,26 +166,11 @@ export default function LandingPage() {
         </p>
       </FloatingFoodHero>
 
-      {/* ── Container scroll: the app, in 3D (desktop) / static preview (mobile) ── */}
-      {isMobile ? (
-        <section className="container" style={{ paddingTop: '1rem', paddingBottom: '2.5rem' }}>
-          <h2 style={{ fontSize: '1.7rem', fontWeight: 800, lineHeight: 1.15, letterSpacing: '-0.02em', textAlign: 'center', marginBottom: '0.6rem' }}>
-            Your body, <span style={{ color: 'var(--color-faint)' }}>computed.</span>
-          </h2>
-          <p style={{ color: 'var(--color-muted)', fontSize: '0.92rem', textAlign: 'center', marginBottom: '1.5rem', maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
-            Every meal, macro and number — computed from your body&apos;s math.
-          </p>
-          <div className="glass-card" style={{ padding: '0.6rem', overflow: 'hidden' }}>
-            <div style={{ height: 380, overflow: 'hidden', borderRadius: '0.9rem', border: '1px solid var(--color-border)' }}>
-              <ZaiqAppPreview />
-            </div>
-          </div>
-        </section>
-      ) : (
+      {/* ── Container scroll: the app, in 3D ── */}
       <ContainerScroll
         titleComponent={
           <>
-            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+            <h2 style={{ fontSize: 'clamp(1.7rem, 5vw, 3.5rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em' }}>
               Your body, <br />
               <span style={{ color: 'var(--color-faint)' }}>computed.</span>
             </h2>
@@ -214,7 +183,6 @@ export default function LandingPage() {
       >
         <ZaiqAppPreview />
       </ContainerScroll>
-      )}
 
       {/* ── Learn more ──────────────────────────────────── */}
       <section className="container" style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
@@ -224,7 +192,7 @@ export default function LandingPage() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.8rem', maxWidth: 900, margin: '0 auto' }}>
           {[
-            { href: '/numbers', title: 'How we hit your numbers', desc: 'BMI, BMR, TDEE and your target — the four equations, with the science cited.' },
+            { href: '/numbers', title: 'How we hit your numbers', desc: 'The exact method behind your calorie and macro targets — fully transparent.' },
             { href: '/how-it-works', title: 'How it works', desc: 'Four steps from sign-up to supper. No guesswork, no generic templates.' },
             { href: '/faq', title: 'FAQ', desc: 'Medical advice, accounts, allergies, food matching, data storage.' },
           ].map((c) => (
