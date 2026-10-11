@@ -39,8 +39,14 @@ const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string }[] =
   { value: 'very_active', label: 'Extremely active', desc: 'Physical job plus intense daily training' },
 ];
 
-const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Keto', 'Low-carb', 'Gluten-free', 'Dairy-free', 'Halal', 'Kosher', 'Paleo'];
+const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'High-protein', 'Low-carb', 'Keto', 'Gluten-free'];
 const ALLERGY_OPTIONS = ['Nuts', 'Shellfish', 'Dairy', 'Eggs', 'Soy', 'Wheat', 'Fish', 'Peanuts'];
+
+const COOKING_TIME_OPTIONS: { value: number | null; label: string; desc: string }[] = [
+  { value: 15, label: 'Quick & easy', desc: 'Meals in 15 minutes or less' },
+  { value: 30, label: 'Standard', desc: 'Up to 30 minutes of cooking' },
+  { value: null, label: 'No limit', desc: 'I enjoy cooking — anything goes' },
+];
 
 const BUDGET_OPTIONS: { value: BudgetTier; label: string; desc: string }[] = [
   { value: 'budget', label: 'Budget-friendly', desc: 'Everyday staples, easy on the wallet' },
@@ -573,7 +579,7 @@ export default function OnboardingPage() {
 
               <div>
                 <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
-                  Dietary restrictions <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— select all that apply</span>
+                  Diet preference <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— select all that apply</span>
                 </span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                   {DIETARY_OPTIONS.map((d) => {
@@ -585,6 +591,23 @@ export default function OnboardingPage() {
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              <div>
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
+                  Cooking time <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— how long will you cook per meal?</span>
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {COOKING_TIME_OPTIONS.map((c) => (
+                    <button key={c.label} type="button"
+                      className={`option-card ${(profile.maxPrepTime ?? null) === c.value ? 'selected' : ''}`}
+                      onClick={() => update('maxPrepTime', c.value)}
+                      style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{c.label}</span>
+                      <span style={{ fontSize: '0.76rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{c.desc}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
 

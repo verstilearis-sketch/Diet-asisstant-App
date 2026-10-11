@@ -1664,6 +1664,7 @@ function resolveRegion(region: string): string {
 function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
   const restrictions = (profile.dietaryRestrictions || []).map(r => r.toLowerCase());
   const allergies = (profile.allergies || []).map(a => a.toLowerCase());
+  const maxPrep = profile.maxPrepTime ?? Infinity;
 
   return foods.filter(f => {
     if (restrictions.includes('vegan') && !f.tags.includes('vegan')) return false;
@@ -1673,6 +1674,9 @@ function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
     if ((restrictions.includes('keto') || restrictions.includes('low-carb')) && f.carbs > 25) return false;
     if (restrictions.includes('gluten-free') && !f.tags.includes('gluten-free')) return false;
     if (restrictions.includes('high-protein') && !f.tags.includes('high-protein')) return false;
+    // Cooking time: skip meals that take longer than the user will cook.
+    const mins = parseInt(f.prepTime, 10);
+    if (!isNaN(mins) && mins > maxPrep) return false;
     for (const allergy of allergies) {
       if (f.name.toLowerCase().includes(allergy) || f.description.toLowerCase().includes(allergy)) return false;
     }
@@ -1735,6 +1739,7 @@ export function planSeedFor(profile: UserProfile): number {
     profile.usualBreakfast ?? '', profile.usualLunch ?? '', profile.usualDinner ?? '',
     profile.favoriteFoods ?? '', profile.favoriteCuisine ?? '',
     (profile.dietaryRestrictions ?? []).join(','), (profile.allergies ?? []).join(','),
+    profile.maxPrepTime ?? '',
     profile.location ?? '', profile.budget ?? '', profile.cuisineMix ?? '',
     profile.gender,
   ];

@@ -145,8 +145,19 @@ export default function LandingPage() {
     getSession().then((session) => {
       if (session && !cancelled) router.replace('/dashboard');
     });
-    return () => { cancelled = true; };
+    // Warm up the signup route early: its JS chunk is heavy (supabase),
+    // and on phones the tap-to-navigation delay is otherwise seconds.
+    const prefetchAuth = () => router.prefetch('/auth?mode=signup');
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(prefetchAuth, { timeout: 3000 });
+    } else {
+      setTimeout(prefetchAuth, 1500);
+    }
+    return () => { cancelled = true; }
   }, [router]);
+
+  // Extra head start: pointerdown fires ~100-300ms before the tap completes.
+  const warmAuth = () => router.prefetch('/auth?mode=signup');
 
   return (
     <div className="page-shell">
@@ -188,7 +199,7 @@ export default function LandingPage() {
         images={isMobile ? HERO_IMAGES_MOBILE : HERO_IMAGES}
         className={isMobile ? "min-h-[68svh] pt-24" : undefined}
       >
-        <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.1rem' }}>
+        <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth} className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.1rem' }}>
           Get started <ArrowRightIcon size={17} />
         </Link>
         <p style={{ fontSize: '0.82rem', color: 'var(--color-faint)', width: '100%' }}>
@@ -422,7 +433,7 @@ export default function LandingPage() {
           <p style={{ color: 'var(--color-muted)', marginBottom: '1.75rem', fontSize: '1rem' }}>
             Answer four short steps of questions and get a plan built on your body’s math.
           </p>
-          <Link href="/auth?mode=signup" className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.5rem' }}>
+          <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth} className="btn-primary" style={{ fontSize: '1rem', padding: '0.95rem 2.5rem' }}>
             Get started <ArrowRightIcon size={17} />
           </Link>
           <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', marginTop: '1.5rem', flexWrap: 'wrap' }}>

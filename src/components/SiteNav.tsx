@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ZaiqIcon } from '@/components/icons';
 
 export interface NavLink {
@@ -43,6 +43,9 @@ function MenuIcon({ open }: { open: boolean }) {
 export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  // Warm the signup chunk on finger-down so the tap feels instant on phones.
+  const warmAuth = () => router.prefetch('/auth?mode=signup');
 
   // Tapping the logo scrolls to top (replaces the old back-to-top button)
   const onLogoClick = (e: React.MouseEvent) => {
@@ -68,7 +71,7 @@ export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
         </div>
         <div className="nav-right">
           <Link href="/auth?mode=signin" className="btn-ghost nav-signin">Sign in</Link>
-          <Link href="/auth?mode=signup" className="nav-cta-solid">
+          <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth} className="nav-cta-solid">
             Get Started
           </Link>
           <button
@@ -91,7 +94,7 @@ export function SiteNav({ links = DEFAULT_LINKS }: { links?: NavLink[] }) {
           ))}
           <div className="nav-menu-actions">
             <Link href="/auth?mode=signin" className="btn-ghost" onClick={() => setOpen(false)}>Sign in</Link>
-            <Link href="/auth?mode=signup" className="nav-cta-solid" onClick={() => setOpen(false)}>Get Started</Link>
+            <Link href="/auth?mode=signup" prefetch={true} onPointerDown={warmAuth} className="nav-cta-solid" onClick={() => setOpen(false)}>Get Started</Link>
           </div>
         </div>
       )}
