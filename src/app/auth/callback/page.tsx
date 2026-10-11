@@ -14,6 +14,22 @@ import { LoadingScreen } from '@/components/ZaiqLoader';
 // /onboarding when they have no plan yet.
 // (The old Supabase-hosted ?code=… flow is kept as a fallback.)
 
+/** The one and only loading screen for sign-in — used both as the
+ *  Suspense fallback and by the handler, so the user never sees two
+ *  different spinners. */
+function FinishingSignInCard() {
+  return (
+    <div className="auth-wrap">
+      <div className="bg-orb bg-orb-1" />
+      <div className="bg-orb bg-orb-2" />
+      <div className="glass-card auth-card fade-in-up" style={{ textAlign: 'center' }}>
+        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><ZaiqIcon size={33} /></span>
+        <LoadingScreen title="Finishing Google sign-in…" subtitle="You're almost in — setting things up." />
+      </div>
+    </div>
+  );
+}
+
 function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -106,37 +122,35 @@ function CallbackHandler() {
     };
   }, [router, searchParams]);
 
-  return (
-    <div className="auth-wrap">
-      <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb bg-orb-2" />
-      <div className="glass-card auth-card fade-in-up" style={{ textAlign: 'center' }}>
-        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><ZaiqIcon size={33} /></span>
-        {error ? (
-          <>
-            <div className="error-box" style={{ textAlign: 'left', marginBottom: '1.25rem' }}>
-              <AlertIcon size={16} /> {error}
-            </div>
-            {debug && (
-              <p style={{ fontSize: '0.72rem', color: 'var(--color-faint)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '1.25rem', textAlign: 'left' }}>
-                Detail: {debug}
-              </p>
-            )}
-            <Link href="/auth" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
-              Back to sign in
-            </Link>
-          </>
-        ) : (
-          <LoadingScreen title="Finishing Google sign-in…" subtitle="You're almost in — setting things up." />
-        )}
+  if (error) {
+    return (
+      <div className="auth-wrap">
+        <div className="bg-orb bg-orb-1" />
+        <div className="bg-orb bg-orb-2" />
+        <div className="glass-card auth-card fade-in-up" style={{ textAlign: 'center' }}>
+          <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><ZaiqIcon size={33} /></span>
+          <div className="error-box" style={{ textAlign: 'left', marginBottom: '1.25rem' }}>
+            <AlertIcon size={16} /> {error}
+          </div>
+          {debug && (
+            <p style={{ fontSize: '0.72rem', color: 'var(--color-faint)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '1.25rem', textAlign: 'left' }}>
+              Detail: {debug}
+            </p>
+          )}
+          <Link href="/auth" className="btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
+            Back to sign in
+          </Link>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <FinishingSignInCard />;
 }
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense fallback={<FinishingSignInCard />}>
       <CallbackHandler />
     </Suspense>
   );
