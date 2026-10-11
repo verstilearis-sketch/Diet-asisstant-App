@@ -154,7 +154,7 @@ export const FESTIVALS: Festival[] = [
     id: 'karva-chauth',
     name: 'Karva Chauth',
     type: 'fast',
-    defaultDate: '2026-10-28',
+    defaultDate: '2026-10-29',
     blurb: 'A day-long fast — sargi before sunrise decides how the day feels.',
     tips: [
       'Sargi is everything: protein + slow carbs + lots of water before sunrise.',
@@ -334,7 +334,7 @@ export const FESTIVALS: Festival[] = [
     id: 'navratri',
     name: 'Navratri',
     type: 'fast',
-    defaultDate: '2026-10-10',
+    defaultDate: '2026-10-11',
     blurb: 'Nine nights of fasting — vrat-friendly eating that still hits your targets.',
     tips: [
       'Fasting rules vary by family — follow yours first, this plan adapts around it.',
