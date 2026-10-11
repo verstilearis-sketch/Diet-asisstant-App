@@ -14,9 +14,9 @@ import { FloatingFoodHero } from '@/components/ui/hero-section-7';
 import { ContainerScroll } from '@/components/ui/container-scroll';
 import { ZaiqAppPreview } from '@/components/ui/zaiq-app-preview';
 import { useIsMobile } from '@/hooks/use-is-mobile';
-import { FAQS, FORMULAS } from '@/data/info-pages';
+import { FAQS } from '@/data/info-pages';
 
-const FADED: React.CSSProperties = { filter: 'saturate(0.1)' }; // 90% less saturation
+const FADED: React.CSSProperties = { filter: 'saturate(0.5)' }; // muted, not dull
 
 const HERO_IMAGES = [  {
     src: '/images/hero/salad-bowl.png',
@@ -108,9 +108,6 @@ const HERO_IMAGES_MOBILE = [
   },
 ];
 
-// Hero shows only the Target card — BMI/BMR/TDEE live in "How we hit your numbers".
-const HERO_FORMULAS = FORMULAS.filter((f) => f.name === 'Target');
-
 // ── The math the app actually uses (src/lib/calculations.ts) ──
 
 
@@ -183,48 +180,6 @@ export default function LandingPage() {
         <p style={{ fontSize: '0.82rem', color: 'var(--color-faint)', width: '100%' }}>
           Free · 2-minute setup · No credit card
         </p>
-        {/* The math — horizontally scrollable strip (desktop) / stacked cards (mobile) */}
-        <div style={{ width: '100%', marginTop: '1.75rem' }}>
-          {isMobile ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', textAlign: 'left' }}>
-            {HERO_FORMULAS.map((f) => (
-              <div key={f.name} style={{
-                display: 'flex', alignItems: 'baseline', gap: '0.8rem',
-                padding: '0.8rem 1rem',
-                background: 'color-mix(in srgb, var(--color-surface) 72%, transparent)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '0.85rem',
-              }}>
-                <div className="mono" style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '0.1em', flex: '0 0 52px' }}>{f.name}</div>
-                <div className="mono" style={{ fontSize: '0.8rem', lineHeight: 1.5, color: 'var(--color-text)', overflowWrap: 'anywhere' }}>{f.formula}</div>
-              </div>
-            ))}
-          </div>
-          ) : (
-          <div className="math-strip" style={{
-            display: 'flex', gap: '0.7rem',
-            overflowX: 'auto', paddingBottom: '0.4rem',
-            scrollSnapType: 'x mandatory',
-          }}>
-            {HERO_FORMULAS.map((f) => (
-              <div key={f.name} style={{
-                flex: '0 0 auto', scrollSnapAlign: 'start',
-                width: 230,
-                padding: '0.95rem 1.05rem',
-                background: 'color-mix(in srgb, var(--color-surface) 72%, transparent)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '1rem',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                textAlign: 'left',
-              }}>
-                <div className="mono" style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-accent)', marginBottom: '0.35rem', letterSpacing: '0.1em' }}>{f.name}</div>
-                <div className="mono" style={{ fontSize: '0.83rem', lineHeight: 1.55, color: 'var(--color-text)' }}>{f.formula}</div>
-              </div>
-            ))}
-          </div>
-          )}
-        </div>
       </FloatingFoodHero>
 
       {/* ── Container scroll: the app, in 3D (desktop) / static preview (mobile) ── */}
