@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSession, savePlan } from '@/lib/storage';
 import { computeAll, calculateBMI, getBMICategory } from '@/lib/calculations';
@@ -85,6 +85,40 @@ export default function OnboardingPage() {
   const [generating, setGenerating] = useState(false);
   const [userId, setUserId] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [estimatingBodyType, setEstimatingBodyType] = useState(false);
+  const [aiEstimatedBodyType, setAiEstimatedBodyType] = useState(false);
+  const estimateSeq = useRef(0);
+
+  // AI body-type estimate from the uploaded photo — pre-selects the closest
+  // figure. The user always confirms or changes it; failures stay silent.
+  const estimateBodyType = async (photoDataUrl: string | undefined) => {
+    if (!photoDataUrl || typeof photoDataUrl !== 'string' || !photoDataUrl.startsWith('data:image/')) return;
+    const seq = ++estimateSeq.current;
+    setEstimatingBodyType(true);
+    setAiEstimatedBodyType(false);
+    try {
+      const base64 = photoDataUrl.includes(',') ? photoDataUrl.split(',').pop()! : photoDataUrl;
+      const mimeType = photoDataUrl.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+      const res = await fetch('/api/estimate-body-type', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mimeType }),
+        signal: AbortSignal.timeout(40000),
+      });
+      if (seq !== estimateSeq.current) return; // a newer photo superseded this
+      if (!res.ok) return;
+      const data = await res.json();
+      const t = data?.bodyType;
+      if (['lean', 'athletic', 'average', 'soft', 'plus'].includes(t)) {
+        setProfile((p) => ({ ...p, bodyType: t }));
+        setAiEstimatedBodyType(true);
+      }
+    } catch {
+      /* silent — manual selection still works */
+    } finally {
+      if (seq === estimateSeq.current) setEstimatingBodyType(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -334,7 +368,11 @@ export default function OnboardingPage() {
                 <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
                   Your photo
                 </span>
-                <PhotoUpload value={profile.photoUrl} onChange={(v) => update('photoUrl', v)} />
+                <PhotoUpload value={profile.photoUrl} onChange={(v) => { update('photoUrl', v); estimateBodyType(v); }} />
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: '0.5rem', lineHeight: 1.5 }}>
+                  If you upload a photo, the AI will estimate your body type from it and pre-select
+                  the closest figure below — you confirm or change it. It&apos;s an estimate, not a measurement.
+                </p>
               </div>
 
               <div>
@@ -344,8 +382,19 @@ export default function OnboardingPage() {
                 <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '0.9rem', lineHeight: 1.6 }}>
                   This refines your calorie math — the figure maps to an estimated body-fat percentage,
                   which tunes your BMR beyond height and weight alone.
+                  {estimatingBodyType && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.5rem', color: 'var(--color-accent)', fontWeight: 600 }}>
+                      <span className="spinner" style={{ width: 12, height: 12, borderWidth: 2 }} />
+                      Analyzing your photo…
+                    </span>
+                  )}
+                  {!estimatingBodyType && aiEstimatedBodyType && (
+                    <span style={{ display: 'block', marginTop: '0.4rem', color: 'var(--color-accent)', fontWeight: 600 }}>
+                      ✨ AI estimate from your photo — confirm it or pick a different figure.
+                    </span>
+                  )}
                 </p>
-                <BodyTypePicker value={profile.bodyType} gender={profile.gender} onChange={(v) => update('bodyType', v)} />
+                <BodyTypePicker value={profile.bodyType} gender={profile.gender} onChange={(v) => { setAiEstimatedBodyType(false); update('bodyType', v); }} />
               </div>
 
               <div>

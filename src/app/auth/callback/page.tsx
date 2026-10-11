@@ -3,7 +3,8 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { getSupabase } from '@/lib/supabase';
+// NOTE: '@/lib/supabase' is lazy-loaded inside the effect so this page's
+// "Finishing Google sign-in…" paints instantly on phones.
 import { ZaiqIcon, AlertIcon } from '@/components/icons';
 import { SignInHandoffLoader, markSignInHandoff } from '@/components/SignInHandoffLoader';
 
@@ -30,6 +31,8 @@ function CallbackHandler() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Supabase loads in the background — the loader above is already painted.
+      const { getSupabase } = await import('@/lib/supabase');
       const sb = getSupabase();
       const errDesc = searchParams.get('error_description') || searchParams.get('error');
       const debugUrl = () => {

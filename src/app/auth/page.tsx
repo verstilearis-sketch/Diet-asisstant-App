@@ -53,13 +53,31 @@ function AuthForm() {
     if (redirecting.current) return;
     redirecting.current = true;
     setError('');
-    setLoading(true); // instant feedback — the auth chunk loads behind this
+    setLoading(true); // instant feedback
     try { localStorage.setItem('zaiq_privacy_accepted', PRIVACY_VERSION); } catch { /* private mode */ }
+    // Direct Google OAuth: just build the URL and go — no heavy libraries,
+    // no waiting. The tap redirects instantly.
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (clientId) {
+      const redirectUri = `${window.location.origin}/api/auth/google/callback`;
+      const state = [...crypto.getRandomValues(new Uint8Array(16))]
+        .map((b) => b.toString(16).padStart(2, '0')).join('');
+      document.cookie = `zaiq_oauth_state=${encodeURIComponent(state)}; path=/; max-age=600; SameSite=Lax`;
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope: 'openid email profile',
+        state,
+        prompt: 'select_account',
+      });
+      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+      return; // the browser is leaving for Google — nothing more to do
+    }
+    // Fallback (no client ID configured): needs supabase — lazy-load only here.
     try {
       const { signInWithGoogle } = await import('@/lib/storage');
       const result = await signInWithGoogle();
-      // Success means the browser is leaving for Google — keep the spinner
-      // until navigation happens. Failure stays on this page with an error.
       if (!result.success) {
         setError(result.error || 'Google sign-in failed. Please try again.');
         setLoading(false);
