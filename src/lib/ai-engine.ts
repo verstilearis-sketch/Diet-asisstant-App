@@ -174,6 +174,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Besan Chilla & Chutney', emoji: '🥞', cal: 260, protein: 14, carbs: 32, fat: 8, prepTime: '15 min', description: 'Chickpea flour pancakes with ginger, green chili, and coriander chutney', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Upma', emoji: '🫙', cal: 290, protein: 7, carbs: 48, fat: 8, prepTime: '15 min', description: 'Savory semolina cooked with vegetables, curry leaves, and mustard seeds', tags: ['vegetarian'] },
       { name: 'Bread Omelette (Brown Bread)', emoji: '🍳', cal: 320, protein: 18, carbs: 28, fat: 14, prepTime: '10 min', description: 'Fluffy egg omelette with onion, tomato, and green chili on whole grain bread', tags: ['high-protein'] },
+      { name: 'Suji Cheela & Dahi', emoji: '🥞', cal: 270, protein: 12, carbs: 38, fat: 7, prepTime: '15 min', description: 'Semolina pancakes with veggies, served with low-fat curd', tags: ['vegetarian'] },
+      { name: 'Paneer Bhurji & Toast', emoji: '🍳', cal: 330, protein: 22, carbs: 26, fat: 15, prepTime: '15 min', description: 'Crumbled spiced paneer on whole wheat toast', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Aloo Gobi Paratha', emoji: '🫓', cal: 360, protein: 10, carbs: 54, fat: 12, prepTime: '25 min', description: 'Potato-cauliflower stuffed flatbread with white butter', tags: ['vegetarian'] },
+      { name: 'Oats Chilla', emoji: '🥞', cal: 250, protein: 12, carbs: 34, fat: 7, prepTime: '15 min', description: 'Oats and besan pancakes with veggies — high fiber start', tags: ['vegetarian', 'high-protein'] },
     ],
     lunch: [
       { name: 'Dal Makhani & Roti', emoji: '🫘', cal: 450, protein: 18, carbs: 62, fat: 14, prepTime: '40 min', description: 'Slow-cooked black lentils with butter and cream, served with whole wheat roti', tags: ['vegetarian'] },
@@ -183,6 +187,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Sarson Ka Saag & Makki Roti', emoji: '🌿', cal: 420, protein: 14, carbs: 52, fat: 16, prepTime: '45 min', description: 'Punjabi mustard greens with corn flatbread and dollop of white butter', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Butter Chicken & Rice', emoji: '🍗', cal: 510, protein: 36, carbs: 48, fat: 18, prepTime: '40 min', description: 'Tender chicken in velvety tomato-cream sauce with basmati rice', tags: ['high-protein', 'gluten-free'] },
       { name: 'Kadhi Pakora & Rice', emoji: '🍲', cal: 440, protein: 12, carbs: 65, fat: 14, prepTime: '35 min', description: 'Yogurt-based tangy curry with crispy besan dumplings and rice', tags: ['vegetarian'] },
+      { name: 'Amritsari Fish & Rice', emoji: '🐟', cal: 500, protein: 36, carbs: 44, fat: 18, prepTime: '35 min', description: 'Ajwain-battered fish, tawa-fried light, with steamed rice', tags: ['high-protein'] },
+      { name: 'Dal Fry & Tandoori Roti', emoji: '🫘', cal: 430, protein: 17, carbs: 60, fat: 12, prepTime: '30 min', description: 'Arhar dal with ghee-garlic tadka and tandoori roti', tags: ['vegetarian'] },
+      { name: 'Soya Chaap & Rice', emoji: '🍢', cal: 470, protein: 28, carbs: 52, fat: 14, prepTime: '30 min', description: 'Tandoori soya chaap in onion-capsicum masala with rice', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Kala Chana & Rice', emoji: '🫘', cal: 450, protein: 19, carbs: 66, fat: 10, prepTime: '35 min', description: 'Black chickpea curry with anardana tang and basmati rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     dinner: [
       { name: 'Dal Tadka & Jeera Rice', emoji: '🍛', cal: 420, protein: 16, carbs: 65, fat: 10, prepTime: '30 min', description: 'Yellow lentils tempered with cumin, mustard, and garlic with aromatic cumin rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
@@ -191,12 +199,20 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Mixed Veg Subzi & Phulka', emoji: '🥕', cal: 360, protein: 10, carbs: 54, fat: 12, prepTime: '25 min', description: 'Seasonal vegetables stir-fried with cumin, coriander and served with thin roti', tags: ['vegetarian', 'vegan'] },
       { name: 'Keema Matar & Paratha', emoji: '🥩', cal: 490, protein: 34, carbs: 44, fat: 20, prepTime: '35 min', description: 'Spiced minced lamb with green peas served with whole wheat paratha', tags: ['high-protein'] },
       { name: 'Khichdi & Papad', emoji: '🍲', cal: 360, protein: 14, carbs: 58, fat: 8, prepTime: '25 min', description: 'Comforting rice-lentil porridge with ghee, cumin, and papad on the side', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Shahi Paneer & Naan (1)', emoji: '🧀', cal: 470, protein: 20, carbs: 46, fat: 23, prepTime: '30 min', description: 'Royal paneer in cashew-melon seed gravy with one tandoori naan', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Tandoori Chicken & Salad', emoji: '🍗', cal: 380, protein: 42, carbs: 12, fat: 16, prepTime: '30 min', description: 'Char-grilled tandoori chicken with onion-cucumber salad', tags: ['high-protein', 'low-carb', 'gluten-free'] },
+      { name: 'Baingan Bharta & Roti', emoji: '🍆', cal: 340, protein: 9, carbs: 48, fat: 13, prepTime: '30 min', description: 'Smoky mashed eggplant with peas and tomato, whole wheat roti', tags: ['vegetarian', 'vegan'] },
+      { name: 'Egg Curry & Rice', emoji: '🍳', cal: 430, protein: 22, carbs: 50, fat: 15, prepTime: '25 min', description: 'Dhaba-style egg curry in onion-tomato gravy with rice', tags: ['high-protein', 'gluten-free'] },
     ],
     snack: [
       { name: 'Sprouts Chaat', emoji: '🌱', cal: 140, protein: 8, carbs: 22, fat: 2, prepTime: '5 min', description: 'Mixed sprouted moong & chana with lemon, chaat masala, onion, tomato', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
       { name: 'Roasted Chana', emoji: '🫘', cal: 160, protein: 10, carbs: 24, fat: 3, prepTime: '0 min', description: 'Crunchy roasted chickpeas with black salt and chili — high protein', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
       { name: 'Makhana (Fox Nuts) Bowl', emoji: '⚪', cal: 120, protein: 4, carbs: 20, fat: 2, prepTime: '5 min', description: 'Roasted fox nuts with ghee, black pepper, and rock salt', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Dahi with Gud (Jaggery)', emoji: '🍮', cal: 150, protein: 8, carbs: 22, fat: 3, prepTime: '2 min', description: 'Fresh curd topped with a small piece of jaggery — probiotic-rich', tags: ['vegetarian'] },
+      { name: 'Paneer Tikka Skewers (4)', emoji: '🧀', cal: 180, protein: 16, carbs: 8, fat: 10, prepTime: '15 min', description: 'Tandoori-spiced paneer cubes with capsicum — mini protein snack', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Masala Papad (2)', emoji: '🫓', cal: 90, protein: 3, carbs: 16, fat: 2, prepTime: '5 min', description: 'Roasted papad topped with onion, tomato and chaat masala', tags: ['vegetarian', 'vegan'] },
+      { name: 'Boiled Egg Chaat (2)', emoji: '🥚', cal: 160, protein: 13, carbs: 4, fat: 10, prepTime: '10 min', description: 'Sliced boiled eggs with chaat masala, lemon and onion', tags: ['high-protein', 'gluten-free', 'low-carb'] },
+      { name: 'Chana Jor Garam', emoji: '🫘', cal: 130, protein: 7, carbs: 20, fat: 3, prepTime: '0 min', description: 'Flattened roasted chickpea snack with onion and lemon', tags: ['vegetarian', 'vegan'] },
     ],
   },
 
@@ -209,6 +225,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Uttapam with Coconut Chutney', emoji: '🥞', cal: 320, protein: 9, carbs: 52, fat: 8, prepTime: '15 min', description: 'Thick rice pancake topped with onion, tomato, and green chili', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Puttu & Kadala Curry', emoji: '🫛', cal: 360, protein: 14, carbs: 58, fat: 8, prepTime: '25 min', description: 'Steamed rice cylinders with black chickpea curry — Kerala breakfast', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Egg Dosa & Sambar', emoji: '🍳', cal: 340, protein: 16, carbs: 48, fat: 10, prepTime: '15 min', description: 'Crispy dosa with egg cooked on top, served with hot sambar', tags: ['gluten-free'] },
+      { name: 'Ragi Mudde & Sambar', emoji: '🟤', cal: 320, protein: 10, carbs: 58, fat: 6, prepTime: '20 min', description: 'Finger-millet balls with drumstick sambar — Karnataka power breakfast', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Medu Vada (2) & Chutney', emoji: '🍩', cal: 300, protein: 10, carbs: 38, fat: 12, prepTime: '20 min', description: 'Crisp urad-dal doughnuts with coconut chutney', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kollu Rasam & Rice (small)', emoji: '🍜', cal: 280, protein: 12, carbs: 46, fat: 5, prepTime: '20 min', description: 'Horse-gram pepper rasam — Tamil weight-loss classic', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Adai Dosa & Avial', emoji: '🥞', cal: 360, protein: 14, carbs: 54, fat: 10, prepTime: '20 min', description: 'Protein-rich mixed-lentil dosa with coconut veg curry', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
     ],
     lunch: [
       { name: 'Sambar Rice & Papad', emoji: '🍛', cal: 420, protein: 14, carbs: 68, fat: 8, prepTime: '30 min', description: 'Flavorful lentil-vegetable sambar mixed into hot rice with crispy papad', tags: ['vegetarian', 'vegan', 'gluten-free'] },
@@ -217,6 +237,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Bisi Bele Bath', emoji: '🍲', cal: 450, protein: 14, carbs: 68, fat: 12, prepTime: '40 min', description: 'Karnataka\'s hot rice-lentil-vegetable stew with ghee and boondi', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Chicken Chettinad & Parotta', emoji: '🍗', cal: 520, protein: 38, carbs: 52, fat: 18, prepTime: '45 min', description: 'Bold, aromatic Chettinad pepper chicken with layered Kerala parotta', tags: ['high-protein'] },
       { name: 'Rasam Rice & Fry', emoji: '🍜', cal: 380, protein: 10, carbs: 62, fat: 8, prepTime: '25 min', description: 'Peppery tamarind rasam with steamed rice and stir-fried vegetables', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Avial & Matta Rice', emoji: '🥥', cal: 430, protein: 11, carbs: 64, fat: 14, prepTime: '30 min', description: 'Kerala mixed-veg coconut curry with red matta rice', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Mutton Kuzhambu & Rice', emoji: '🍖', cal: 540, protein: 34, carbs: 50, fat: 22, prepTime: '40 min', description: 'Tamil-style mutton curry with shallots and stone-flower spice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Keerai Masiyal & Rice', emoji: '🥬', cal: 370, protein: 12, carbs: 58, fat: 10, prepTime: '25 min', description: 'Mashed spinach-dal with garlic tempering and steamed rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Lemon Rice & Vada', emoji: '🍋', cal: 400, protein: 9, carbs: 62, fat: 12, prepTime: '20 min', description: 'Tangy turmeric lemon rice with one medu vada', tags: ['vegetarian', 'vegan'] },
     ],
     dinner: [
       { name: 'Kootu & Chapati', emoji: '🥬', cal: 380, protein: 14, carbs: 54, fat: 12, prepTime: '30 min', description: 'Lentil and vegetable stew in coconut base with whole wheat chapati', tags: ['vegetarian', 'vegan'] },
@@ -224,12 +248,20 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Prawn Masala & Rice', emoji: '🦐', cal: 460, protein: 38, carbs: 46, fat: 14, prepTime: '30 min', description: 'Coastal prawn curry in onion-tomato base with basmati rice', tags: ['high-protein', 'gluten-free'] },
       { name: 'Vegetable Biryani (Hyderbadi)', emoji: '🍚', cal: 440, protein: 12, carbs: 68, fat: 14, prepTime: '45 min', description: 'Fragrant Hyderabadi-style vegetable dum biryani with raita', tags: ['vegetarian'] },
       { name: 'Pesarattu & Upma', emoji: '🥞', cal: 360, protein: 14, carbs: 54, fat: 8, prepTime: '25 min', description: 'Andhra green moong crepes with upma filling — high protein', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Chicken Biryani (Hyderbadi)', emoji: '🍚', cal: 560, protein: 36, carbs: 62, fat: 18, prepTime: '50 min', description: 'Dum-cooked Hyderabadi chicken biryani with mirchi ka salan', tags: ['high-protein'] },
+      { name: 'Idiyappam & Coconut Milk', emoji: '🍝', cal: 340, protein: 8, carbs: 58, fat: 10, prepTime: '25 min', description: 'Steamed rice-flour string hoppers with sweetened coconut milk', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Vatha Kuzhambu & Rice', emoji: '🍆', cal: 390, protein: 10, carbs: 60, fat: 11, prepTime: '25 min', description: 'Tamarind curry with sundried turkey-berry and steamed rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Egg Korma & Parotta', emoji: '🍳', cal: 450, protein: 22, carbs: 44, fat: 20, prepTime: '30 min', description: 'Eggs in coconut-cashew korma with flaky parotta', tags: ['high-protein'] },
     ],
     snack: [
       { name: 'Sundal (Chickpea)', emoji: '🫘', cal: 150, protein: 8, carbs: 22, fat: 3, prepTime: '10 min', description: 'Boiled chickpeas tempered with coconut, curry leaves, and mustard', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
       { name: 'Banana Chips (Nendran)', emoji: '🍌', cal: 160, protein: 1, carbs: 24, fat: 7, prepTime: '0 min', description: 'Thin-sliced raw Kerala banana chips fried in coconut oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Murukku (1 serving)', emoji: '🌀', cal: 130, protein: 3, carbs: 18, fat: 6, prepTime: '0 min', description: 'Crispy spiral rice-lentil snack — a South Indian staple', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Tamarind Rice (small)', emoji: '🍚', cal: 180, protein: 3, carbs: 32, fat: 5, prepTime: '10 min', description: 'Tangy temple-style tamarind rice with groundnuts and curry leaves', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kozhukattai (2)', emoji: '🥟', cal: 160, protein: 4, carbs: 30, fat: 4, prepTime: '20 min', description: 'Steamed rice dumplings with coconut-jaggery filling', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Thattai (3)', emoji: '🫓', cal: 140, protein: 3, carbs: 20, fat: 6, prepTime: '0 min', description: 'Crisp rice-flour crackers with peanuts — Tamil tea-time', tags: ['vegetarian', 'vegan'] },
+      { name: 'Pazham Pori (2)', emoji: '🍌', cal: 170, protein: 2, carbs: 30, fat: 6, prepTime: '15 min', description: 'Kerala banana fritters — crisp outside, soft inside', tags: ['vegetarian'] },
+      { name: 'Buttermilk & Curry Leaf', emoji: '🥛', cal: 60, protein: 4, carbs: 8, fat: 1, prepTime: '5 min', description: 'Spiced neer mor with ginger, green chili and curry leaves', tags: ['vegetarian', 'gluten-free'] },
     ],
   },
 
@@ -241,6 +273,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Pav Bhaji (Healthy)', emoji: '🥖', cal: 420, protein: 12, carbs: 65, fat: 14, prepTime: '30 min', description: 'Mashed vegetable bhaji with whole wheat pav and a squeeze of lemon', tags: ['vegetarian'] },
       { name: 'Batata Vada & Chutney', emoji: '🟠', cal: 300, protein: 6, carbs: 46, fat: 10, prepTime: '20 min', description: 'Spiced potato ball in chickpea batter with green chutney', tags: ['vegetarian', 'vegan'] },
       { name: 'Khaman & Chutney', emoji: '🟡', cal: 240, protein: 9, carbs: 35, fat: 5, prepTime: '25 min', description: 'Soft steamed chickpea flour cake with mustard seeds and coconut', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Handvo Slice & Chutney', emoji: '🍰', cal: 280, protein: 10, carbs: 38, fat: 10, prepTime: '30 min', description: 'Baked Gujarati lentil-rice cake with sesame crust', tags: ['vegetarian'] },
+      { name: 'Moong Dal Sheera', emoji: '🍮', cal: 320, protein: 12, carbs: 48, fat: 9, prepTime: '25 min', description: 'Protein-rich moong dal halwa, light on ghee', tags: ['vegetarian', 'high-protein'] },
+      { name: 'Sabudana Khichdi', emoji: '⚪', cal: 300, protein: 5, carbs: 52, fat: 9, prepTime: '20 min', description: 'Tapioca pearls with peanuts, potato and cumin — Maharashtrian classic', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Ghavan & Chutney', emoji: '🥞', cal: 250, protein: 6, carbs: 42, fat: 7, prepTime: '15 min', description: 'Lacy rice-flour dosa from coastal Maharashtra', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     lunch: [
       { name: 'Gujarati Thali', emoji: '🍽️', cal: 480, protein: 16, carbs: 72, fat: 14, prepTime: '40 min', description: 'Dal, sabzi, roti, rice, chaas, farsan — balanced Gujarati meal', tags: ['vegetarian'] },
@@ -248,16 +284,28 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Kolhapuri Chicken Rassa', emoji: '🍗', cal: 480, protein: 36, carbs: 38, fat: 20, prepTime: '45 min', description: 'Fiery Kolhapuri-style chicken curry with bhakri — spice lover\'s pick', tags: ['high-protein'] },
       { name: 'Undhiyu & Puri', emoji: '🥘', cal: 460, protein: 12, carbs: 66, fat: 16, prepTime: '50 min', description: 'Winter Gujarati mixed vegetable dish with puri — festive meal', tags: ['vegetarian'] },
       { name: 'Pitla Bhakri', emoji: '🫓', cal: 400, protein: 14, carbs: 58, fat: 12, prepTime: '25 min', description: 'Chickpea flour curry with sorghum flatbread — Maharashtrian staple', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Zunka Bhakri', emoji: '🌾', cal: 420, protein: 13, carbs: 60, fat: 13, prepTime: '25 min', description: 'Dry besan sabzi with jowar bhakri and raw onion', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Goan Fish Curry & Rice', emoji: '🐟', cal: 470, protein: 34, carbs: 50, fat: 15, prepTime: '35 min', description: 'Kokum-tangy Goan fish curry with steamed rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Bharli Vangi & Bhakri', emoji: '🍆', cal: 390, protein: 10, carbs: 56, fat: 14, prepTime: '30 min', description: 'Stuffed baby brinjals in peanut-sesame masala', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Pav Bhaji (lunch plate)', emoji: '🥖', cal: 460, protein: 13, carbs: 68, fat: 15, prepTime: '30 min', description: 'Full lunch plate of Mumbai pav bhaji with onion-lemon', tags: ['vegetarian'] },
+      { name: 'Masala Bhaat', emoji: '🍚', cal: 430, protein: 11, carbs: 66, fat: 13, prepTime: '30 min', description: 'Maharashtrian spiced rice with veggies and goda masala', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     dinner: [
       { name: 'Masoor Dal & Bhakri', emoji: '🫘', cal: 380, protein: 16, carbs: 54, fat: 8, prepTime: '25 min', description: 'Red lentil soup with sorghum flatbread and raw onion', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Bombay Fish Curry & Rice', emoji: '🐟', cal: 460, protein: 36, carbs: 48, fat: 14, prepTime: '30 min', description: 'Coastal Maharashtra-style fish curry with steamed rice', tags: ['high-protein', 'gluten-free'] },
       { name: 'Misal Pav', emoji: '🫛', cal: 420, protein: 16, carbs: 62, fat: 12, prepTime: '30 min', description: 'Spicy sprouted moth bean curry with pav and toppings', tags: ['vegetarian'] },
+      { name: 'Khandvi Rolls (6)', emoji: '🟡', cal: 220, protein: 9, carbs: 28, fat: 8, prepTime: '25 min', description: 'Silky gram-flour rolls with mustard-coconut tempering — light dinner', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Pithla & Jowar Roti', emoji: '🫓', cal: 380, protein: 14, carbs: 54, fat: 11, prepTime: '25 min', description: 'Rustic besan curry with jowar roti and thecha', tags: ['vegetarian', 'vegan'] },
+      { name: 'Solkadhi & Rice', emoji: '🥥', cal: 320, protein: 8, carbs: 48, fat: 10, prepTime: '20 min', description: 'Kokum-coconut solkadhi with steamed rice — coastal light dinner', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Egg Kejriwal', emoji: '🍳', cal: 380, protein: 20, carbs: 30, fat: 18, prepTime: '15 min', description: 'Mumbai toast with fried egg, cheese and chili — quick protein dinner', tags: ['high-protein'] },
     ],
     snack: [
       { name: 'Chivda (Light)', emoji: '🥣', cal: 150, protein: 4, carbs: 22, fat: 5, prepTime: '0 min', description: 'Dry roasted flattened rice mix with nuts and spices', tags: ['vegetarian', 'vegan'] },
       { name: 'Fafda & Chutney', emoji: '🟡', cal: 160, protein: 5, carbs: 20, fat: 7, prepTime: '0 min', description: 'Crispy chickpea flour strips with sweet papaya chutney', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Kanda Poha', emoji: '🍚', cal: 180, protein: 4, carbs: 32, fat: 4, prepTime: '10 min', description: 'Quick flattened rice snack with onion, peanuts, and lemon', tags: ['vegetarian', 'vegan'] },
+      { name: 'Khakra (2) & Chutney', emoji: '🫓', cal: 120, protein: 4, carbs: 20, fat: 3, prepTime: '0 min', description: 'Crisp whole-wheat khakra with green chutney', tags: ['vegetarian'] },
+      { name: 'Dabeli (1)', emoji: '🥖', cal: 220, protein: 6, carbs: 36, fat: 7, prepTime: '15 min', description: 'Kutchi spiced potato pav with pomegranate and sev', tags: ['vegetarian'] },
+      { name: 'Sprouted Moth Chaat', emoji: '🌱', cal: 140, protein: 9, carbs: 22, fat: 3, prepTime: '10 min', description: 'Kolhapuri sprouted moth beans with onion-lemon', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
     ],
   },
 
@@ -268,6 +316,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Sattu Paratha', emoji: '🫓', cal: 350, protein: 14, carbs: 52, fat: 10, prepTime: '20 min', description: 'Roasted chickpea flour stuffed paratha — Bihar protein staple', tags: ['vegetarian', 'high-protein'] },
       { name: 'Panta Bhat & Vegetables', emoji: '🍚', cal: 260, protein: 6, carbs: 48, fat: 4, prepTime: '5 min (soaked overnight)', description: 'Fermented rice water with small potato and mustard oil — probiotic', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Chira Dahi (Flattened Rice + Curd)', emoji: '🥣', cal: 290, protein: 9, carbs: 50, fat: 5, prepTime: '5 min', description: 'Beaten rice soaked in curd with banana and jaggery — Bengal classic', tags: ['vegetarian'] },
+      { name: 'Chitoi Pitha & Chutney', emoji: '🥞', cal: 280, protein: 7, carbs: 50, fat: 6, prepTime: '20 min', description: 'Bengali rice-flour pancakes with mustard-coconut chutney', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Dhuska & Ghugni', emoji: '🫓', cal: 380, protein: 12, carbs: 58, fat: 10, prepTime: '25 min', description: 'Jharkhand rice-lentil pancakes with spiced pea curry', tags: ['vegetarian', 'vegan'] },
+      { name: 'Manda Pitha (2)', emoji: '🥟', cal: 260, protein: 6, carbs: 48, fat: 6, prepTime: '25 min', description: 'Odia steamed rice dumplings with coconut-jaggery filling', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Bengali Egg Toast', emoji: '🍳', cal: 320, protein: 16, carbs: 30, fat: 15, prepTime: '10 min', description: 'Masala French toast Kolkata-style with green chili', tags: ['high-protein'] },
     ],
     lunch: [
       { name: 'Macher Jhol & Rice', emoji: '🐟', cal: 460, protein: 34, carbs: 52, fat: 14, prepTime: '35 min', description: 'Light Bengali fish curry with potatoes in mustard-turmeric gravy and rice', tags: ['high-protein', 'gluten-free'] },
@@ -275,15 +327,27 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Litti Chokha', emoji: '🫙', cal: 440, protein: 14, carbs: 64, fat: 14, prepTime: '45 min', description: 'Baked wheat balls stuffed with sattu, served with roasted vegetable mash', tags: ['vegetarian'] },
       { name: 'Hilsa Fish Bhapa', emoji: '🐟', cal: 480, protein: 36, carbs: 38, fat: 22, prepTime: '30 min', description: 'Steamed hilsa fish in mustard-coconut marinade — Bengali delicacy', tags: ['high-protein', 'gluten-free'] },
       { name: 'Dalma & Rice', emoji: '🫘', cal: 400, protein: 16, carbs: 60, fat: 8, prepTime: '35 min', description: 'Odisha-style lentils with raw banana, papaya, and spices', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Chingri Malai Curry & Rice', emoji: '🦐', cal: 500, protein: 32, carbs: 50, fat: 18, prepTime: '35 min', description: 'Bengali prawns in creamy coconut-mustard curry', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Pakhala Bhat', emoji: '🍚', cal: 360, protein: 10, carbs: 62, fat: 8, prepTime: '10 min', description: 'Odia fermented rice with curd, fried badi and greens', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Mutton Dak Bungalow & Rice', emoji: '🍖', cal: 540, protein: 34, carbs: 48, fat: 22, prepTime: '50 min', description: 'Colonial-era Bengali slow mutton curry with potatoes', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Santula & Rice', emoji: '🥕', cal: 380, protein: 11, carbs: 58, fat: 11, prepTime: '25 min', description: 'Light Odia boiled-vegetable curry with minimal oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     dinner: [
       { name: 'Shorshe Ilish & Rice', emoji: '🐟', cal: 500, protein: 38, carbs: 48, fat: 18, prepTime: '30 min', description: 'Hilsa fish in mustard sauce — Puja special from Bengal', tags: ['high-protein', 'gluten-free'] },
       { name: 'Aloo Posto & Rice', emoji: '🥔', cal: 380, protein: 8, carbs: 58, fat: 14, prepTime: '20 min', description: 'Potatoes cooked in poppy seed paste — Bengali comfort food', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Chicken Kosha & Rice', emoji: '🍗', cal: 480, protein: 36, carbs: 42, fat: 20, prepTime: '50 min', description: 'Dark, rich slow-cooked Bengali chicken with caramelized onions', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Begun Bhaja & Dal Rice', emoji: '🍆', cal: 400, protein: 11, carbs: 60, fat: 12, prepTime: '25 min', description: 'Crisp mustard-oil fried brinjal with dal and rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kosha Mangsho (light) & Roti', emoji: '🍖', cal: 500, protein: 34, carbs: 40, fat: 21, prepTime: '45 min', description: 'Bengali mutton bhuna, lighter oil, with whole wheat roti', tags: ['high-protein'] },
+      { name: 'Dhokar Dalna & Rice', emoji: '🫘', cal: 420, protein: 15, carbs: 62, fat: 11, prepTime: '35 min', description: 'Bengali lentil cakes in ginger-cumin gravy', tags: ['vegetarian', 'vegan'] },
+      { name: 'Bhetki Paturi', emoji: '🐟', cal: 440, protein: 34, carbs: 30, fat: 18, prepTime: '35 min', description: 'Bhetki fish steamed in banana leaf with mustard paste', tags: ['high-protein', 'gluten-free'] },
     ],
     snack: [
       { name: 'Ghugni Chaat', emoji: '🫛', cal: 170, protein: 9, carbs: 25, fat: 4, prepTime: '10 min', description: 'Spiced white pea chaat with tamarind, onion, and green chili', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Jhalmuri', emoji: '🥣', cal: 130, protein: 3, carbs: 22, fat: 4, prepTime: '5 min', description: 'Kolkata street puffed rice with vegetables, mustard oil, and spices', tags: ['vegetarian', 'vegan'] },
+      { name: 'Mishti Doi (small)', emoji: '🍮', cal: 160, protein: 6, carbs: 28, fat: 4, prepTime: '0 min', description: 'Bengal caramelized sweet curd — small portion', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Koraishutir Kochuri', emoji: '🫓', cal: 240, protein: 8, carbs: 38, fat: 8, prepTime: '20 min', description: 'Peas-stuffed Bengali kachori with alur dom', tags: ['vegetarian'] },
+      { name: 'Chana Chaat Kolkata', emoji: '🫘', cal: 180, protein: 10, carbs: 28, fat: 4, prepTime: '10 min', description: 'Black chana chaat with mustard oil and coconut', tags: ['vegetarian', 'vegan', 'gluten-free', 'high-protein'] },
+      { name: 'Nimki (4)', emoji: '🫓', cal: 120, protein: 3, carbs: 18, fat: 5, prepTime: '0 min', description: 'Crisp diamond-cut Bengali crackers with tea', tags: ['vegetarian', 'vegan'] },
     ],
   },
 
@@ -1578,23 +1642,49 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Noon Chai & Lavasa', emoji: '🫖', cal: 200, protein: 5, carbs: 30, fat: 7, prepTime: '15 min', description: 'Salted pink tea brewed with milk, served with soft lavasa bread', tags: ['vegetarian'] },
       { name: 'Kashmiri Harissa', emoji: '🥣', cal: 420, protein: 28, carbs: 35, fat: 18, prepTime: '30 min', description: 'Slow-cooked mutton and rice porridge — the classic winter breakfast', tags: ['high-protein', 'gluten-free'] },
       { name: 'Zafrani Doodh & Kulcha', emoji: '🥛', cal: 300, protein: 10, carbs: 42, fat: 10, prepTime: '10 min', description: 'Warm saffron milk with a crisp Kashmiri kulcha', tags: ['vegetarian'] },
+      { name: 'Tchot & Makhan Chai', emoji: '🧈', cal: 260, protein: 6, carbs: 34, fat: 11, prepTime: '15 min', description: 'Flaky tchot bread with butter tea churned with salt', tags: ['vegetarian'] },
+      { name: 'Roth & Doodh', emoji: '🍞', cal: 320, protein: 8, carbs: 52, fat: 9, prepTime: '10 min', description: 'Sweet Kashmiri roth bread soaked in warm milk', tags: ['vegetarian'] },
+      { name: 'Bakarkhani & Kahwa', emoji: '🥐', cal: 290, protein: 6, carbs: 44, fat: 10, prepTime: '10 min', description: 'Layered bakarkhani pastry with saffron kahwa', tags: ['vegetarian'] },
+      { name: 'Anda Curry & Girda', emoji: '🍳', cal: 380, protein: 20, carbs: 32, fat: 18, prepTime: '20 min', description: 'Eggs simmered in Kashmiri masala with girda bread', tags: ['high-protein'] },
+      { name: 'Doodh Daliya', emoji: '🥣', cal: 340, protein: 12, carbs: 58, fat: 7, prepTime: '20 min', description: 'Slow-cooked wheat porridge in milk with crushed walnuts', tags: ['vegetarian'] },
+      { name: 'Kulcha & Noon Chai (double)', emoji: '🫖', cal: 350, protein: 9, carbs: 48, fat: 13, prepTime: '15 min', description: 'Two crisp kulchas with a full glass of salted pink tea', tags: ['vegetarian'] },
+      { name: 'Harissa (chicken)', emoji: '🥣', cal: 400, protein: 30, carbs: 32, fat: 16, prepTime: '30 min', description: 'Lighter chicken version of the slow-cooked harissa porridge', tags: ['high-protein', 'gluten-free'] },
     ],
     lunch: [
       { name: 'Rogan Josh & Rice', emoji: '🍛', cal: 580, protein: 38, carbs: 45, fat: 26, prepTime: '30 min', description: 'Slow-braised mutton in Kashmiri chili gravy with steamed rice', tags: ['high-protein', 'gluten-free'] },
       { name: 'Rajma Chawal (Jammu style)', emoji: '🫘', cal: 520, protein: 20, carbs: 85, fat: 12, prepTime: '30 min', description: 'Jammu\'s beloved red kidney beans with steamed basmati rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Mutton Yakhni & Rice', emoji: '🍲', cal: 540, protein: 36, carbs: 42, fat: 24, prepTime: '30 min', description: 'Delicate yogurt-based mutton curry with fennel and dry mint', tags: ['high-protein', 'gluten-free'] },
       { name: 'Haak Saag & Rice', emoji: '🥬', cal: 380, protein: 10, carbs: 55, fat: 14, prepTime: '20 min', description: 'Collard greens sautéed with mustard oil and garlic over rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Marchwangan Korma & Rice', emoji: '🍗', cal: 560, protein: 36, carbs: 40, fat: 28, prepTime: '30 min', description: 'Chicken in fiery Kashmiri chili gravy with steamed rice', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Daniwal Korma & Rice', emoji: '🍛', cal: 570, protein: 34, carbs: 42, fat: 27, prepTime: '30 min', description: 'Mutton with fresh coriander in rich wazwan gravy', tags: ['high-protein'] },
+      { name: 'Aab Gosht & Rice', emoji: '🥛', cal: 550, protein: 33, carbs: 38, fat: 27, prepTime: '35 min', description: 'Mutton simmered in spiced milk with cardamom and fennel', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Kashmiri Dum Aloo & Rice', emoji: '🥔', cal: 450, protein: 9, carbs: 68, fat: 16, prepTime: '30 min', description: 'Baby potatoes in yogurt-fennel-dry ginger gravy', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Gogji Nadru & Rice', emoji: '🪷', cal: 400, protein: 9, carbs: 62, fat: 13, prepTime: '25 min', description: 'Turnip and lotus stem curry — a Kashmiri winter staple', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Monj Haak & Rice', emoji: '🥬', cal: 360, protein: 9, carbs: 52, fat: 13, prepTime: '20 min', description: 'Kohlrabi greens wilted with garlic and mustard oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Razmah Gogji & Rice', emoji: '🫘', cal: 480, protein: 18, carbs: 72, fat: 12, prepTime: '30 min', description: 'Kidney beans slow-cooked with turnips, Kashmiri home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     dinner: [
       { name: 'Rista & Rice', emoji: '🧆', cal: 560, protein: 34, carbs: 44, fat: 28, prepTime: '30 min', description: 'Hand-pounded mutton meatballs in fiery red wazwan gravy', tags: ['high-protein'] },
       { name: 'Gushtaba & Rice', emoji: '🍖', cal: 590, protein: 36, carbs: 40, fat: 30, prepTime: '30 min', description: 'The wazwan finale — tender meatballs in creamy yogurt gravy', tags: ['high-protein', 'gluten-free'] },
       { name: 'Nadru Yakhni & Rice', emoji: '🪷', cal: 420, protein: 12, carbs: 58, fat: 16, prepTime: '25 min', description: 'Lotus stem from Dal Lake simmered in spiced yogurt', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Tabak Maaz (grilled) & Rice', emoji: '🍢', cal: 520, protein: 32, carbs: 38, fat: 26, prepTime: '25 min', description: 'Grilled rib chops with Kashmiri spices — lighter than the fried classic', tags: ['high-protein'] },
+      { name: 'Kashmiri Kabab & Rice', emoji: '🍢', cal: 540, protein: 34, carbs: 36, fat: 27, prepTime: '25 min', description: 'Hand-minced seekh kababs with saffron and dry fruits', tags: ['high-protein'] },
+      { name: 'Kokur Yakhni & Rice', emoji: '🍲', cal: 500, protein: 34, carbs: 36, fat: 24, prepTime: '30 min', description: 'Country chicken in delicate yogurt-fennel yakhni', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Dhani Phol & Rice', emoji: '🍖', cal: 560, protein: 32, carbs: 48, fat: 25, prepTime: '35 min', description: 'Mutton with split peas in thick wazwan gravy', tags: ['high-protein'] },
+      { name: 'Chaman Qaliya & Rice', emoji: '🧀', cal: 480, protein: 22, carbs: 44, fat: 24, prepTime: '25 min', description: 'Kashmiri paneer in turmeric-fennel qaliya gravy', tags: ['vegetarian', 'high-protein', 'gluten-free'] },
+      { name: 'Modur Pulao (light)', emoji: '🍚', cal: 450, protein: 8, carbs: 78, fat: 12, prepTime: '30 min', description: 'Saffron sweet pulao with nuts — festive rice, lighter portion', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Al Hachi & Rice', emoji: '🎃', cal: 380, protein: 9, carbs: 60, fat: 12, prepTime: '25 min', description: 'Sun-dried bottle gourd curry — pure Kashmiri winter comfort', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Mujj Chetin & Rice meal', emoji: '🌶️', cal: 420, protein: 12, carbs: 58, fat: 15, prepTime: '20 min', description: 'Rice with radish chutney, haak and a small dal — light Kashmiri thali', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     snack: [
       { name: 'Kahwa & Shufta (small)', emoji: '🍵', cal: 200, protein: 4, carbs: 28, fat: 9, prepTime: '10 min', description: 'Saffron tea with a small portion of dry-fruit shufta dessert', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Kaladi Kulcha (Jammu)', emoji: '🧀', cal: 280, protein: 14, carbs: 28, fat: 12, prepTime: '15 min', description: 'Grilled kaladi cheese stuffed in a crisp kulcha — Jammu street classic', tags: ['vegetarian'] },
       { name: 'Roasted Kashmiri Walnuts', emoji: '🌰', cal: 180, protein: 5, carbs: 4, fat: 18, prepTime: '10 min', description: 'A handful of local walnuts, dry-roasted with a pinch of salt', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Nader Monj (4 pc)', emoji: '🪷', cal: 220, protein: 6, carbs: 32, fat: 8, prepTime: '20 min', description: 'Crisp lotus-stem fritters — Dal Lake street snack', tags: ['vegetarian', 'vegan'] },
+      { name: 'Phirni (small katori)', emoji: '🍮', cal: 180, protein: 5, carbs: 30, fat: 5, prepTime: '10 min', description: 'Chilled saffron rice pudding in an earthen katori', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Doon Chetin & Lavasa', emoji: '🌰', cal: 240, protein: 6, carbs: 30, fat: 11, prepTime: '10 min', description: 'Walnut chutney with soft lavasa bread', tags: ['vegetarian'] },
+      { name: 'Kashmiri Roth (1 pc)', emoji: '🍞', cal: 200, protein: 4, carbs: 34, fat: 6, prepTime: '5 min', description: 'Sweet dense Kashmiri bread — one piece with kahwa', tags: ['vegetarian'] },
+      { name: 'Buzza & Nuts mix', emoji: '🥜', cal: 210, protein: 7, carbs: 18, fat: 13, prepTime: '5 min', description: 'Roasted barley snack mixed with walnuts and almonds', tags: ['vegetarian', 'vegan'] },
     ],
   },
 
@@ -1872,6 +1962,13 @@ function pickSmart(
       if (freshOnly && recent[type].includes(f.name)) continue;
       seen.add(f.name);
       let s = scoreCandidate(f, target, proteinWeight, budget) - penalty;
+      // Repeat fallback: penalize by recency so the plan ROTATES through the
+      // pool (least-recent first) instead of serving the best macro scorer
+      // every day. recent[] is oldest→newest, so the tail gets the biggest hit.
+      if (!freshOnly) {
+        const rIdx = recent[type].indexOf(f.name);
+        if (rIdx >= 0) s -= (rIdx + 1) * 1.5;
+      }
       // Taste learning: dislikes are heavily penalized (effectively excluded),
       // likes get a nudge — the plan learns what the user actually eats.
       if (taste) {
@@ -1900,8 +1997,9 @@ function pickSmart(
   // when nothing regional works at all (last resort, avoids empty plans).
   const strictLocal = cuisineMix === 'local';
   if (!strictLocal) collect(secondary, true, true, 0.06);
-  // Then allow repeats, still budget-respecting.
-  if (scored.length < 4) {
+  // Then allow repeats only when the fresh pool is nearly exhausted —
+  // with the recency penalty above, the least-recent dish wins.
+  if (scored.length < 2) {
     collect(primary, false, true, 0.01);
     if (!strictLocal) collect(secondary, false, true, 0.07);
   }
