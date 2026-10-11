@@ -1754,7 +1754,6 @@ function resolveRegion(region: string): string {
 function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
   const restrictions = (profile.dietaryRestrictions || []).map(r => r.toLowerCase());
   const allergies = (profile.allergies || []).map(a => a.toLowerCase());
-  const maxPrep = profile.maxPrepTime ?? Infinity;
 
   return foods.filter(f => {
     if (restrictions.includes('vegan') && !f.tags.includes('vegan')) return false;
@@ -1764,9 +1763,9 @@ function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
     if ((restrictions.includes('keto') || restrictions.includes('low-carb')) && f.carbs > 25) return false;
     if (restrictions.includes('gluten-free') && !f.tags.includes('gluten-free')) return false;
     if (restrictions.includes('high-protein') && !f.tags.includes('high-protein')) return false;
-    // Cooking time: skip meals that take longer than the user will cook.
-    const mins = parseInt(f.prepTime, 10);
-    if (!isNaN(mins) && mins > maxPrep) return false;
+    // NOTE: cooking time is a soft preference applied as a score penalty in
+    // pickSmart — never a hard filter. A hard filter starves small regional
+    // pools and forces the same 2-3 quick dishes on repeat all week.
     for (const allergy of allergies) {
       if (f.name.toLowerCase().includes(allergy) || f.description.toLowerCase().includes(allergy)) return false;
     }
@@ -1943,6 +1942,7 @@ function pickSmart(
   proteinWeight: number,
   rng: Rng,
   taste?: TasteProfile,
+  dayUsed?: Set<string>,
 ): FoodItem {
   const primary = rollSource(cuisineMix, rng);
   const secondary = primary === 'regional' ? 'international' : 'regional';
@@ -1969,6 +1969,14 @@ function pickSmart(
         const rIdx = recent[type].indexOf(f.name);
         if (rIdx >= 0) s -= (rIdx + 1) * 1.5;
       }
+      // Cooking-time preference (soft): over-limit meals lose points so quick
+      // meals win when available — but the pool never starves into repetition.
+      const maxPrep = profile.maxPrepTime ?? Infinity;
+      const mins = parseInt(f.prepTime, 10);
+      if (!isNaN(mins) && mins > maxPrep) s -= 1.2;
+      // Same-day dedup: never serve the same dish twice in one day, even
+      // across different slots (no oat-bowl for lunch AND dinner).
+      if (dayUsed?.has(f.name)) s -= 3;
       // Taste learning: dislikes are heavily penalized (effectively excluded),
       // likes get a nudge — the plan learns what the user actually eats.
       if (taste) {
@@ -2090,6 +2098,7 @@ export async function generateDietPlan(
     let remP = calculations.proteinG, remC = calculations.carbsG, remF = calculations.fatG;
     let remShare = 1;
     const picked = {} as Record<'breakfast' | 'morningSnack' | 'lunch' | 'afternoonSnack' | 'dinner', Meal>;
+    const dayUsed = new Set<string>(); // no dish twice in the same day
     for (const slot of SLOT_ORDER) {
       const share = slot.calShare / remShare;
       // Per-slot protein soft cap (~0.4 g/kg, the per-meal muscle-protein-synthesis
@@ -2104,7 +2113,8 @@ export async function generateDietPlan(
         carbs: remC * share,
         fat: remF * share,
       };
-      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight, rng, taste);
+      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight, rng, taste, dayUsed);
+      dayUsed.add(food.name);
       const meal = toMeal(food);
       // Portion-scale (up to 2×) so the slot actually meets its calorie target —
       // pools have fixed serving sizes, and real dietetics adjusts portions, not wishes.
@@ -2237,14 +2247,20 @@ export function getMealAlternatives(
   const rng = mulberry32(planSeedFor(profile));
   const pools = buildMealPools(region);
   const seen = new Set<string>([current.name]);
-  const candidates: FoodItem[] = [];
-  // Regional first, then international — same priority as plan generation.
-  for (const source of ['regional', 'international'] as const) {
+  const candidates: { f: FoodItem; regional: boolean }[] = [];
+  const cuisineMix: CuisineMix = profile.cuisineMix || 'mixed';
+  const strictLocal = cuisineMix === 'local';
+  // Strict place-based: international alternatives only fill gaps.
+  const sources = strictLocal ? ['regional', 'international'] as const : ['regional', 'international'] as const;
+  for (const source of sources) {
     let pool = filterFoods(pools[slotType][source], profile)
       .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
     if (pool.length === 0) {
       pool = filterFoods(pools[slotType][source], profile).filter((f) => !seen.has(f.name));
     }
+    // In strict-local mode, only reach for international dishes when the
+    // regional pool can't fill the alternatives.
+    if (strictLocal && source === 'international' && candidates.length >= count) break;
     // Taste learning: never suggest something the user keeps rejecting.
     if (taste?.dislikes.length) {
       const filtered = pool.filter((f) => !tasteMatchesAny(f.name, taste.dislikes));
@@ -2252,15 +2268,21 @@ export function getMealAlternatives(
     }
     for (const f of pool) {
       seen.add(f.name);
-      candidates.push(f);
+      candidates.push({ f, regional: source === 'regional' });
     }
   }
   // Closest macros to the current meal win — the swap shouldn't break the day.
+  // Regional dishes sort first; cooking-time preference applies as a nudge.
+  const maxPrep = profile.maxPrepTime ?? Infinity;
   const scored = candidates
-    .map((f) => {
+    .map(({ f, regional }) => {
       const calErr = Math.abs(f.cal - current.calories) / Math.max(current.calories, 1);
       const proErr = Math.abs(f.protein - current.protein) / Math.max(current.protein, 1);
-      return { f, s: calErr * 0.6 + proErr * 0.4 };
+      let s = calErr * 0.6 + proErr * 0.4;
+      if (!regional) s += 0.25;
+      const mins = parseInt(f.prepTime, 10);
+      if (!isNaN(mins) && mins > maxPrep) s += 0.3;
+      return { f, s };
     })
     .sort((a, b) => a.s - b.s);
   return scored.slice(0, count).map(({ f }) => toMeal(f));
