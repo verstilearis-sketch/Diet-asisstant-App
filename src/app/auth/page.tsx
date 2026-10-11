@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { getSession, signInWithGoogle } from '@/lib/storage';
+// NOTE: '@/lib/storage' (supabase-js, ~800KB) is NEVER statically imported
+// here — it loads lazily on tap so this page paints instantly on phones.
 import { ZaiqIcon, AlertIcon, GoogleIcon } from '@/components/icons';
-import { LoadingScreen } from '@/components/ZaiqLoader';
 
 /** Bump this whenever the privacy policy changes — users will be asked to accept again. */
 const PRIVACY_VERSION = '2026-10-11';
@@ -27,9 +27,12 @@ function AuthForm() {
 
   useEffect(() => {
     let cancelled = false;
-    getSession().then((session) => {
-      if (session && !cancelled) router.replace('/dashboard');
-    });
+    // Lazy session check — never blocks first paint.
+    import('@/lib/storage').then(({ getSession }) => {
+      getSession().then((session) => {
+        if (session && !cancelled) router.replace('/dashboard');
+      }).catch(() => {});
+    }).catch(() => {});
     // Returning users who already accepted the current privacy policy
     // go straight through — no checkbox again.
     try {
@@ -50,13 +53,20 @@ function AuthForm() {
     if (redirecting.current) return;
     redirecting.current = true;
     setError('');
-    setLoading(true);
+    setLoading(true); // instant feedback — the auth chunk loads behind this
     try { localStorage.setItem('zaiq_privacy_accepted', PRIVACY_VERSION); } catch { /* private mode */ }
-    const result = await signInWithGoogle();
-    // Success means the browser is leaving for Google — keep the spinner
-    // until navigation happens. Failure stays on this page with an error.
-    if (!result.success) {
-      setError(result.error || 'Google sign-in failed. Please try again.');
+    try {
+      const { signInWithGoogle } = await import('@/lib/storage');
+      const result = await signInWithGoogle();
+      // Success means the browser is leaving for Google — keep the spinner
+      // until navigation happens. Failure stays on this page with an error.
+      if (!result.success) {
+        setError(result.error || 'Google sign-in failed. Please try again.');
+        setLoading(false);
+        redirecting.current = false;
+      }
+    } catch {
+      setError('Could not start Google sign-in. Please check your connection and try again.');
       setLoading(false);
       redirecting.current = false;
     }
@@ -128,7 +138,13 @@ function AuthForm() {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<LoadingScreen />}>
+    <Suspense fallback={
+      <div className="auth-wrap">
+        <div className="signin-card" style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+          <span className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
+        </div>
+      </div>
+    }>
       <AuthForm />
     </Suspense>
   );

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabase } from '@/lib/supabase';
 import { ZaiqIcon, AlertIcon } from '@/components/icons';
-import { LoadingScreen } from '@/components/ZaiqLoader';
+import { SignInHandoffLoader, markSignInHandoff } from '@/components/SignInHandoffLoader';
 
 // ── OAuth callback ──────────────────────────────────────────────
 // Direct Google OAuth (not via Supabase Auth) lands here with the ID token
@@ -14,20 +14,11 @@ import { LoadingScreen } from '@/components/ZaiqLoader';
 // /onboarding when they have no plan yet.
 // (The old Supabase-hosted ?code=… flow is kept as a fallback.)
 
-/** The one and only loading screen for sign-in — used both as the
- *  Suspense fallback and by the handler, so the user never sees two
- *  different spinners. */
+/** The one and only loading screen for the Google sign-in handoff —
+ *  shared with the dashboard (see SignInHandoffLoader) so the user sees
+ *  a single continuous loading page from tap to dashboard. */
 function FinishingSignInCard() {
-  return (
-    <div className="auth-wrap">
-      <div className="bg-orb bg-orb-1" />
-      <div className="bg-orb bg-orb-2" />
-      <div className="glass-card auth-card fade-in-up" style={{ textAlign: 'center' }}>
-        <span className="auth-logo" style={{ marginBottom: '1.25rem' }}><ZaiqIcon size={33} /></span>
-        <LoadingScreen title="Finishing Google sign-in…" subtitle="You're almost in — setting things up." />
-      </div>
-    </div>
-  );
+  return <SignInHandoffLoader />;
 }
 
 function CallbackHandler() {
@@ -71,7 +62,7 @@ function CallbackHandler() {
           }
           return;
         }
-        if (!cancelled) router.replace('/dashboard');
+        if (!cancelled) { markSignInHandoff(); router.replace('/dashboard'); }
         return;
       }
       const code = searchParams.get('code');
@@ -85,7 +76,7 @@ function CallbackHandler() {
           try {
             const { data } = await sb.auth.getSession();
             if (data.session) {
-              if (!cancelled) router.replace('/dashboard');
+              if (!cancelled) { markSignInHandoff(); router.replace('/dashboard'); }
               return;
             }
           } catch {
@@ -98,7 +89,7 @@ function CallbackHandler() {
           }
           return;
         }
-        if (!cancelled) router.replace('/dashboard');
+        if (!cancelled) { markSignInHandoff(); router.replace('/dashboard'); }
         return;
       }
       // No code: the user may already have a session (already signed in).

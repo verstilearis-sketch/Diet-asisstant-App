@@ -19,6 +19,7 @@ import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
 import MoodCalendar from '@/components/MoodCalendar';
 import { LoadingScreen } from '@/components/ZaiqLoader';
+import { SignInHandoffLoader, isSignInHandoff, clearSignInHandoff } from '@/components/SignInHandoffLoader';
 import { DashboardShell } from '@/components/DashboardShell';
 import { HealthStatsCard } from '@/components/HealthStatsCard';
 import { BodyEnergyFlow } from '@/components/BodyEnergyFlow';
@@ -166,6 +167,7 @@ export default function DashboardPage() {
       setSavedPlan(plan);
       setDailyLog(log);
       setDraftLog(log);
+      clearSignInHandoff();
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -678,6 +680,9 @@ export default function DashboardPage() {
   }, [savedPlan]);
 
   if (loading || !savedPlan || !dailyLog || !draftLog) {
+    // Fresh sign-in handoff: keep the exact same loading screen the
+    // callback showed, so it feels like one continuous page.
+    if (isSignInHandoff()) return <SignInHandoffLoader />;
     return <LoadingScreen title="Loading your plan…" subtitle="Getting your meals ready for today." />;
   }
 
