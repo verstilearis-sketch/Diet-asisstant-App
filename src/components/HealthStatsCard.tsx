@@ -9,13 +9,15 @@ interface HealthStatsCardProps {
   target: number;
   goalLabel: string;
   onRecalculate: () => void;
+  photoUrl?: string;
+  userName?: string;
 }
 
 /**
  * Health stats as a tracker card — icon badge header, animated hero
  * number, pill progress bar, stat rows, and a full-width CTA.
  */
-export function HealthStatsCard({ bmr, tdee, target, goalLabel, onRecalculate }: HealthStatsCardProps) {
+export function HealthStatsCard({ bmr, tdee, target, goalLabel, onRecalculate, photoUrl, userName }: HealthStatsCardProps) {
   const [open, setOpen] = useState(true);
   const [display, setDisplay] = useState(0);
 
@@ -48,7 +50,15 @@ export function HealthStatsCard({ bmr, tdee, target, goalLabel, onRecalculate }:
         aria-expanded={open}
         aria-label={open ? 'Collapse health stats' : 'Expand health stats'}
       >
-        <span className="tracker-badge"><ActivityIcon size={18} /></span>
+        <span className="tracker-badge" style={photoUrl ? { overflow: 'hidden', padding: 0 } : undefined}>
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl} alt={userName ? `${userName}'s photo` : 'Your photo'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+          ) : (
+            <ActivityIcon size={18} />
+          )}
+        </span>
         <span className="tracker-titles">
           <strong>Health stats</strong>
           <small>Your body&apos;s daily numbers</small>

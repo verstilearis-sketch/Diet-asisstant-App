@@ -17,6 +17,7 @@ import type { TasteProfile } from '@/lib/taste';
 import { buildTasteConstraints, hasTasteSignal, recordSwap } from '@/lib/taste';
 import RecipeModal from '@/components/RecipeModal';
 import MiniCalendar from '@/components/MiniCalendar';
+import MoodCalendar from '@/components/MoodCalendar';
 import { LoadingScreen } from '@/components/ZaiqLoader';
 import { DashboardShell } from '@/components/DashboardShell';
 import { HealthStatsCard } from '@/components/HealthStatsCard';
@@ -207,6 +208,8 @@ export default function DashboardPage() {
       setDraftLog(toSave);
       setSaveState('saved');
       setSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      // Back home after saving — the day is done.
+      setTimeout(() => setActiveTab('home'), 900);
     } catch (e) {
       console.error('Failed to save daily log:', e);
       setSaveState('error');
@@ -852,6 +855,8 @@ export default function DashboardPage() {
                 target={calcs.dailyCalorieGoal}
                 goalLabel={GOAL_LABELS[profile.goal] || 'Your goal'}
                 onRecalculate={() => setShowNewPlanConfirm(true)}
+                photoUrl={profile.photoUrl}
+                userName={profile.name}
               />
 
               <BodyEnergyFlow
@@ -899,8 +904,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem', marginBottom: '1rem' }}>
-              <MiniCalendar userId={savedPlan.userId} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem' }}>
+                <MiniCalendar userId={savedPlan.userId} />
+              </div>
+              <div className="glass-card fade-in-up delay-100" style={{ padding: '1.4rem' }}>
+                <MoodCalendar userId={savedPlan.userId} />
+              </div>
             </div>
 
             {/* ── Weekly review ──────────────────────────────── */}

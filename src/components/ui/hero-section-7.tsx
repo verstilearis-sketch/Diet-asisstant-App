@@ -12,6 +12,7 @@ export interface FloatingHeroImage {
   src: string;
   alt: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export interface FloatingFoodHeroProps {
@@ -60,6 +61,7 @@ export function FloatingFoodHero({
             "animate-float pointer-events-none absolute select-none",
             img.className,
           )}
+          style={img.style}
         />
       ))}
 

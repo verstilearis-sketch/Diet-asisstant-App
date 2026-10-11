@@ -1828,7 +1828,7 @@ export function planSeedFor(profile: UserProfile): number {
     profile.usualBreakfast ?? '', profile.usualLunch ?? '', profile.usualDinner ?? '',
     profile.favoriteFoods ?? '', profile.favoriteCuisine ?? '',
     (profile.dietaryRestrictions ?? []).join(','), (profile.allergies ?? []).join(','),
-    profile.foodsToAvoid ?? '',
+    profile.foodsToAvoid ?? '', profile.bodyType ?? '', profile.metabolism ?? '',
     profile.location ?? '', profile.budget ?? '', profile.cuisineMix ?? '',
     profile.gender,
   ];

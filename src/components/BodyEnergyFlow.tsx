@@ -70,7 +70,7 @@ export function BodyEnergyFlow({ bmr, tdee, target, goalLabel }: BodyEnergyFlowP
   ];
 
   return (
-    <div className="glass-card" style={{ padding: '1.4rem' }}>
+    <div className="glass-card card-enter" style={{ padding: '1.4rem' }}>
       <h3 style={{ fontSize: '0.98rem', marginBottom: '0.25rem' }}>Where your calories go</h3>
       <p style={{ fontSize: '0.82rem', color: 'var(--color-muted)', margin: '0 0 1rem' }}>
         Your plan, visualized.

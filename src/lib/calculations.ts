@@ -36,6 +36,12 @@ export interface UserProfile {
   allergies?: string[];
   /** Foods the user avoids (comma-separated) — the plan steers clear of these. */
   foodsToAvoid?: string;
+  /** Closest body-type figure the user picked (5 options per gender). */
+  bodyType?: 'lean' | 'athletic' | 'average' | 'soft' | 'plus';
+  /** Self-reported metabolism speed — nudges TDEE. */
+  metabolism?: 'very-slow' | 'slow' | 'average' | 'fast' | 'very-fast';
+  /** Compressed profile photo (data URL), stored with the plan. */
+  photoUrl?: string;
   location?: string;
   budget?: BudgetTier;       // cost preference for meal planning
   cuisineMix?: CuisineMix;   // how much regional vs international food
@@ -78,9 +84,42 @@ export function calculateBMR(profile: UserProfile): number {
   const { weightKg, heightCm, age, gender } = profile;
   // Mifflin-St Jeor
   const base = 10 * weightKg + 6.25 * heightCm - 5 * age;
-  if (gender === 'male') return Math.round(base + 5);
-  if (gender === 'female') return Math.round(base - 161);
-  return Math.round(base - 78); // average for 'other'
+  let mifflin: number;
+  if (gender === 'male') mifflin = base + 5;
+  else if (gender === 'female') mifflin = base - 161;
+  else mifflin = base - 78; // average for 'other'
+  // Body-type refinement: the picked figure maps to an estimated body-fat %,
+  // giving lean mass for the Katch-McArdle equation — blended 50/50 with
+  // Mifflin-St Jeor so neither formula dominates.
+  const bf = estimatedBodyFat(profile.bodyType, gender);
+  if (bf == null) return Math.round(mifflin);
+  const leanMassKg = weightKg * (1 - bf / 100);
+  const katch = 370 + 21.6 * leanMassKg;
+  return Math.round((mifflin + katch) / 2);
+}
+
+/** Estimated body-fat % for each body-type figure, by gender. */
+export function estimatedBodyFat(
+  bodyType?: UserProfile['bodyType'],
+  gender?: UserProfile['gender'],
+): number | null {
+  if (!bodyType) return null;
+  const female = gender === 'female';
+  const table: Record<NonNullable<UserProfile['bodyType']>, number> = female
+    ? { lean: 20, athletic: 24, average: 29, soft: 35, plus: 40 }
+    : { lean: 12, athletic: 16, average: 21, soft: 27, plus: 33 };
+  return table[bodyType];
+}
+
+/** Self-reported metabolism speed → small TDEE nudge. */
+export function metabolismFactor(metabolism?: UserProfile['metabolism']): number {
+  switch (metabolism) {
+    case 'very-slow': return 0.93;
+    case 'slow': return 0.96;
+    case 'fast': return 1.04;
+    case 'very-fast': return 1.07;
+    default: return 1.0; // average or unset
+  }
 }
 
 export function calculateTDEE(bmr: number, activityLevel: ActivityLevel): number {
@@ -148,7 +187,11 @@ export function computeAll(profile: UserProfile): Calculations {
   const bmi = calculateBMI(profile.weightKg, profile.heightCm);
   const bmiCategory = getBMICategory(bmi);
   const bmr = calculateBMR(profile);
-  const tdee = Math.round(calculateTDEE(bmr, profile.activityLevel) * workTypeFactor(profile.workType, profile.workMix));
+  const tdee = Math.round(
+    calculateTDEE(bmr, profile.activityLevel)
+    * workTypeFactor(profile.workType, profile.workMix)
+    * metabolismFactor(profile.metabolism),
+  );
   const dailyCalorieGoal = calculateDailyCalorieGoal(tdee, profile.goal);
   const macros = calculateMacros(dailyCalorieGoal, profile.goal, profile.weightKg);
   const waterLiters = calculateWater(profile.weightKg, profile.activityLevel);

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { ZaiqIcon } from '@/components/icons';
+import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { DesktopTopBar } from './DesktopTopBar';
+import { PointerSpotlight } from './PointerSpotlight';
 
 export interface DashNavItem {
   id: string;
@@ -61,9 +64,22 @@ export function DashboardShell({
   };
 
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  const isDesktop = useIsDesktop();
 
   return (
-    <div className="dash-shell">
+    <div className={`dash-shell ${isDesktop ? 'dash-shell-desktop' : ''}`}>
+      <PointerSpotlight />
+      {isDesktop && (
+        <DesktopTopBar
+          workspaceTitle={workspaceTitle}
+          workspaceSubtitle={workspaceSubtitle}
+          nav={nav}
+          activeId={activeId}
+          onNavigate={onNavigate}
+          planActions={planActions}
+          bottomActions={bottomActions}
+        />
+      )}
       <div
         className={`dash-scrim ${drawerOpen ? 'dash-scrim-open' : ''}`}
         onClick={() => setDrawerOpen(false)}

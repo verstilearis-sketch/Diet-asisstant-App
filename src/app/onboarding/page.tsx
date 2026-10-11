@@ -12,6 +12,9 @@ import {
 } from '@/components/icons';
 import { LoaderRing } from '@/components/ZaiqLoader';
 import { LocationPicker } from '@/components/LocationPicker';
+import { PhotoUpload } from '@/components/PhotoUpload';
+import { BodyTypePicker } from '@/components/BodyTypePicker';
+import { ChipSelectWithOther } from '@/components/ChipSelectWithOther';
 
 // ── Step definitions ──────────────────────────────────────────
 
@@ -41,6 +44,14 @@ const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string }[] =
 
 const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'High-protein', 'Low-carb', 'Keto', 'Gluten-free'];
 const ALLERGY_OPTIONS = ['Nuts', 'Shellfish', 'Dairy', 'Eggs', 'Soy', 'Wheat', 'Fish', 'Peanuts'];
+
+const METABOLISM_OPTIONS: { value: 'very-slow' | 'slow' | 'average' | 'fast' | 'very-fast'; label: string; desc: string }[] = [
+  { value: 'very-slow', label: 'Very slow', desc: 'I gain weight easily, even when I eat little' },
+  { value: 'slow', label: 'Slow', desc: 'I eat little but my weight barely moves' },
+  { value: 'average', label: 'Average', desc: 'What I eat is roughly what I get' },
+  { value: 'fast', label: 'Fast', desc: 'I can eat quite a bit and stay steady' },
+  { value: 'very-fast', label: 'Very fast', desc: 'I could eat a feast and still not gain weight' },
+];
 
 const BUDGET_OPTIONS: { value: BudgetTier; label: string; desc: string }[] = [
   { value: 'budget', label: 'Budget-friendly', desc: 'Everyday staples, easy on the wallet' },
@@ -318,6 +329,46 @@ export default function OnboardingPage() {
                   </div>
                 </div>
               )}
+
+              <div>
+                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
+                  Your photo
+                </span>
+                <PhotoUpload value={profile.photoUrl} onChange={(v) => update('photoUrl', v)} />
+              </div>
+
+              <div>
+                <span className="input-label" style={{ marginBottom: '0.35rem', display: 'block' }}>
+                  Which figure is closest to your body type?
+                </span>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '0.9rem', lineHeight: 1.6 }}>
+                  This refines your calorie math — the figure maps to an estimated body-fat percentage,
+                  which tunes your BMR beyond height and weight alone.
+                </p>
+                <BodyTypePicker value={profile.bodyType} gender={profile.gender} onChange={(v) => update('bodyType', v)} />
+              </div>
+
+              <div>
+                <span className="input-label" style={{ marginBottom: '0.35rem', display: 'block' }}>
+                  How is your metabolism?
+                </span>
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-muted)', marginBottom: '0.9rem', lineHeight: 1.6 }}>
+                  Pick the one that sounds most like you — for example, do you eat very little and stay
+                  the same, or could you eat a feast and still not gain? Your answer nudges your daily
+                  calorie target up or down.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {METABOLISM_OPTIONS.map((m) => (
+                    <button key={m.value} type="button"
+                      className={`option-card ${profile.metabolism === m.value ? 'selected' : ''}`}
+                      onClick={() => update('metabolism', m.value)}
+                      style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{m.label}</span>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--color-muted)', lineHeight: 1.5 }}>{m.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -571,22 +622,13 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <div>
-                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
-                  Diet preference <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— select all that apply</span>
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {DIETARY_OPTIONS.map((d) => {
-                    const isChecked = (profile.dietaryRestrictions || []).map((v) => v.toLowerCase()).includes(d.toLowerCase());
-                    return (
-                      <button key={d} type="button" className={`checkbox-item ${isChecked ? 'checked' : ''}`}
-                        onClick={() => toggleArray('dietaryRestrictions', d)}>
-                        {isChecked && <CheckIcon size={13} />} {d}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <ChipSelectWithOther
+                label="Diet preference"
+                options={DIETARY_OPTIONS}
+                values={profile.dietaryRestrictions || []}
+                onToggle={(v) => toggleArray('dietaryRestrictions', v)}
+                placeholder="e.g. Jain, pescatarian…"
+              />
 
               <div>
                 <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
@@ -597,22 +639,13 @@ export default function OnboardingPage() {
                   placeholder="e.g. mushroom, bitter gourd, prawns" maxLength={200} />
               </div>
 
-              <div>
-                <span className="input-label" style={{ marginBottom: '0.6rem', display: 'block' }}>
-                  Food allergies <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>— select all that apply</span>
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {ALLERGY_OPTIONS.map((a) => {
-                    const isChecked = (profile.allergies || []).map((v) => v.toLowerCase()).includes(a.toLowerCase());
-                    return (
-                      <button key={a} type="button" className={`checkbox-item ${isChecked ? 'checked' : ''}`}
-                        onClick={() => toggleArray('allergies', a)}>
-                        {isChecked && <CheckIcon size={13} />} {a}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <ChipSelectWithOther
+                label="Food allergies"
+                options={ALLERGY_OPTIONS}
+                values={profile.allergies || []}
+                onToggle={(v) => toggleArray('allergies', v)}
+                placeholder="e.g. sesame, mustard…"
+              />
 
               <div>
                 <label className="input-label" htmlFor="pref-exercise-type">Exercise type <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(optional)</span></label>
