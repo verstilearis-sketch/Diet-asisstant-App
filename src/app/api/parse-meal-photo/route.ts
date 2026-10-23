@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/api-auth';
+import { checkRateLimit, clientKey } from '@/lib/api-guard';
 import { tryGeminiVision, tryOpenRouterVision, extractJsonObject } from '@/lib/ai-providers';
 
 // ── Photo meal logging ──────────────────────────────────────────
@@ -41,6 +42,10 @@ function parseMealJson(raw: string): {
 export async function POST(req: Request) {
   const auth = await requireUser(req);
   if (auth instanceof NextResponse) return auth;
+
+  if (!checkRateLimit(clientKey(req, 'parse-meal-photo'), 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again shortly.' }, { status: 429 });
+  }
 
   let body: unknown;
   try {
