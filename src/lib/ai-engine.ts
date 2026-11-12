@@ -2076,9 +2076,18 @@ function pickSmart(
   if (!scored.length) return FALLBACK_FOOD;
 
   scored.sort((a, b) => b.s - a.s);
-  // Deterministic best pick — the recent-names exclusion (10 deep per meal type)
-  // already forces week-long variety, so we always take the best macro fit.
-  return scored[0].f;
+  // Variety: don't always serve the single best macro fit — pick from the
+  // top 5 by score (seeded, so the plan stays reproducible), weighted toward
+  // the best. Always taking #1 made every plan the same "best" dishes in the
+  // same order, however big the pool was.
+  const top = scored.slice(0, 5);
+  const total = top.reduce((a, c) => a + Math.max(c.s, 0.01), 0);
+  let roll = rng() * total;
+  for (const c of top) {
+    roll -= Math.max(c.s, 0.01);
+    if (roll <= 0) return c.f;
+  }
+  return top[0].f;
 }
 
 function toMeal(f: FoodItem): Meal {
