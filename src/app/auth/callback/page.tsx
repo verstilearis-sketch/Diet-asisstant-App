@@ -30,6 +30,11 @@ function CallbackHandler() {
 
   useEffect(() => {
     let cancelled = false;
+    // Warm the dashboard's JS while the sign-in finishes: router.replace()
+    // after sign-in would otherwise have to download the whole dashboard
+    // bundle first, and the user stares at this same spinner meanwhile.
+    // Prefetching here runs it in parallel with the work below instead.
+    router.prefetch('/dashboard');
     (async () => {
       // Supabase loads in the background — the loader above is already painted.
       const { getSupabase } = await import('@/lib/supabase');

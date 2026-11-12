@@ -27,6 +27,11 @@ function AuthForm() {
 
   useEffect(() => {
     let cancelled = false;
+    // Warm the dashboard's JS while the user is still here — and on
+    // Google's consent screen after the tap. The dashboard is a heavy
+    // page; prefetching it now means the post-sign-in handoff doesn't
+    // have to download it while the user watches the spinner.
+    router.prefetch('/dashboard');
     // Lazy session check — never blocks first paint.
     import('@/lib/storage').then(({ getSession }) => {
       getSession().then((session) => {
