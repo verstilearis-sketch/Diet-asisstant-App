@@ -2392,7 +2392,7 @@ export async function generateDietPlan(
       calorieTarget: calculations.dailyCalorieGoal,
       dayTotal: totalCalories,
       goal: profile.goal,
-      exercises: (profile.exerciseFrequency ?? 0) > 0,
+      exercises: profile.activityLevel !== 'sedentary',
     };
     for (const [key, m] of Object.entries(picked) as [SlotKey, Meal][]) {
       m.why = mealWhy(m, key, whyCtx);
@@ -2587,7 +2587,7 @@ function getTips(profile: UserProfile, c: Calculations, region: string): string[
       `🎯 ${name}, performance eating means fueling around training: your ${kcal} kcal and ${protein}g protein only work if timed right.`,
       `⚡ Eat a carb-rich meal 2–3h before intense sessions (rice, oats, banana) — training fasted at your volume leaves 15–20% of performance on the table.`,
       `🧃 Within 30 min post-workout: fast carbs + 25–30g protein (banana + whey, or chocolate milk). This window is when glycogen replenishes fastest.`,
-      `🛌 Sleep 8–9h on heavy training days — at ${profile.exerciseFrequency ?? 4}+ sessions/week, recovery is where the adaptation actually happens.`,
+      `🛌 Sleep 8–9h on heavy training days — recovery is where the adaptation actually happens.`,
     );
   } else {
     tips.push(
@@ -2632,8 +2632,8 @@ function getTips(profile: UserProfile, c: Calculations, region: string): string[
     `📝 Log everything for the first 2 weeks — people who track double their success rate, because the diary catches the "invisible" 300–400 kcal (oils, nibbles, sugary chai) that stall ${goal === 'lose_weight' ? 'fat loss' : 'progress'}.`,
     `📊 Weigh yourself 3x/week (morning, after bathroom) and watch the weekly average, not daily noise — water alone swings 1–2 kg and means nothing.`,
   );
-  if (profile.timeline)
-    tips.push(`📅 Your ${profile.timeline}-week timeline is realistic if you average ~0.5 kg/week — faster than that usually costs muscle, not just fat.`);
+  if (profile.timeline && (goal === 'lose_weight' || goal === 'gain_weight'))
+    tips.push(`📅 Your ${profile.timeline}-week timeline plans ~${Math.abs(c.weeklyWeightChangeKg).toFixed(1)} kg/week — faster than ~0.5 kg/week usually costs muscle, not just fat.`);
 
   return tips;
 }

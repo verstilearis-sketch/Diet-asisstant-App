@@ -138,7 +138,27 @@ export function workTypeFactor(workType?: UserProfile['workType'], workMix?: Use
   return 1.0; // desk (or unset): activity level already covers it
 }
 
-export function calculateDailyCalorieGoal(tdee: number, goal: Goal): number {
+export function calculateDailyCalorieGoal(
+  tdee: number,
+  goal: Goal,
+  profile?: Pick<UserProfile, 'weightKg' | 'targetWeightKg' | 'timeline'>,
+): number {
+  // When the user gave a target weight AND a timeline, the daily
+  // deficit/surplus comes from their own pace: kg to change ÷ weeks.
+  // 1 kg of body fat ≈ 7,700 kcal. Clamped to safe daily rates so an
+  // aggressive timeline can never starve or force-feed anyone.
+  if (profile?.targetWeightKg != null && profile.timeline) {
+    const kgToChange = profile.weightKg - profile.targetWeightKg; // +ve = lose
+    const weeklyKg = kgToChange / Math.max(1, profile.timeline);
+    if (goal === 'lose_weight' && weeklyKg > 0) {
+      const deficit = Math.round((weeklyKg * 7700) / 7);
+      return tdee - Math.min(750, Math.max(250, deficit));
+    }
+    if (goal === 'gain_weight' && weeklyKg < 0) {
+      const surplus = Math.round((-weeklyKg * 7700) / 7);
+      return tdee + Math.min(500, Math.max(200, surplus));
+    }
+  }
   switch (goal) {
     case 'lose_weight': return tdee - 500;   // ~0.5 kg/week loss
     case 'gain_weight': return tdee + 400;   // ~0.4 kg/week gain
@@ -192,7 +212,7 @@ export function computeAll(profile: UserProfile): Calculations {
     * workTypeFactor(profile.workType, profile.workMix)
     * metabolismFactor(profile.metabolism),
   );
-  const dailyCalorieGoal = calculateDailyCalorieGoal(tdee, profile.goal);
+  const dailyCalorieGoal = calculateDailyCalorieGoal(tdee, profile.goal, profile);
   const macros = calculateMacros(dailyCalorieGoal, profile.goal, profile.weightKg);
   const waterLiters = calculateWater(profile.weightKg, profile.activityLevel);
   const weeklyWeightChangeKg = Math.round(((dailyCalorieGoal - tdee) * 7) / 7700 * 100) / 100;

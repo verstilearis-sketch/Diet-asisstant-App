@@ -1150,7 +1150,7 @@ export default function DashboardPage() {
                   calorieTarget: calcs.dailyCalorieGoal,
                   dayTotal: selectedDayPlan.totalCalories,
                   goal: profile.goal,
-                  exercises: (profile.exerciseFrequency ?? 0) > 0,
+                  exercises: profile.activityLevel !== 'sedentary',
                 });
                 return (
                   <MealCard

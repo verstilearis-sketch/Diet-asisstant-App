@@ -73,7 +73,9 @@ const initProfile: Partial<UserProfile> = {
   dietaryRestrictions: [], allergies: [], location: '',
   budget: 'moderate', cuisineMix: 'mixed',
   sleepHours: 7, stressLevel: 3, workType: 'desk',
-  exerciseFrequency: 3, exerciseDuration: 45,
+  // No exerciseFrequency/Duration/Type here: the Activity level choice
+  // already covers exercise (its labels say "1–3 days/week" etc.), so
+  // asking again would be an input that changes nothing.
 };
 
 // ── Main component ────────────────────────────────────────────
@@ -495,38 +497,6 @@ export default function OnboardingPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem' }}>
                 <div>
-                  <label className="input-label" htmlFor="lifestyle-exercise-freq">Exercise days / week</label>
-                  <input id="lifestyle-exercise-freq" className="input-field" type="number" min={0} max={7}
-                    value={profile.exerciseFrequency ?? 3}
-                    onChange={(e) => update('exerciseFrequency', +e.target.value)} />
-                </div>
-                <div>
-                  <label className="input-label" htmlFor="lifestyle-exercise-dur">Session length <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(min)</span></label>
-                  <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.5rem' }}>
-                    <button type="button" aria-label="Decrease session length by 5 minutes"
-                      onClick={() => update('exerciseDuration', Math.max(0, (profile.exerciseDuration ?? 45) - 5))}
-                      disabled={(profile.exerciseDuration ?? 45) <= 0}
-                      className="option-card"
-                      style={{ width: 46, justifyContent: 'center', alignItems: 'center', padding: 0 }}>
-                      <MinusIcon size={18} />
-                    </button>
-                    <div id="lifestyle-exercise-dur" className="input-field"
-                      style={{ flex: 1, textAlign: 'center', fontWeight: 750, fontVariantNumeric: 'tabular-nums', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {profile.exerciseDuration ?? 45} min
-                    </div>
-                    <button type="button" aria-label="Increase session length by 5 minutes"
-                      onClick={() => update('exerciseDuration', Math.min(180, (profile.exerciseDuration ?? 45) + 5))}
-                      disabled={(profile.exerciseDuration ?? 45) >= 180}
-                      className="option-card"
-                      style={{ width: 46, justifyContent: 'center', alignItems: 'center', padding: 0 }}>
-                      <PlusIcon size={18} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem' }}>
-                <div>
                   <label className="input-label" htmlFor="lifestyle-sleep">Sleep <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(hrs/night)</span></label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
                     <input id="lifestyle-sleep" type="range" min={4} max={12} step={0.5}
@@ -695,12 +665,6 @@ export default function OnboardingPage() {
                 onToggle={(v) => toggleArray('allergies', v)}
                 placeholder="e.g. sesame, mustard…"
               />
-
-              <div>
-                <label className="input-label" htmlFor="pref-exercise-type">Exercise type <span style={{ color: 'var(--color-faint)', fontWeight: 500 }}>(optional)</span></label>
-                <input id="pref-exercise-type" className="input-field" placeholder="e.g. Running, gym, yoga, swimming"
-                  value={profile.exerciseType || ''} onChange={(e) => update('exerciseType', e.target.value)} />
-              </div>
             </div>
           </div>
         )}
