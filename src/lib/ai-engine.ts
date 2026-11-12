@@ -51,6 +51,9 @@ export interface DietPlan {
   };
   /** Meal swap history — the raw signal for taste learning. Capped at 60. */
   swapHistory?: { from: string; to: string; slot: string; at: string }[];
+  /** Shuffle salt — each "Shuffle week" bumps it so the same profile
+   *  yields a fresh plan instead of the deterministic one. */
+  seedSalt?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1656,6 +1659,9 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Roth & Noon Chai', emoji: '🍞', cal: 300, protein: 7, carbs: 46, fat: 9, prepTime: '10 min', description: 'Sweet roth bread with salted pink tea', tags: ['vegetarian'] },
       { name: 'Kashmiri Walnut Porridge', emoji: '🥣', cal: 360, protein: 12, carbs: 52, fat: 12, prepTime: '15 min', description: 'Wheat porridge with crushed Kashmiri walnuts, honey and milk', tags: ['vegetarian'] },
       { name: 'Kashmiri Egg Omelette & Girda', emoji: '🍳', cal: 340, protein: 22, carbs: 26, fat: 16, prepTime: '15 min', description: 'Fluffy omelette with onion and green chili, served with girda', tags: ['high-protein'] },
+      { name: 'Kashmiri Apple & Oats Porridge', emoji: '🥣', cal: 330, protein: 10, carbs: 56, fat: 7, prepTime: '12 min', description: 'Oats porridge with apple, milk and honey', tags: ['vegetarian'] },
+      { name: 'Kashmiri Besan Cheela & Chutney', emoji: '🥞', cal: 320, protein: 14, carbs: 44, fat: 8, prepTime: '20 min', description: 'Gram-flour pancakes with onion and mint chutney', tags: ['vegetarian', 'vegan', 'high-protein'] },
+      { name: 'Kashmiri Yogurt & Berry Bowl', emoji: '🥣', cal: 260, protein: 12, carbs: 34, fat: 8, prepTime: '5 min', description: 'Thick yogurt with berries and a drizzle of honey', tags: ['vegetarian', 'gluten-free'] },
     ],
     lunch: [
       { name: 'Rogan Josh & Rice', emoji: '🍛', cal: 580, protein: 38, carbs: 45, fat: 26, prepTime: '30 min', description: 'Slow-braised mutton in Kashmiri chili gravy with steamed rice', tags: ['high-protein', 'gluten-free'] },
@@ -1679,6 +1685,12 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Kashmiri Dum Aloo & Girda', emoji: '🥔', cal: 400, protein: 8, carbs: 62, fat: 14, prepTime: '30 min', description: 'Baby potatoes in yogurt-fennel gravy with warm girda bread', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Kashmiri Walnut & Greens Salad Bowl', emoji: '🥗', cal: 340, protein: 12, carbs: 22, fat: 22, prepTime: '15 min', description: 'Haak greens, walnuts, apple and yogurt dressing — a fresh Kashmiri bowl', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Kashmiri Rajma & Lavasa', emoji: '🫘', cal: 430, protein: 18, carbs: 64, fat: 10, prepTime: '30 min', description: 'Red kidney beans with soft lavasa bread, Jammu home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Haak Stir-Fry & Girda', emoji: '🥬', cal: 380, protein: 10, carbs: 52, fat: 14, prepTime: '20 min', description: 'Collard greens stir-fried with garlic and mustard oil, served with girda', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Dal & Girda', emoji: '🍲', cal: 420, protein: 18, carbs: 60, fat: 10, prepTime: '25 min', description: 'Yellow dal with cumin tempering and warm girda bread', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Chickpea & Greens Bowl', emoji: '🥗', cal: 400, protein: 20, carbs: 52, fat: 10, prepTime: '15 min', description: 'Chickpeas, haak greens and onion with lemon — a light protein bowl', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Kashmiri Turnip & Lentil Soup', emoji: '🍲', cal: 320, protein: 16, carbs: 46, fat: 8, prepTime: '25 min', description: 'Turnip and yellow lentils simmered into a light winter soup', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Mutton Korma & Girda', emoji: '🍖', cal: 520, protein: 34, carbs: 40, fat: 24, prepTime: '35 min', description: 'Slow-cooked mutton korma with girda bread instead of rice', tags: ['high-protein'] },
+      { name: 'Kashmiri Char-Grilled Chicken', emoji: '🍢', cal: 440, protein: 40, carbs: 6, fat: 28, prepTime: '25 min', description: 'Char-grilled chicken marinated in Kashmiri spices, with onion and lemon', tags: ['high-protein', 'low-carb', 'gluten-free'] },
     ],
     dinner: [
       { name: 'Rista & Rice', emoji: '🧆', cal: 560, protein: 34, carbs: 44, fat: 28, prepTime: '30 min', description: 'Hand-pounded mutton meatballs in fiery red wazwan gravy', tags: ['high-protein'] },
@@ -1699,6 +1711,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Kashmiri Haak & Lentil Soup', emoji: '🍲', cal: 300, protein: 16, carbs: 42, fat: 8, prepTime: '25 min', description: 'Collard greens and yellow lentils simmered into a light Kashmiri soup', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Kashmiri Kokur Korma & Roti', emoji: '🍗', cal: 470, protein: 32, carbs: 40, fat: 20, prepTime: '30 min', description: 'Country chicken korma with whole wheat roti instead of rice', tags: ['high-protein'] },
       { name: 'Kashmiri Nadru & Greens Bowl', emoji: '🪷', cal: 360, protein: 12, carbs: 48, fat: 14, prepTime: '20 min', description: 'Lotus stem and haak greens over a light yogurt bowl', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kashmiri Dal Tadka & Roti', emoji: '🍲', cal: 450, protein: 18, carbs: 62, fat: 10, prepTime: '25 min', description: 'Yellow dal with garlic-cumin tadka and whole wheat roti', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Mixed Veg & Girda', emoji: '🥗', cal: 380, protein: 10, carbs: 56, fat: 12, prepTime: '25 min', description: 'Turnip, kohlrabi and greens with girda bread', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Chickpea Salad Bowl', emoji: '🥗', cal: 390, protein: 19, carbs: 50, fat: 10, prepTime: '15 min', description: 'Chickpeas with onion, tomato, cucumber and lemon', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Kashmiri Mutton Seekh Kebab Wrap', emoji: '🌯', cal: 500, protein: 34, carbs: 38, fat: 24, prepTime: '25 min', description: 'Grilled mutton seekh kebab rolled in a soft wrap with onion', tags: ['high-protein'] },
     ],
     snack: [
       { name: 'Kahwa & Shufta (small)', emoji: '🍵', cal: 200, protein: 4, carbs: 28, fat: 9, prepTime: '10 min', description: 'Saffron tea with a small portion of dry-fruit shufta dessert', tags: ['vegetarian', 'gluten-free'] },
@@ -1718,6 +1734,9 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Kashmiri Kahwa & Almonds', emoji: '🍵', cal: 150, protein: 5, carbs: 12, fat: 10, prepTime: '10 min', description: 'Saffron kahwa with a small handful of almonds', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Kashmiri Yogurt & Walnut Bowl', emoji: '🥣', cal: 220, protein: 10, carbs: 20, fat: 12, prepTime: '5 min', description: 'Thick yogurt with walnuts, apple and a drizzle of honey', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Kashmiri Fruit Chaat', emoji: '🍎', cal: 170, protein: 3, carbs: 38, fat: 2, prepTime: '10 min', description: 'Apple, pear and pomegranate with lemon and chaat masala', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Roasted Makhana', emoji: '🍿', cal: 160, protein: 5, carbs: 28, fat: 4, prepTime: '5 min', description: 'Roasted lotus seeds with salt and chaat masala', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Cucumber & Yogurt Bowl', emoji: '🥒', cal: 150, protein: 6, carbs: 16, fat: 6, prepTime: '5 min', description: 'Cucumber and onion in thick yogurt with mint', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kashmiri Carrot & Beet Salad', emoji: '🥕', cal: 140, protein: 3, carbs: 30, fat: 2, prepTime: '10 min', description: 'Grated carrot and beetroot with lemon and green chili', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
   },
 
@@ -2084,7 +2103,7 @@ function pickSmart(
       // costs nothing; when alternatives exist, it breaks the monotony.
       const fmt = dishFormat(f);
       for (let i = 0; i < recentFormats.length; i++) {
-        if (recentFormats[recentFormats.length - 1 - i] === fmt) s -= [0.15, 0.08, 0.04][i];
+        if (recentFormats[recentFormats.length - 1 - i] === fmt) s -= [0.22, 0.12, 0.06][i];
       }
       // Repeat fallback: penalize by recency so the plan ROTATES through the
       // pool (least-recent first) instead of serving the best macro scorer
@@ -2201,6 +2220,10 @@ export async function generateDietPlan(
   profile: UserProfile,
   calculations: Calculations,
   taste?: TasteProfile,
+  // Shuffle salt: same profile + different salt = a different plan.
+  // Lets the dashboard offer a one-tap "Shuffle week" without re-entering
+  // onboarding, while the default (0) keeps plans reproducible.
+  seedSalt?: number,
 ): Promise<DietPlan> {
   // No artificial delay: the plan builds locally in milliseconds.
   const rawRegion = detectRegion(profile.location);
@@ -2208,8 +2231,9 @@ export async function generateDietPlan(
   const budget: BudgetTier = profile.budget || 'moderate';
   const cuisineMix: CuisineMix = profile.cuisineMix || 'mixed';
   // Deterministic plan: the RNG is seeded from the profile, so identical
-  // details always produce the identical plan.
-  const rng = mulberry32(planSeedFor(profile));
+  // details always produce the identical plan — unless a shuffle salt
+  // was passed, which shifts the stream to a fresh plan.
+  const rng = mulberry32(planSeedFor(profile) + (seedSalt || 0));
   const pools = buildMealPools(region);
   // High-protein goals get extra protein weighting in meal scoring
   const proteinWeight = profile.goal === 'lose_weight' ? 0.36

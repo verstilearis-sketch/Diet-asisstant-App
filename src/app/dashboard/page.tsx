@@ -128,6 +128,7 @@ export default function DashboardPage() {
   const [scanBusy, setScanBusy] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [learnBusy, setLearnBusy] = useState(false);
+  const [shuffleBusy, setShuffleBusy] = useState(false);
   const [learnings, setLearnings] = useState<string[] | null>(null);
   const [adaptation, setAdaptation] = useState<AdaptationCheck | null>(null);
   const adaptCheckedFor = useRef<string | null>(null);
@@ -587,6 +588,37 @@ export default function DashboardPage() {
       console.error('Smart week generation failed:', e);
     } finally {
       setLearnBusy(false);
+    }
+  };
+
+  // Shuffle week: one tap for a fresh plan from the SAME saved inputs —
+  // no re-entering onboarding. Each tap bumps the seed salt, so the plan
+  // actually changes instead of rebuilding the deterministic one.
+  const handleShuffleWeek = async () => {
+    if (!savedPlan || shuffleBusy) return;
+    setShuffleBusy(true);
+    try {
+      const salt = (savedPlan.plan.seedSalt || 0) + 1;
+      const fresh = await generateDietPlan(
+        savedPlan.profile,
+        { ...baseCalcs, dailyCalorieGoal: dailyGoal },
+        undefined,
+        salt,
+      );
+      const updated = {
+        ...fresh,
+        seedSalt: salt,
+        adaptiveTarget: savedPlan.plan.adaptiveTarget,
+        festivalMode: savedPlan.plan.festivalMode,
+        swapHistory: savedPlan.plan.swapHistory,
+      };
+      setSavedPlan({ ...savedPlan, plan: updated });
+      await updatePlan(savedPlan.id, updated);
+      setActiveTab('meals');
+    } catch (e) {
+      console.error('Shuffle week failed:', e);
+    } finally {
+      setShuffleBusy(false);
     }
   };
 
@@ -1081,6 +1113,12 @@ export default function DashboardPage() {
         {/* ── MEALS ─────────────────────────────────────── */}
         {activeTab === 'meals' && (
           <div className="fade-in-up">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+              <button type="button" className="btn-secondary" onClick={handleShuffleWeek} disabled={shuffleBusy} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                <RefreshIcon />
+                {shuffleBusy ? 'Shuffling…' : 'Shuffle week'}
+              </button>
+            </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
               {plan.weeklyPlan.map((d, i) => (
                 <button key={d.day}
