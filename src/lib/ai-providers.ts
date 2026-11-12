@@ -13,18 +13,18 @@ const GROQ_MODEL_PREFERENCE = [
   'qwen/qwen3.8-27b',
   'moonshotai/kimi-k2-instruct',
 ].filter((m): m is string => !!m);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 // OpenRouter: third link in the chain — separate free-model quota pool.
+// Verified live Nov 12, 2026 — the old free list is gone from OpenRouter.
 const OPENROUTER_MODEL_PREFERENCE = [
   process.env.OPENROUTER_MODEL,
-  'google/gemma-3-27b-it:free',
-  'qwen/qwen3-32b:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'deepseek/deepseek-chat-v3-0324:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
 ].filter((m): m is string => !!m);
 const OPENROUTER_VISION_PREFERENCE = [
   process.env.OPENROUTER_VISION_MODEL,
-  'qwen/qwen2.5-vl-72b-instruct:free',
+  'nvidia/nemotron-3.5-super-vl:free',
 ].filter((m): m is string => !!m);
 const OPENROUTER_REFERER = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`

@@ -38,13 +38,14 @@ const GROQ_MODEL_PREFERENCE = [
   'qwen/qwen3.8-27b',
   'moonshotai/kimi-k2-instruct',
 ].filter((m): m is string => !!m);
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 const OPENROUTER_MODEL_PREFERENCE = [
   process.env.OPENROUTER_MODEL,
-  'google/gemma-3-27b-it:free',
-  'qwen/qwen3-32b:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'deepseek/deepseek-chat-v3-0324:free',
+  // Verified live Nov 12, 2026 — the old free list (gemma-3-27b, qwen3-32b,
+  // llama-3.3-70b, deepseek-v3) is gone from OpenRouter entirely.
+  'google/gemma-4-26b-a4b-it:free',
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
 ].filter((m): m is string => !!m);
 // NOTE: GitHub Models was retired by GitHub on July 30, 2026 — removed from
 // the chat chain. Chain is now: Groq → Gemini → OpenRouter.
@@ -190,7 +191,7 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
     const flatPrompt = typedMessages
       .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
       .join('\n\n');
-    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 8000 });
+    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 20000 });
     if (attempt.ok) {
       return new Response(attempt.reply, {
         headers: {
@@ -473,8 +474,16 @@ async function streamGroq(
     preferredGroqModel = firstTry;
     return stream;
   } catch (err) {
-    // Model retired or failing — don't waste time on discovery here,
-    // just fail over to the next provider immediately.
+    // The hardcoded model may have retired — discover what Groq serves right
+    // now and retry once, instead of failing over with a stale model id.
+    if (isModelNotFound(err)) {
+      const discovered = await discoverGroqModel(apiKey);
+      if (discovered !== firstTry) {
+        const stream = await tryGroqModel(apiKey, messages, systemPrompt, discovered, outerSignal);
+        preferredGroqModel = discovered;
+        return stream;
+      }
+    }
     throw err;
   }
 }
@@ -626,7 +635,16 @@ async function streamOpenRouter(
     preferredOpenRouterModel = firstTry;
     return stream;
   } catch (err) {
-    // Fail over immediately — no discovery delay on the hot path.
+    // Same self-healing as Groq: a retired model id must not kill the
+    // provider forever — discover a live free model and retry once.
+    if (isModelNotFound(err)) {
+      const discovered = await discoverOpenRouterModel(apiKey);
+      if (discovered !== firstTry) {
+        const stream = await tryOpenRouterModel(apiKey, messages, systemPrompt, discovered, outerSignal);
+        preferredOpenRouterModel = discovered;
+        return stream;
+      }
+    }
     throw err;
   }
 }
