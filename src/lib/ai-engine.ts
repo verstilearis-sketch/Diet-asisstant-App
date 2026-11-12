@@ -1654,6 +1654,8 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Lavasa & Warm Milk', emoji: '🥛', cal: 260, protein: 8, carbs: 36, fat: 8, prepTime: '10 min', description: 'Soft lavasa bread with warm milk', tags: ['vegetarian'] },
       { name: 'Wheat Porridge & Milk', emoji: '🥣', cal: 320, protein: 11, carbs: 54, fat: 7, prepTime: '20 min', description: 'Slow-cooked wheat daliya in milk with jaggery', tags: ['vegetarian'] },
       { name: 'Roth & Noon Chai', emoji: '🍞', cal: 300, protein: 7, carbs: 46, fat: 9, prepTime: '10 min', description: 'Sweet roth bread with salted pink tea', tags: ['vegetarian'] },
+      { name: 'Kashmiri Walnut Porridge', emoji: '🥣', cal: 360, protein: 12, carbs: 52, fat: 12, prepTime: '15 min', description: 'Wheat porridge with crushed Kashmiri walnuts, honey and milk', tags: ['vegetarian'] },
+      { name: 'Kashmiri Egg Omelette & Girda', emoji: '🍳', cal: 340, protein: 22, carbs: 26, fat: 16, prepTime: '15 min', description: 'Fluffy omelette with onion and green chili, served with girda', tags: ['high-protein'] },
     ],
     lunch: [
       { name: 'Rogan Josh & Rice', emoji: '🍛', cal: 580, protein: 38, carbs: 45, fat: 26, prepTime: '30 min', description: 'Slow-braised mutton in Kashmiri chili gravy with steamed rice', tags: ['high-protein', 'gluten-free'] },
@@ -1670,6 +1672,13 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Palak Haak & Rice', emoji: '🥬', cal: 360, protein: 10, carbs: 52, fat: 13, prepTime: '20 min', description: 'Spinach and collard greens with garlic over rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Dal Gogji & Rice', emoji: '🍲', cal: 430, protein: 16, carbs: 64, fat: 10, prepTime: '30 min', description: 'Yellow dal with turnips, Kashmiri home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Moong Dal & Rice', emoji: '🍲', cal: 440, protein: 18, carbs: 62, fat: 10, prepTime: '25 min', description: 'Moong dal with rice, Kashmiri home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Grilled Kashmiri Chicken Tikka', emoji: '🍢', cal: 420, protein: 38, carbs: 8, fat: 26, prepTime: '25 min', description: 'Char-grilled chicken tikka marinated in Kashmiri spices, served with onion and lemon', tags: ['high-protein', 'low-carb', 'gluten-free'] },
+      { name: 'Kashmiri Mutton Seekh Kebab', emoji: '🍢', cal: 460, protein: 36, carbs: 6, fat: 30, prepTime: '25 min', description: 'Hand-minced mutton kebabs with saffron, grilled over charcoal', tags: ['high-protein', 'low-carb', 'gluten-free'] },
+      { name: 'Kashmiri Yakhni Shorba', emoji: '🍲', cal: 320, protein: 22, carbs: 18, fat: 18, prepTime: '25 min', description: 'Light yogurt-fennel broth with shredded chicken — a warming Kashmiri soup', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Kashmiri Chicken Korma & Girda', emoji: '🫓', cal: 480, protein: 34, carbs: 42, fat: 20, prepTime: '30 min', description: 'Chicken korma with girda bread instead of rice — same wazwan flavour, different plate', tags: ['high-protein'] },
+      { name: 'Kashmiri Dum Aloo & Girda', emoji: '🥔', cal: 400, protein: 8, carbs: 62, fat: 14, prepTime: '30 min', description: 'Baby potatoes in yogurt-fennel gravy with warm girda bread', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kashmiri Walnut & Greens Salad Bowl', emoji: '🥗', cal: 340, protein: 12, carbs: 22, fat: 22, prepTime: '15 min', description: 'Haak greens, walnuts, apple and yogurt dressing — a fresh Kashmiri bowl', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kashmiri Rajma & Lavasa', emoji: '🫘', cal: 430, protein: 18, carbs: 64, fat: 10, prepTime: '30 min', description: 'Red kidney beans with soft lavasa bread, Jammu home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     dinner: [
       { name: 'Rista & Rice', emoji: '🧆', cal: 560, protein: 34, carbs: 44, fat: 28, prepTime: '30 min', description: 'Hand-pounded mutton meatballs in fiery red wazwan gravy', tags: ['high-protein'] },
@@ -1686,6 +1695,10 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Bottle Gourd Yakhni & Rice', emoji: '🎃', cal: 400, protein: 10, carbs: 56, fat: 14, prepTime: '25 min', description: 'Bottle gourd in spiced yogurt yakhni', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Nadru Monj Curry & Rice', emoji: '🪷', cal: 420, protein: 11, carbs: 60, fat: 14, prepTime: '30 min', description: 'Lotus stem and kohlrabi curry — winter staple', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Bathua Saag & Rice', emoji: '🥬', cal: 370, protein: 10, carbs: 50, fat: 13, prepTime: '20 min', description: 'Bathua greens with garlic over rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Grilled Kashmiri Paneer Tikka', emoji: '🧀', cal: 380, protein: 24, carbs: 10, fat: 26, prepTime: '20 min', description: 'Char-grilled paneer tikka with Kashmiri spices and mint chutney', tags: ['vegetarian', 'high-protein', 'low-carb', 'gluten-free'] },
+      { name: 'Kashmiri Haak & Lentil Soup', emoji: '🍲', cal: 300, protein: 16, carbs: 42, fat: 8, prepTime: '25 min', description: 'Collard greens and yellow lentils simmered into a light Kashmiri soup', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Kokur Korma & Roti', emoji: '🍗', cal: 470, protein: 32, carbs: 40, fat: 20, prepTime: '30 min', description: 'Country chicken korma with whole wheat roti instead of rice', tags: ['high-protein'] },
+      { name: 'Kashmiri Nadru & Greens Bowl', emoji: '🪷', cal: 360, protein: 12, carbs: 48, fat: 14, prepTime: '20 min', description: 'Lotus stem and haak greens over a light yogurt bowl', tags: ['vegetarian', 'gluten-free'] },
     ],
     snack: [
       { name: 'Kahwa & Shufta (small)', emoji: '🍵', cal: 200, protein: 4, carbs: 28, fat: 9, prepTime: '10 min', description: 'Saffron tea with a small portion of dry-fruit shufta dessert', tags: ['vegetarian', 'gluten-free'] },
@@ -1702,6 +1715,9 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Gogji Monj Chaat', emoji: '🥗', cal: 180, protein: 5, carbs: 28, fat: 6, prepTime: '15 min', description: 'Turnip and lotus-stem chaat with lemon and green chili', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Roasted Chana & Gur', emoji: '🫘', cal: 210, protein: 9, carbs: 32, fat: 5, prepTime: '5 min', description: 'Roasted black chana with a piece of jaggery', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Masal Tchot (1 pc)', emoji: '🍞', cal: 220, protein: 5, carbs: 34, fat: 7, prepTime: '10 min', description: 'Spiced Kashmiri bread with noon chai', tags: ['vegetarian'] },
+      { name: 'Kashmiri Kahwa & Almonds', emoji: '🍵', cal: 150, protein: 5, carbs: 12, fat: 10, prepTime: '10 min', description: 'Saffron kahwa with a small handful of almonds', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Kashmiri Yogurt & Walnut Bowl', emoji: '🥣', cal: 220, protein: 10, carbs: 20, fat: 12, prepTime: '5 min', description: 'Thick yogurt with walnuts, apple and a drizzle of honey', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Kashmiri Fruit Chaat', emoji: '🍎', cal: 170, protein: 3, carbs: 38, fat: 2, prepTime: '10 min', description: 'Apple, pear and pomegranate with lemon and chaat masala', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
   },
 
@@ -1984,6 +2000,38 @@ function tasteMatchesAny(foodName: string, list: string[]): boolean {
   return list.some((r) => tasteNameMatches(foodName, r));
 }
 
+/**
+ * What KIND of meal a dish is — rice plate, bread meal, soup, bowl, grilled,
+ * porridge, egg, fried snack, drink. Names carry the main component; the
+ * description only disambiguates dishes whose names hide the format
+ * ("Kashmiri Harissa" is a porridge). Used to rotate formats across the
+ * week: unique names are not enough if every lunch is "& Rice".
+ */
+type DishFormat = 'rice' | 'bread' | 'soup' | 'bowl' | 'grilled' | 'porridge' | 'egg' | 'fried' | 'drink' | 'other';
+
+const FORMAT_RULES: [DishFormat, RegExp][] = [
+  ['porridge', /porridge|daliya|dalia|oatmeal|oats|upma|poha/],
+  ['rice', /rice|chawal|pulao|biryani|khichdi/],
+  ['soup', /soup|shorba|rasam|stew/],
+  ['bread', /roti|naan|kulcha|paratha|bread|sandwich|wrap|tchot|lavasa|girda|chapati|toast|bun|roth|bakarkhani|cheela|pancake/],
+  ['bowl', /salad|chaat|bowl/],
+  ['grilled', /\bgrill|tikka|kabab|kebab|tandoori|seekh|roast chicken|roasted chicken/],
+  ['fried', /pakoda|fritter|samosa|cutlet|fries|monj/],
+  ['egg', /egg|anda|omelette|scramble/],
+  ['drink', /smoothie|milk|doodh|chai|kahwa|lassi|juice|shake|tea/],
+];
+
+function dishFormat(f: Pick<FoodItem, 'name' | 'description'>): DishFormat {
+  const name = f.name.toLowerCase();
+  for (const [fmt, re] of FORMAT_RULES) if (re.test(name)) return fmt;
+  const desc = (f.description || '').toLowerCase();
+  for (const [fmt, re] of FORMAT_RULES) {
+    if (fmt !== 'porridge' && fmt !== 'soup' && fmt !== 'drink') continue;
+    if (re.test(desc)) return fmt;
+  }
+  return 'other';
+}
+
 function pickSmart(
   type: MealType,
   target: SlotTarget,
@@ -1999,6 +2047,10 @@ function pickSmart(
 ): FoodItem {
   const primary = rollSource(cuisineMix, rng);
   const secondary = primary === 'regional' ? 'international' : 'regional';
+  // Format rotation: the formats this slot served on the last 3 days
+  // (oldest→newest) — a week of "& Rice" lunches is boring even when
+  // every name is different, so recent formats are penalised in collect().
+  const recentFormats = recent[type].slice(-3).map((n) => dishFormat({ name: n, description: '' }));
   const scored: { f: FoodItem; s: number }[] = [];
   const seen = new Set<string>();
 
@@ -2026,6 +2078,14 @@ function pickSmart(
       // across different slots (no oat-bowl for lunch AND dinner).
       if (dayUsed?.has(f.name)) continue;
       let s = scoreCandidate(f, target, proteinWeight, budget) - penalty;
+      // Format rotation: prefer a different kind of meal than the last
+      // few days in this slot (rice → grilled → soup → bread → bowl).
+      // When the whole pool is one format the penalty is uniform, so it
+      // costs nothing; when alternatives exist, it breaks the monotony.
+      const fmt = dishFormat(f);
+      for (let i = 0; i < recentFormats.length; i++) {
+        if (recentFormats[recentFormats.length - 1 - i] === fmt) s -= [0.15, 0.08, 0.04][i];
+      }
       // Repeat fallback: penalize by recency so the plan ROTATES through the
       // pool (least-recent first) instead of serving the best macro scorer
       // every day. recent[] is oldest→newest — use the MOST recent serving
