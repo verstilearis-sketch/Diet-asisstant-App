@@ -152,7 +152,7 @@ export function detectRegion(location?: string): string {
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-interface FoodItem {
+export interface FoodItem {
   name: string;
   emoji: string;
   cal: number;
