@@ -185,13 +185,15 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 
   // Last resort: keyless Pollinations (non-streaming) before the offline
   // reply. Flatten the conversation into one prompt — at this point any
-  // real answer beats a canned one. Kept short: the offline reply below
-  // is instant, so don't stall long here.
+  // real answer beats a canned one. 400 tokens + 45s: when the keyed
+  // providers fail fast (no keys) this is the whole budget, and a short
+  // reply is what actually finishes inside it — a 600-token ask usually
+  // times out and lands on the offline reply instead.
   try {
     const flatPrompt = typedMessages
       .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
       .join('\n\n');
-    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 600, timeoutMs: 20000 });
+    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 400, timeoutMs: 45000 });
     if (attempt.ok) {
       return new Response(attempt.reply, {
         headers: {

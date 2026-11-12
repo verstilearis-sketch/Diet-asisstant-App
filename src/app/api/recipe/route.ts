@@ -79,9 +79,11 @@ ${restrictions?.length ? `Must respect: ${restrictions.join(', ')} (no exception
 ${region ? `Home-kitchen style for ${region}; use locally available ingredients where possible.` : ''}`;
 
   const result = await runAiChain(systemPrompt, userPrompt, {
-    // 2000 tokens: a full recipe (12 ingredients + 8 steps) needs room.
+    // 1200 tokens: a full recipe (12 ingredients + 8 steps) fits in ~700–900;
+    // 1200 leaves room without needing the slow keyless path to grind
+    // through 2000 tokens (which timed out and returned 503 instead).
     // If a provider still truncates, runAiChain retries it with double.
-    maxTokens: 2000,
+    maxTokens: 1200,
     validate: (reply) => parseRecipeJson(reply) !== null,
   });
   if (result.ok) {

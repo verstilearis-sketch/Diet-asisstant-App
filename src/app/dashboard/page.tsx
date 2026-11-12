@@ -150,6 +150,7 @@ export default function DashboardPage() {
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showNewPlanConfirm, setShowNewPlanConfirm] = useState(false);
   const [recipeMeal, setRecipeMeal] = useState<Meal | null>(null);
+  const [shuffleError, setShuffleError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -597,6 +598,7 @@ export default function DashboardPage() {
   const handleShuffleWeek = async () => {
     if (!savedPlan || shuffleBusy) return;
     setShuffleBusy(true);
+    setShuffleError('');
     try {
       const salt = (savedPlan.plan.seedSalt || 0) + 1;
       const fresh = await generateDietPlan(
@@ -617,6 +619,9 @@ export default function DashboardPage() {
       setActiveTab('meals');
     } catch (e) {
       console.error('Shuffle week failed:', e);
+      // Never fail silently: a Shuffle that does nothing looks exactly like
+      // a plan that never changes, and the user has no way to tell why.
+      setShuffleError('Could not rebuild the week — check your connection and try again.');
     } finally {
       setShuffleBusy(false);
     }
@@ -1123,6 +1128,11 @@ export default function DashboardPage() {
                 {shuffleBusy ? 'Shuffling…' : 'Shuffle week'}
               </button>
             </div>
+            {shuffleError && (
+              <div style={{ fontSize: '0.85rem', color: '#b3261e', background: '#fdecea', borderRadius: 8, padding: '0.6rem 0.8rem', marginBottom: '0.75rem' }}>
+                {shuffleError}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '1.25rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
               {plan.weeklyPlan.map((d, i) => (
                 <button key={d.day}
