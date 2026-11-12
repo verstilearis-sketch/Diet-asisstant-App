@@ -9,7 +9,7 @@ import { computeAll, calculateMacros } from '@/lib/calculations';
 import type { UserProfile } from '@/lib/calculations';
 import type { SavedPlan, ExtraMeal, ExerciseEntry } from '@/lib/storage';
 import type { Meal } from '@/lib/ai-engine';
-import { getMealAlternatives, generateDietPlan, mealWhy, type MealType } from '@/lib/ai-engine';
+import { getMealAlternatives, generateDietPlan, mealWhy, detectRegion, type MealType } from '@/lib/ai-engine';
 import { checkAdaptation, type AdaptationCheck } from '@/lib/adaptive';
 import { buildWeeklyReview } from '@/lib/weekly-review';
 import { type FestivalFood } from '@/lib/festivals';
@@ -1113,7 +1113,11 @@ export default function DashboardPage() {
         {/* ── MEALS ─────────────────────────────────────── */}
         {activeTab === 'meals' && (
           <div className="fade-in-up">
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--color-muted)' }}>
+                Cooking from: <strong style={{ color: 'var(--color-text)' }}>{({ kashmir: 'Kashmir', 'north-india': 'North India', 'south-india': 'South India', 'east-india': 'East India', 'west-india': 'West India', global: 'Global' } as Record<string, string>)[detectRegion(profile.location)] ?? 'Global'}</strong>
+                {profile.location ? ` · ${profile.location}` : ' · no location set'}
+              </span>
               <button type="button" className="btn-secondary" onClick={handleShuffleWeek} disabled={shuffleBusy} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                 <RefreshIcon />
                 {shuffleBusy ? 'Shuffling…' : 'Shuffle week'}

@@ -2536,6 +2536,23 @@ export function getMealAlternatives(
       candidates.push({ f, regional: source === 'regional' });
     }
   }
+  // Last resort: the honest fallback dishes (same diet/allergy rules) so the
+  // swap sheet is never empty when ANY safe dish exists. These are explicit
+  // user-chosen swaps, not auto-served meals — and they sort last (the
+  // +0.25 non-regional penalty below) behind every regional option.
+  if (candidates.length < count) {
+    let fb = filterFoods(FALLBACK_POOL, profile)
+      .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
+    if (fb.length === 0) fb = filterFoods(FALLBACK_POOL, profile).filter((f) => !seen.has(f.name));
+    if (taste?.dislikes.length) {
+      const kept = fb.filter((f) => !tasteMatchesAny(f.name, taste.dislikes));
+      if (kept.length) fb = kept;
+    }
+    for (const f of fb) {
+      seen.add(f.name);
+      candidates.push({ f, regional: false });
+    }
+  }
   // Closest macros to the current meal win — the swap shouldn't break the day.
   // Regional dishes sort first; avoided foods sink to the bottom.
   const avoids = (profile.foodsToAvoid || '').split(',').map((x) => x.trim()).filter(Boolean);
