@@ -1649,6 +1649,11 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Doodh Daliya', emoji: '🥣', cal: 340, protein: 12, carbs: 58, fat: 7, prepTime: '20 min', description: 'Slow-cooked wheat porridge in milk with crushed walnuts', tags: ['vegetarian'] },
       { name: 'Kulcha & Noon Chai (double)', emoji: '🫖', cal: 350, protein: 9, carbs: 48, fat: 13, prepTime: '15 min', description: 'Two crisp kulchas with a full glass of salted pink tea', tags: ['vegetarian'] },
       { name: 'Harissa (chicken)', emoji: '🥣', cal: 400, protein: 30, carbs: 32, fat: 16, prepTime: '30 min', description: 'Lighter chicken version of the slow-cooked harissa porridge', tags: ['high-protein', 'gluten-free'] },
+      { name: 'Girda & Butter Tea', emoji: '🧈', cal: 240, protein: 6, carbs: 34, fat: 9, prepTime: '10 min', description: 'Soft girda bread with churned butter tea', tags: ['vegetarian'] },
+      { name: 'Tchot & Noon Chai', emoji: '🫖', cal: 280, protein: 6, carbs: 36, fat: 11, prepTime: '10 min', description: 'Flaky tchot with a glass of salted pink tea', tags: ['vegetarian'] },
+      { name: 'Lavasa & Warm Milk', emoji: '🥛', cal: 260, protein: 8, carbs: 36, fat: 8, prepTime: '10 min', description: 'Soft lavasa bread with warm milk', tags: ['vegetarian'] },
+      { name: 'Wheat Porridge & Milk', emoji: '🥣', cal: 320, protein: 11, carbs: 54, fat: 7, prepTime: '20 min', description: 'Slow-cooked wheat daliya in milk with jaggery', tags: ['vegetarian'] },
+      { name: 'Roth & Noon Chai', emoji: '🍞', cal: 300, protein: 7, carbs: 46, fat: 9, prepTime: '10 min', description: 'Sweet roth bread with salted pink tea', tags: ['vegetarian'] },
     ],
     lunch: [
       { name: 'Rogan Josh & Rice', emoji: '🍛', cal: 580, protein: 38, carbs: 45, fat: 26, prepTime: '30 min', description: 'Slow-braised mutton in Kashmiri chili gravy with steamed rice', tags: ['high-protein', 'gluten-free'] },
@@ -1662,6 +1667,9 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Gogji Nadru & Rice', emoji: '🪷', cal: 400, protein: 9, carbs: 62, fat: 13, prepTime: '25 min', description: 'Turnip and lotus stem curry — a Kashmiri winter staple', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Monj Haak & Rice', emoji: '🥬', cal: 360, protein: 9, carbs: 52, fat: 13, prepTime: '20 min', description: 'Kohlrabi greens wilted with garlic and mustard oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Razmah Gogji & Rice', emoji: '🫘', cal: 480, protein: 18, carbs: 72, fat: 12, prepTime: '30 min', description: 'Kidney beans slow-cooked with turnips, Kashmiri home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Palak Haak & Rice', emoji: '🥬', cal: 360, protein: 10, carbs: 52, fat: 13, prepTime: '20 min', description: 'Spinach and collard greens with garlic over rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Dal Gogji & Rice', emoji: '🍲', cal: 430, protein: 16, carbs: 64, fat: 10, prepTime: '30 min', description: 'Yellow dal with turnips, Kashmiri home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Moong Dal & Rice', emoji: '🍲', cal: 440, protein: 18, carbs: 62, fat: 10, prepTime: '25 min', description: 'Moong dal with rice, Kashmiri home-style', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     dinner: [
       { name: 'Rista & Rice', emoji: '🧆', cal: 560, protein: 34, carbs: 44, fat: 28, prepTime: '30 min', description: 'Hand-pounded mutton meatballs in fiery red wazwan gravy', tags: ['high-protein'] },
@@ -1675,6 +1683,9 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Modur Pulao (light)', emoji: '🍚', cal: 450, protein: 8, carbs: 78, fat: 12, prepTime: '30 min', description: 'Saffron sweet pulao with nuts — festive rice, lighter portion', tags: ['vegetarian', 'gluten-free'] },
       { name: 'Al Hachi & Rice', emoji: '🎃', cal: 380, protein: 9, carbs: 60, fat: 12, prepTime: '25 min', description: 'Sun-dried bottle gourd curry — pure Kashmiri winter comfort', tags: ['vegetarian', 'vegan', 'gluten-free'] },
       { name: 'Mujj Chetin & Rice meal', emoji: '🌶️', cal: 420, protein: 12, carbs: 58, fat: 15, prepTime: '20 min', description: 'Rice with radish chutney, haak and a small dal — light Kashmiri thali', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Bottle Gourd Yakhni & Rice', emoji: '🎃', cal: 400, protein: 10, carbs: 56, fat: 14, prepTime: '25 min', description: 'Bottle gourd in spiced yogurt yakhni', tags: ['vegetarian', 'gluten-free'] },
+      { name: 'Nadru Monj Curry & Rice', emoji: '🪷', cal: 420, protein: 11, carbs: 60, fat: 14, prepTime: '30 min', description: 'Lotus stem and kohlrabi curry — winter staple', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Bathua Saag & Rice', emoji: '🥬', cal: 370, protein: 10, carbs: 50, fat: 13, prepTime: '20 min', description: 'Bathua greens with garlic over rice', tags: ['vegetarian', 'vegan', 'gluten-free'] },
     ],
     snack: [
       { name: 'Kahwa & Shufta (small)', emoji: '🍵', cal: 200, protein: 4, carbs: 28, fat: 9, prepTime: '10 min', description: 'Saffron tea with a small portion of dry-fruit shufta dessert', tags: ['vegetarian', 'gluten-free'] },
@@ -1685,6 +1696,12 @@ const REGIONAL_DB: RegionalFoodDB = {
       { name: 'Doon Chetin & Lavasa', emoji: '🌰', cal: 240, protein: 6, carbs: 30, fat: 11, prepTime: '10 min', description: 'Walnut chutney with soft lavasa bread', tags: ['vegetarian'] },
       { name: 'Kashmiri Roth (1 pc)', emoji: '🍞', cal: 200, protein: 4, carbs: 34, fat: 6, prepTime: '5 min', description: 'Sweet dense Kashmiri bread — one piece with kahwa', tags: ['vegetarian'] },
       { name: 'Buzza & Nuts mix', emoji: '🥜', cal: 210, protein: 7, carbs: 18, fat: 13, prepTime: '5 min', description: 'Roasted barley snack mixed with walnuts and almonds', tags: ['vegetarian', 'vegan'] },
+      { name: 'Monj Haak Pakoda (4 pc)', emoji: '🥬', cal: 200, protein: 6, carbs: 26, fat: 8, prepTime: '20 min', description: 'Crisp kohlrabi-green fritters with chutney', tags: ['vegetarian', 'vegan'] },
+      { name: 'Haak Pakoda (4 pc)', emoji: '🥬', cal: 190, protein: 5, carbs: 24, fat: 8, prepTime: '20 min', description: 'Collard-green fritters, Kashmiri tea-time snack', tags: ['vegetarian', 'vegan'] },
+      { name: 'Chana Chaat (Kashmiri style)', emoji: '🫘', cal: 230, protein: 12, carbs: 34, fat: 5, prepTime: '10 min', description: 'Black chickpeas with onion, tomato and lemon', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+      { name: 'Gogji Monj Chaat', emoji: '🥗', cal: 180, protein: 5, carbs: 28, fat: 6, prepTime: '15 min', description: 'Turnip and lotus-stem chaat with lemon and green chili', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Roasted Chana & Gur', emoji: '🫘', cal: 210, protein: 9, carbs: 32, fat: 5, prepTime: '5 min', description: 'Roasted black chana with a piece of jaggery', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+      { name: 'Masal Tchot (1 pc)', emoji: '🍞', cal: 220, protein: 5, carbs: 34, fat: 7, prepTime: '10 min', description: 'Spiced Kashmiri bread with noon chai', tags: ['vegetarian'] },
     ],
   },
 
@@ -1767,7 +1784,11 @@ function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
     // pickSmart — never a hard filter. A hard filter starves small regional
     // pools and forces the same 2-3 quick dishes on repeat all week.
     for (const allergy of allergies) {
-      if (f.name.toLowerCase().includes(allergy) || f.description.toLowerCase().includes(allergy)) return false;
+      // "nuts" must also catch walnut chutney; "dairy" must catch paneer —
+      // match the whole ingredient family, not just the literal word.
+      const keywords = ALLERGY_KEYWORDS[allergy] ?? [allergy];
+      const hay = `${f.name} ${f.description}`.toLowerCase();
+      if (keywords.some((k) => hay.includes(k))) return false;
     }
     return true;
   });
@@ -1918,13 +1939,45 @@ const FALLBACK_FOOD: FoodItem = {
 function tasteNorm(name: string): string {
   return name.toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
 }
+
+// Users write "nuts" but dishes say "walnut"; "rajma" but the dish says
+// "razmah". Match on ingredient families and local spelling variants so an
+// allergy or an avoided food can never slip through on wording alone.
+const ALLERGY_KEYWORDS: Record<string, string[]> = {
+  nuts: ['walnut', 'almond', 'cashew', 'peanut', 'pistachio', 'hazelnut', 'pecan', 'macadamia', 'pine nut', 'groundnut', 'mixed nuts'],
+  dairy: ['milk', 'paneer', 'cheese', 'curd', 'yogurt', 'yoghurt', 'ghee', 'butter', 'cream', 'khoya', 'doodh'],
+  milk: ['milk', 'paneer', 'cheese', 'curd', 'yogurt', 'yoghurt', 'ghee', 'butter', 'cream', 'khoya', 'doodh'],
+  gluten: ['wheat', 'roti', 'naan', 'maida', 'atta', 'kulcha', 'lavasa', 'bread', 'tchot', 'girda', 'bakarkhani', 'barley'],
+  wheat: ['wheat', 'roti', 'naan', 'maida', 'atta', 'kulcha', 'lavasa', 'bread', 'tchot', 'girda', 'bakarkhani'],
+  egg: ['egg', 'anda'],
+  soy: ['soya', 'soy', 'tofu'],
+  fish: ['fish', 'prawn', 'shrimp', 'crab', 'seafood'],
+  seafood: ['fish', 'prawn', 'shrimp', 'crab', 'seafood'],
+  peanut: ['peanut', 'groundnut'],
+  sesame: ['sesame', 'til'],
+};
+
+// Local / variant spellings mapped to one canonical word, so "avoid rajma"
+// also avoids "razmah", and "avoid egg" also avoids "anda".
+const FOOD_ALIASES: Record<string, string> = {
+  razmah: 'rajma', chawal: 'rice', anda: 'egg', doodh: 'milk', aloo: 'potato',
+  makhan: 'butter', kokur: 'chicken', murgh: 'chicken', gosht: 'mutton',
+  gogji: 'turnip', nadru: 'lotus stem', monj: 'kohlrabi', haak: 'greens',
+  chana: 'chickpea', chole: 'chickpea', atta: 'wheat', maida: 'flour',
+};
+
+function canonicalFoodText(text: string): string {
+  return tasteNorm(text).split(' ').map((w) => FOOD_ALIASES[w] ?? w).join(' ');
+}
 function tasteNameMatches(foodName: string, remembered: string): boolean {
-  const f = tasteNorm(foodName);
-  const r = tasteNorm(remembered);
+  const f = canonicalFoodText(foodName);
+  const r = canonicalFoodText(remembered);
   if (!f || !r) return false;
   if (f === r) return true;
   const shorter = f.length < r.length ? f : r;
   const longer = f.length < r.length ? r : f;
+  // Whole-word match works for short words too ("egg" in "egg curry").
+  if (longer.split(' ').includes(shorter)) return true;
   return longer.includes(shorter) && shorter.length >= 4;
 }
 function tasteMatchesAny(foodName: string, list: string[]): boolean {
@@ -1961,25 +2014,31 @@ function pickSmart(
       if (seen.has(f.name)) continue;
       if (freshOnly && recent[type].includes(f.name)) continue;
       seen.add(f.name);
+      // Foods to avoid: NEVER serve, even when the pool is thin — the
+      // last-resort global collect below fills the gap instead. Name AND
+      // description are checked ("Chaman Qaliya" is paneer even though its
+      // name doesn't say so).
+      const avoids = (profile.foodsToAvoid || '').split(',').map((x) => x.trim()).filter(Boolean);
+      if (avoids.length && tasteMatchesAny(f.name + ' ' + f.description, avoids)) continue;
+      // Learned dislikes: same — never serve what the user keeps rejecting.
+      if (taste?.dislikes.length && tasteMatchesAny(f.name + ' ' + f.description, taste.dislikes)) continue;
+      // Same-day dedup: never serve the same dish twice in one day, even
+      // across different slots (no oat-bowl for lunch AND dinner).
+      if (dayUsed?.has(f.name)) continue;
       let s = scoreCandidate(f, target, proteinWeight, budget) - penalty;
       // Repeat fallback: penalize by recency so the plan ROTATES through the
       // pool (least-recent first) instead of serving the best macro scorer
-      // every day. recent[] is oldest→newest, so the tail gets the biggest hit.
+      // every day. recent[] is oldest→newest — use the MOST recent serving
+      // (lastIndexOf): indexOf anchors the penalty to the first serving, so
+      // a dish served on day 1 keeps winning all week.
       if (!freshOnly) {
-        const rIdx = recent[type].indexOf(f.name);
+        const rIdx = recent[type].lastIndexOf(f.name);
         if (rIdx >= 0) s -= (rIdx + 1) * 1.5;
       }
-      // Foods to avoid: steered clear of, same as learned dislikes.
-      const avoids = (profile.foodsToAvoid || '').split(',').map((x) => x.trim()).filter(Boolean);
-      if (avoids.length && tasteMatchesAny(f.name, avoids)) s -= 2;
-      // Same-day dedup: never serve the same dish twice in one day, even
-      // across different slots (no oat-bowl for lunch AND dinner).
-      if (dayUsed?.has(f.name)) s -= 3;
-      // Taste learning: dislikes are heavily penalized (effectively excluded),
-      // likes get a nudge — the plan learns what the user actually eats.
+      // Taste learning: likes get a nudge — the plan learns what the user
+      // actually eats.
       if (taste) {
-        if (tasteMatchesAny(f.name, taste.dislikes)) s -= 2;
-        else if (tasteMatchesAny(f.name, taste.likes)) s += 0.25;
+        if (tasteMatchesAny(f.name, taste.likes)) s += 0.25;
       }
       // Familiarity: the plan should feel like THEIR food, made healthier —
       // not a stranger's menu. Boost what they usually eat and love.

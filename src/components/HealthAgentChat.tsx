@@ -10,6 +10,8 @@ interface Message {
   id: string;
   role: 'user' | 'agent';
   content: string;
+  /** True when the reply came from the server's offline fallback, not the live AI. */
+  offline?: boolean;
 }
 
 // Thrown when /api/chat answers 401: the Supabase session expired or the
@@ -80,8 +82,20 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
     history: Message[],
     onFirstChunk: () => void,
     onChunk: (partial: string) => void,
-  ): Promise<string> => {
+  ): Promise<{ text: string; offline: boolean }> => {
     const calcs = computeAll(plan.profile);
+    // Today's meals, so even an offline reply can name what they're eating.
+    const dayIdx = (new Date().getDay() + 6) % 7; // Monday-first
+    const todayPlan = plan.plan.weeklyPlan[dayIdx];
+    const today = todayPlan
+      ? {
+          breakfast: todayPlan.breakfast.name,
+          lunch: todayPlan.lunch.name,
+          dinner: todayPlan.dinner.name,
+          totalCalories: todayPlan.totalCalories,
+          totalProtein: [todayPlan.breakfast, todayPlan.morningSnack, todayPlan.lunch, todayPlan.afternoonSnack, todayPlan.dinner].reduce((a, m) => a + (m.protein || 0), 0),
+        }
+      : null;
     // 55s cap: the server budget is 60s — never spin the typing dots forever
     // on a hung connection. The catch below turns this into a retryable error.
     const controller = new AbortController();
@@ -100,6 +114,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
             hydrationPlan: plan.plan.hydrationPlan,
             calorieGoal: calcs.dailyCalorieGoal,
             festival: plan.plan.festivalMode ?? null,
+            today,
           },
         }),
       });
@@ -113,7 +128,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         onFirstChunk();
-        return data.reply || "I couldn't generate a response — please try again.";
+        return { text: data.reply || "I couldn't generate a response — please try again.", offline: !!data.offline };
       }
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
       const reader = res.body.getReader();
@@ -138,7 +153,7 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
         }
       }
       onChunk(full);
-      return full;
+      return { text: full, offline: false };
     } finally {
       clearTimeout(timer);
       if (abortRef.current === controller) abortRef.current = null;
@@ -175,9 +190,9 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
           );
         },
       );
-      const clean = sanitizeStreamed(reply);
+      const clean = sanitizeStreamed(reply.text);
       setMessages((prev) =>
-        prev.map((m) => (m.id === agentId ? { ...m, content: clean } : m)),
+        prev.map((m) => (m.id === agentId ? { ...m, content: clean, offline: reply.offline } : m)),
       );
     } catch (err) {
       setFailedId(agentId);
@@ -247,6 +262,9 @@ export const HealthAgentChat = memo(function HealthAgentChat({ plan, userName }:
             className={`hac-msg ${msg.role === 'user' ? 'hac-msg-user' : 'hac-msg-agent'}${msg.content.replace(/\s+/g, ' ').trim().length <= 70 ? ' hac-msg-pill' : ''}`}
           >
             <ReactMarkdown>{msg.content}</ReactMarkdown>
+            {msg.offline && (
+              <div style={{ fontSize: '0.68rem', opacity: 0.6, marginTop: '0.3rem' }}>Offline reply — the live coach didn&apos;t answer</div>
+            )}
             {failedId === msg.id && (() => {
               const idx = messages.findIndex((m) => m.id === msg.id);
               const lastUser = [...messages.slice(0, idx)].reverse().find((m) => m.role === 'user');

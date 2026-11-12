@@ -9,7 +9,8 @@ const GROQ_MODEL_PREFERENCE = [
   // llama-3.1-8b-instant was decommissioned by Groq on 2026-08-16;
   // openai/gpt-oss-20b is Groq's official replacement.
   'openai/gpt-oss-20b',
-  'qwen/qwen3-32b',
+  // qwen3-32b is gone from Groq (404s) — qwen3.8-27b is the current Qwen.
+  'qwen/qwen3.8-27b',
   'moonshotai/kimi-k2-instruct',
 ].filter((m): m is string => !!m);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
@@ -72,9 +73,15 @@ async function pickGroqModel(apiKey: string): Promise<string> {
   if (cachedGroqModel) return cachedGroqModel;
   let available: Set<string> | null = null;
   try {
+    // Fast metadata call — one shot, 8s, no retries. A slow model list must
+    // never stall the hot path: serverless instances re-discover often, and
+    // the old 3-retry × 20s discovery could eat the whole request budget
+    // before the first real attempt. On failure, fall back blind to the
+    // preference order — the completion call 404s fast if the model is dead.
     const res = await fetchWithBackoff('https://api.groq.com/openai/v1/models', {
       headers: { Authorization: `Bearer ${apiKey}` },
-    });
+      signal: AbortSignal.timeout(8000),
+    }, 0);
     if (res.ok) {
       const data = await res.json();
       available = new Set(
@@ -117,7 +124,7 @@ export async function tryGroq(
           max_tokens: opts.maxTokens ?? 1000,
           stream: false,
         }),
-      });
+      }, 1); // one retry for transient blips, then fail over fast
       if (res.ok) {
         const data = await res.json();
         const reply = data?.choices?.[0]?.message?.content?.trim();
@@ -130,6 +137,10 @@ export async function tryGroq(
       const errText = (await res.text()).slice(0, 200);
       if (res.status === 404 && /model_not_found|does not exist|decommissioned/i.test(errText)) {
         cachedGroqModel = null;
+        // Discovery may be down too — try the next preferred model directly
+        // instead of re-running discovery and landing on the same dead one.
+        const next = GROQ_MODEL_PREFERENCE.find((m) => !attempted.has(m));
+        if (next) cachedGroqModel = next;
         continue;
       }
       return { ok: false, reason: `HTTP ${res.status}` };
@@ -277,9 +288,11 @@ async function pickOpenRouterModel(
   if (cache.model) return cache.model;
   let available: Set<string> | null = null;
   try {
+    // Fast metadata call — one shot, 8s, no retries (see pickGroqModel).
     const res = await fetchWithBackoff('https://openrouter.ai/api/v1/models', {
       headers: openRouterHeaders(apiKey),
-    });
+      signal: AbortSignal.timeout(8000),
+    }, 0);
     if (res.ok) {
       const data = await res.json();
       available = new Set(
@@ -324,7 +337,7 @@ export async function tryOpenRouter(
           max_tokens: opts.maxTokens ?? 1000,
           stream: false,
         }),
-      });
+      }, 1); // one retry for transient blips, then fail over fast
       if (res.ok) {
         const data = await res.json();
         const reply = data?.choices?.[0]?.message?.content?.trim();
@@ -335,6 +348,8 @@ export async function tryOpenRouter(
       const errText = (await res.text()).slice(0, 200);
       if (res.status === 404 && /model_not_found|no such model|does not exist|decommissioned/i.test(errText)) {
         openRouterTextCache.model = null;
+        const next = OPENROUTER_MODEL_PREFERENCE.find((m) => !attempted.has(m));
+        if (next) openRouterTextCache.model = next;
         continue;
       }
       return { ok: false, reason: `HTTP ${res.status}` };

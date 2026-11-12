@@ -34,7 +34,8 @@ const GROQ_MODEL_PREFERENCE = [
   // llama-3.1-8b-instant was decommissioned by Groq on 2026-08-16;
   // openai/gpt-oss-20b is Groq's official replacement.
   'openai/gpt-oss-20b',
-  'qwen/qwen3-32b',
+  // qwen3-32b is gone from Groq (404s) — qwen3.8-27b is the current Qwen.
+  'qwen/qwen3.8-27b',
   'moonshotai/kimi-k2-instruct',
 ].filter((m): m is string => !!m);
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
@@ -630,7 +631,9 @@ async function streamOpenRouter(
   }
 }
 
-/** Keyword-based offline replies for when no provider answers. */
+/** Keyword-based offline replies for when no provider answers. Built from the
+ *  user's real numbers and today's actual meals, with rotating phrasing —
+ *  so it reads like their coach, not one line on a loop. */
 async function getFallback(
   messages: IncomingMessage[],
   userProfile: Record<string, any> | undefined,
@@ -641,20 +644,42 @@ async function getFallback(
   const goal = goalRaw === 'general health' ? 'health' : goalRaw;
   const kcal = planContext?.calorieGoal ?? 2000;
   const kg = userProfile?.weightKg ?? 70;
+  const today = planContext?.today as { breakfast?: string; lunch?: string; dinner?: string; totalCalories?: number; totalProtein?: number } | undefined;
+  // Same question, same answer; different questions, different answers —
+  // rotate phrasing by the question so the fallback never reads like a loop.
+  const variant = (n: number) => {
+    let h = 0;
+    for (let i = 0; i < lastMsg.length; i++) h = (h * 31 + lastMsg.charCodeAt(i)) >>> 0;
+    return h % n;
+  };
+  const proteinTarget = Math.round(kg * 2);
 
-  let reply = `For your ${goal} goal at ${kcal} kcal/day, prioritize whole foods — lean protein, complex carbs, and vegetables at every meal.`;
+  let reply: string;
   if (/water|hydrat|drink/.test(lastMsg)) {
     reply = `Aim for ${planContext?.hydrationPlan ?? '2–3 liters'} of water daily — a glass first thing in the morning and one before each meal is a solid baseline.`;
   } else if (/protein/.test(lastMsg)) {
-    reply = `Target around ${Math.round(kg * 2)}g of protein per day at ${kg}kg bodyweight. Reliable sources: chicken, eggs, Greek yogurt, lentils, tofu.`;
-  } else if (/calori/.test(lastMsg)) {
-    reply = `Your target is ${kcal} kcal/day. A practical split: ~25% breakfast, 35% lunch, 30% dinner, 10% snacks.`;
+    reply = today?.totalProtein
+      ? `Your meals today add up to about ${Math.round(today.totalProtein)}g protein, against a ${proteinTarget}g target at ${kg}kg — top it up with Greek yogurt or eggs if you're short.`
+      : `Target around ${proteinTarget}g of protein per day at ${kg}kg bodyweight. Reliable sources: chicken, eggs, Greek yogurt, lentils, tofu.`;
+  } else if (/calori|lose|weight/.test(lastMsg)) {
+    reply = `Your target is ${kcal} kcal/day for ${goal}. A practical split: ~25% breakfast, 35% lunch, 30% dinner, 10% snacks — and consistency 5–6 days a week matters more than one perfect day.`;
   } else if (/tired|sleep|energy|fatigue/.test(lastMsg)) {
     reply = `Aim for 7–9 hours of sleep. Short sleep raises hunger hormones and tanks training recovery.`;
   } else if (/exercise|workout|gym|training/.test(lastMsg)) {
     reply = `Pair your nutrition with 3 strength sessions per week plus ~150 minutes of moderate cardio.`;
+  } else if (/eat|meal|hungry|breakfast|lunch|dinner|snack/.test(lastMsg)) {
+    reply = today?.lunch
+      ? `Today's plan has ${today.breakfast ?? 'a light breakfast'} for breakfast, ${today.lunch} for lunch and ${today.dinner ?? 'a balanced dinner'} for dinner — about ${today.totalCalories ?? kcal} kcal in all.`
+      : `Your plan is built around ${kcal} kcal/day — check today's meals on your dashboard for exactly what's next.`;
   } else if (/^(hi|hey|hello|help)\b/.test(lastMsg)) {
     reply = `Hi — I'm your health coach. Ask me about nutrition, meals, hydration, or training.`;
+  } else {
+    const tips = [
+      `For your ${goal} goal at ${kcal} kcal/day, prioritize whole foods — lean protein, complex carbs, and vegetables at every meal.`,
+      `At ${kcal} kcal/day, the biggest lever is consistency: hitting your target 5–6 days a week beats a perfect 3 days followed by a blowout weekend.`,
+      `Drink 500ml of water 20–30 minutes before lunch and dinner — it makes staying inside ${kcal} kcal much easier.`,
+    ];
+    reply = tips[variant(tips.length)];
   }
 
   return NextResponse.json({ reply, offline: true });
