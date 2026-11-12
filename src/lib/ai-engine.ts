@@ -1964,11 +1964,94 @@ function scoreCandidate(f: FoodItem, t: SlotTarget, proteinWeight: number, budge
   return score;
 }
 
-const FALLBACK_FOOD: FoodItem = {
-  name: 'Oats with banana & nuts', emoji: '🥣', cal: 350, protein: 12, carbs: 58, fat: 10,
-  prepTime: '10 min', description: 'Rolled oats cooked in milk, topped with banana and mixed nuts.',
-  tags: ['vegetarian'],
-};
+/**
+ * Emergency dishes for when the filters leave a slot with nothing at all.
+ * The old code returned ONE fixed dish ("Oats with banana & nuts") for every
+ * empty slot — that's how a strict profile (e.g. vegan + low-carb) got the
+ * same oats 21× a week, diet and allergies ignored. The pool rotates across
+ * formats, and every candidate is still vetted against the hard rules.
+ */
+const FALLBACK_POOL: FoodItem[] = [
+  { name: 'Simple Green Salad Bowl', emoji: '🥗', cal: 180, protein: 6, carbs: 10, fat: 12, prepTime: '10 min', description: 'Mixed greens, cucumber, tomato and lemon with olive oil', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+  { name: 'Grilled Chicken & Salad', emoji: '🍗', cal: 380, protein: 38, carbs: 8, fat: 22, prepTime: '20 min', description: 'Char-grilled chicken over mixed greens with lemon', tags: ['high-protein', 'low-carb', 'gluten-free'] },
+  { name: 'Egg White & Spinach Scramble', emoji: '🍳', cal: 240, protein: 26, carbs: 6, fat: 12, prepTime: '10 min', description: 'Egg whites scrambled with spinach and tomato', tags: ['high-protein', 'low-carb', 'gluten-free'] },
+  { name: 'Tofu & Vegetable Stir-Fry', emoji: '🥘', cal: 320, protein: 20, carbs: 14, fat: 20, prepTime: '20 min', description: 'Tofu with mixed vegetables in a light soy-ginger sauce', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+  { name: 'Grilled Paneer & Vegetables', emoji: '🧀', cal: 360, protein: 24, carbs: 10, fat: 26, prepTime: '20 min', description: 'Char-grilled paneer with capsicum, onion and mint chutney', tags: ['vegetarian', 'high-protein', 'low-carb', 'gluten-free'] },
+  { name: 'Lentil & Vegetable Soup', emoji: '🍲', cal: 260, protein: 14, carbs: 28, fat: 8, prepTime: '25 min', description: 'Red lentils simmered with carrot, tomato and cumin', tags: ['vegetarian', 'vegan', 'gluten-free'] },
+  { name: 'Chickpea Salad Bowl', emoji: '🥗', cal: 340, protein: 16, carbs: 30, fat: 12, prepTime: '10 min', description: 'Chickpeas with onion, tomato, cucumber and lemon', tags: ['vegetarian', 'vegan', 'high-protein', 'gluten-free'] },
+  { name: 'Cucumber & Yogurt Bowl', emoji: '🥒', cal: 170, protein: 8, carbs: 12, fat: 8, prepTime: '5 min', description: 'Cucumber and onion in thick yogurt with mint', tags: ['vegetarian', 'gluten-free'] },
+  { name: 'Steamed Fish & Vegetables', emoji: '🐟', cal: 300, protein: 32, carbs: 6, fat: 16, prepTime: '20 min', description: 'Steamed white fish with broccoli and carrots', tags: ['high-protein', 'low-carb', 'gluten-free'] },
+  { name: 'Oats with banana & nuts', emoji: '🥣', cal: 350, protein: 12, carbs: 58, fat: 10, prepTime: '10 min', description: 'Rolled oats cooked in milk, topped with banana and mixed nuts.', tags: ['vegetarian'] },
+];
+
+/**
+ * Last resort when a slot has no dish at all. Passes relax the SOFT rules
+ * in order; allergies and the no-repeat rule are NEVER relaxed — a repeated
+ * compliant dish beats a violating one. Returns the dish plus what (if
+ * anything) had to be relaxed, so the plan can say so honestly.
+ */
+function pickFallback(
+  target: SlotTarget,
+  profile: UserProfile,
+  budget: BudgetTier,
+  proteinWeight: number,
+  recent: Record<MealType, string[]>,
+  type: MealType,
+  dayUsed: Set<string> | undefined,
+  rng: Rng,
+): { food: FoodItem; relaxed: string | null } {
+  const avoids = (profile.foodsToAvoid || '').split(',').map((x) => x.trim()).filter(Boolean);
+  const allergyOk = (f: FoodItem) => {
+    const hay = `${f.name} ${f.description}`.toLowerCase();
+    return !(profile.allergies || []).some((a) => {
+      const keywords = ALLERGY_KEYWORDS[a.toLowerCase()] ?? [a.toLowerCase()];
+      return keywords.some((k) => hay.includes(k));
+    });
+  };
+  const avoidsOk = (f: FoodItem) =>
+    !avoids.length || !tasteMatchesAny(f.name + ' ' + f.description, avoids);
+  const relaxedProfile = {
+    ...profile,
+    dietaryRestrictions: (profile.dietaryRestrictions || []).filter(
+      (r) => !['low-carb', 'keto', 'gluten-free'].includes(r.toLowerCase()),
+    ),
+  };
+  const passes: { label: string | null; keep: (f: FoodItem) => boolean }[] = [
+    { label: null, keep: (f) => filterFoods([f], profile).length > 0 && avoidsOk(f) },
+    { label: 'foods to avoid', keep: (f) => filterFoods([f], profile).length > 0 },
+    { label: 'low-carb and gluten-free limits', keep: (f) => filterFoods([f], relaxedProfile).length > 0 },
+    { label: 'an earlier dish in the week', keep: () => true },
+  ];
+  const recentFormats = recent[type].slice(-3).map((n) => dishFormat({ name: n, description: '' }));
+  for (const pass of passes) {
+    const allowRepeat = pass.label === 'an earlier dish in the week';
+    const cands = FALLBACK_POOL.filter((f) =>
+      allergyOk(f) && pass.keep(f) &&
+      (allowRepeat || (!dayUsed?.has(f.name) && !recent[type].includes(f.name))),
+    );
+    if (!cands.length) continue;
+    const scored = cands.map((f) => {
+      let s = scoreCandidate(f, target, proteinWeight, budget);
+      const fmt = dishFormat(f);
+      for (let i = 0; i < recentFormats.length; i++) {
+        if (recentFormats[recentFormats.length - 1 - i] === fmt) s -= [0.22, 0.12, 0.06][i];
+      }
+      return { f, s };
+    });
+    scored.sort((a, b) => b.s - a.s);
+    const top = scored.slice(0, 3);
+    const total = top.reduce((a, c) => a + Math.max(c.s, 0.01), 0);
+    let roll = rng() * total;
+    for (const c of top) {
+      roll -= Math.max(c.s, 0.01);
+      if (roll <= 0) return { food: c.f, relaxed: pass.label };
+    }
+    return { food: top[0].f, relaxed: pass.label };
+  }
+  // Unreachable in practice — every pass above covers the pool — but never
+  // crash the plan: return the oats entry rather than nothing.
+  return { food: FALLBACK_POOL[FALLBACK_POOL.length - 1], relaxed: 'diet rules' };
+}
 
 // ── Taste learning helpers (kept local to avoid module cycles) ──
 function tasteNorm(name: string): string {
@@ -2063,7 +2146,7 @@ function pickSmart(
   rng: Rng,
   taste?: TasteProfile,
   dayUsed?: Set<string>,
-): FoodItem {
+): { food: FoodItem; fallback: boolean; relaxed: string | null } {
   const primary = rollSource(cuisineMix, rng);
   const secondary = primary === 'regional' ? 'international' : 'regional';
   // Format rotation: the formats this slot served on the last 3 days
@@ -2152,7 +2235,10 @@ function pickSmart(
     collect(primary, true, false, 0.06);
     collect(secondary, true, false, 0.08);
   }
-  if (!scored.length) return FALLBACK_FOOD;
+  if (!scored.length) {
+    const fb = pickFallback(target, profile, budget, proteinWeight, recent, type, dayUsed, rng);
+    return { food: fb.food, fallback: true, relaxed: fb.relaxed };
+  }
 
   scored.sort((a, b) => b.s - a.s);
   // Variety: don't always serve the single best macro fit — pick from the
@@ -2164,9 +2250,9 @@ function pickSmart(
   let roll = rng() * total;
   for (const c of top) {
     roll -= Math.max(c.s, 0.01);
-    if (roll <= 0) return c.f;
+    if (roll <= 0) return { food: c.f, fallback: false, relaxed: null };
   }
-  return top[0].f;
+  return { food: top[0].f, fallback: false, relaxed: null };
 }
 
 function toMeal(f: FoodItem): Meal {
@@ -2240,6 +2326,10 @@ export async function generateDietPlan(
     : (profile.goal === 'gain_weight' || profile.goal === 'athletic') ? 0.38 : 0.30;
 
   const recent: Record<MealType, string[]> = { breakfast: [], lunch: [], dinner: [], snack: [] };
+  // Fallback tracking: how many slots had no dish at all, and what had to
+  // be relaxed — the plan says so honestly instead of hiding it.
+  let fallbackCount = 0;
+  const relaxedReasons = new Set<string>();
 
   const weeklyPlan: DayPlan[] = DAYS.map((dayName) => {
     // Greedy fill: each slot targets its share of what's still left for the day,
@@ -2263,7 +2353,12 @@ export async function generateDietPlan(
         carbs: remC * share,
         fat: remF * share,
       };
-      const food = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight, rng, taste, dayUsed);
+      const pick = pickSmart(slot.type, target, pools, recent, profile, budget, cuisineMix, proteinWeight, rng, taste, dayUsed);
+      if (pick.fallback) {
+        fallbackCount++;
+        if (pick.relaxed) relaxedReasons.add(pick.relaxed);
+      }
+      const food = pick.food;
       dayUsed.add(food.name);
       const meal = toMeal(food);
       // Portion-scale (up to 2×) so the slot actually meets its calorie target —
@@ -2312,6 +2407,17 @@ export async function generateDietPlan(
 
   const { goal } = profile;
   const tips = getTips(profile, calculations, region);
+
+  // Honest fallback coaching: if strict combined choices left some slots
+  // with no dish at all, say so — closest-match dishes were used.
+  if (fallbackCount > 0) {
+    const rules = [
+      ...(profile.dietaryRestrictions || []),
+      ...(profile.allergies || []).map((a) => `${a} allergy`),
+    ].join(', ');
+    const relaxNote = relaxedReasons.size ? ` (relaxed: ${[...relaxedReasons].join(', ')})` : '';
+    tips.unshift(`⚠️ ${fallbackCount} meal${fallbackCount > 1 ? 's' : ''} had no dish that fits all your choices${rules ? ` (${rules})` : ''}, so closest-match dishes were used${relaxNote}. Loosening one choice will open up much more variety.`);
+  }
 
   // Honest protein-gap coaching: if the week's food can't fully reach a very high
   // protein target (e.g. vegetarian + budget constraints), say so and give the fix.
