@@ -1804,7 +1804,20 @@ function resolveRegion(region: string): string {
 // PLAN GENERATION
 // ─────────────────────────────────────────────────────────────────────────────
 
-function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
+/**
+ * Soft gates that starve small regional pools: the 'high-protein' TAG is
+ * sparse (1 Kashmiri breakfast dish carries it) and the 25g carb cap is
+ * per-dish while the target is per-day. Scoring already penalises macro
+ * misses, so these gates can be relaxed inside the region before the
+ * engine gives up on local food entirely. Identity diets (vegan,
+ * vegetarian, gluten-free) and allergies are NEVER relaxed.
+ */
+export interface FilterRelax { dropHighProteinTag?: boolean; carbCap?: number | null; }
+
+/** Macro gates, relaxed one step: no tag requirement, 40g carb cap. */
+const MACRO_RELAX: FilterRelax = { dropHighProteinTag: true, carbCap: 40 };
+
+function filterFoods(foods: FoodItem[], profile: UserProfile, relax?: FilterRelax): FoodItem[] {
   const restrictions = (profile.dietaryRestrictions || []).map(r => r.toLowerCase());
   const allergies = (profile.allergies || []).map(a => a.toLowerCase());
 
@@ -1813,9 +1826,12 @@ function filterFoods(foods: FoodItem[], profile: UserProfile): FoodItem[] {
     if (restrictions.includes('vegetarian') && !f.tags.includes('vegetarian')) return false;
     // Indian-style vegetarian excludes egg (dishes tagged veg but containing egg slip through otherwise)
     if (restrictions.includes('vegetarian') && /egg|huevo/.test(`${f.name} ${f.description}`.toLowerCase())) return false;
-    if ((restrictions.includes('keto') || restrictions.includes('low-carb')) && f.carbs > 25) return false;
+    if (restrictions.includes('keto') || restrictions.includes('low-carb')) {
+      const cap = relax?.carbCap === undefined ? 25 : relax.carbCap;
+      if (cap !== null && f.carbs > cap) return false;
+    }
     if (restrictions.includes('gluten-free') && !f.tags.includes('gluten-free')) return false;
-    if (restrictions.includes('high-protein') && !f.tags.includes('high-protein')) return false;
+    if (restrictions.includes('high-protein') && !relax?.dropHighProteinTag && !f.tags.includes('high-protein')) return false;
     // NOTE: cooking time is a soft preference applied as a score penalty in
     // pickSmart — never a hard filter. A hard filter starves small regional
     // pools and forces the same 2-3 quick dishes on repeat all week.
@@ -1989,9 +2005,11 @@ const FALLBACK_POOL: FoodItem[] = [
 
 /**
  * Last resort when a slot has no dish at all. Passes relax the SOFT rules
- * in order; allergies and the no-repeat rule are NEVER relaxed — a repeated
- * compliant dish beats a violating one. Returns the dish plus what (if
- * anything) had to be relaxed, so the plan can say so honestly.
+ * in order; allergies and the diet are NEVER relaxed — a repeated
+ * compliant dish beats a violating one. The old last pass dropped the
+ * diet check entirely, which is how a vegetarian plan ended up serving
+ * fish and egg, and the same bowl twice in one day. Returns the dish
+ * plus what (if anything) had to be relaxed, so the plan can say so honestly.
  */
 function pickFallback(
   target: SlotTarget,
@@ -2019,18 +2037,23 @@ function pickFallback(
       (r) => !['low-carb', 'keto', 'gluten-free'].includes(r.toLowerCase()),
     ),
   };
-  const passes: { label: string | null; keep: (f: FoodItem) => boolean }[] = [
+  const passes: { label: string | null; keep: (f: FoodItem) => boolean; allowRecent?: boolean; allowRepeat?: boolean }[] = [
     { label: null, keep: (f) => filterFoods([f], profile).length > 0 && avoidsOk(f) },
     { label: 'foods to avoid', keep: (f) => filterFoods([f], profile).length > 0 },
     { label: 'low-carb and gluten-free limits', keep: (f) => filterFoods([f], relaxedProfile).length > 0 },
-    { label: 'an earlier dish in the week', keep: () => true },
+    // Reuse a dish from earlier in the week — but never one already served
+    // today, and never a dish that breaks the diet.
+    { label: 'an earlier dish in the week', keep: (f) => filterFoods([f], relaxedProfile).length > 0, allowRecent: true },
+    // Absolute last resort: the same dish twice in one day. Diet and
+    // allergies still hold — a repeated compliant dish beats a violating one.
+    { label: 'a dish from earlier today', keep: (f) => filterFoods([f], relaxedProfile).length > 0, allowRecent: true, allowRepeat: true },
   ];
   const recentFormats = recent[type].slice(-3).map((n) => dishFormat({ name: n, description: '' }));
   for (const pass of passes) {
-    const allowRepeat = pass.label === 'an earlier dish in the week';
     const cands = FALLBACK_POOL.filter((f) =>
       allergyOk(f) && pass.keep(f) &&
-      (allowRepeat || (!dayUsed?.has(f.name) && !recent[type].includes(f.name))),
+      (pass.allowRepeat || !dayUsed?.has(f.name)) &&
+      (pass.allowRecent || !recent[type].includes(f.name)),
     );
     if (!cands.length) continue;
     const scored = cands.map((f) => {
@@ -2051,9 +2074,13 @@ function pickFallback(
     }
     return { food: top[0].f, relaxed: pass.label };
   }
-  // Unreachable in practice — every pass above covers the pool — but never
-  // crash the plan: return the oats entry rather than nothing.
-  return { food: FALLBACK_POOL[FALLBACK_POOL.length - 1], relaxed: 'diet rules' };
+  // Unreachable in practice — the passes above cover the pool — but never
+  // crash the plan, and never serve a dish that breaks an allergy: prefer
+  // a diet-safe dish, then any allergy-safe dish, then the plainest one.
+  const safe = FALLBACK_POOL.find((f) => allergyOk(f) && filterFoods([f], relaxedProfile).length > 0)
+    ?? FALLBACK_POOL.find(allergyOk)
+    ?? FALLBACK_POOL[0];
+  return { food: safe, relaxed: 'diet rules' };
 }
 
 // ── Taste learning helpers (kept local to avoid module cycles) ──
@@ -2164,8 +2191,9 @@ function pickSmart(
     freshOnly: boolean,
     budgetStrict: boolean,
     penalty: number,
+    relax?: FilterRelax,
   ) => {
-    let pool = filterFoods(pools[type][source], profile);
+    let pool = filterFoods(pools[type][source], profile, relax);
     if (budgetStrict) pool = pool.filter((f) => budgetAllows(estimateCostTier(f), budget));
     for (const f of pool) {
       if (seen.has(f.name)) continue;
@@ -2241,6 +2269,22 @@ function pickSmart(
   if (scored.length < 2) {
     collect(primary, true, false, 0.06);
     if (!strictLocal || !pools[type].regional.length) collect(secondary, true, false, 0.08);
+  }
+  // The hard macro gates (high-protein tag, 25g carb cap) starve small
+  // regional pools — ZERO Kashmiri breakfast dishes carry both the
+  // high-protein tag and ≤25g carbs, so a high-protein + low-carb plan
+  // fell through to generic dishes for every breakfast and snack. Relax
+  // the gates INSIDE the region before giving up on it: scoring still
+  // favours protein-dense, on-target dishes, so the relaxed picks stay
+  // close to the goal. Repeats allowed here (recency penalty rotates
+  // them) — a regional dish from three days ago beats a generic one.
+  if (scored.length < 2) {
+    collect(primary, false, false, 0.08, MACRO_RELAX);
+    if (!strictLocal || !pools[type].regional.length) collect(secondary, false, false, 0.10, MACRO_RELAX);
+  }
+  if (scored.length < 2) {
+    collect(primary, false, false, 0.12, { dropHighProteinTag: true, carbCap: null });
+    if (!strictLocal || !pools[type].regional.length) collect(secondary, false, false, 0.14, { dropHighProteinTag: true, carbCap: null });
   }
   if (!scored.length) {
     const fb = pickFallback(target, profile, budget, proteinWeight, recent, type, dayUsed, rng);
@@ -2519,7 +2563,14 @@ export function getMealAlternatives(
     let pool = filterFoods(pools[slotType][source], profile)
       .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
     if (pool.length === 0) {
+      pool = filterFoods(pools[slotType][source], profile, MACRO_RELAX)
+        .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
+    }
+    if (pool.length === 0) {
       pool = filterFoods(pools[slotType][source], profile).filter((f) => !seen.has(f.name));
+    }
+    if (pool.length === 0) {
+      pool = filterFoods(pools[slotType][source], profile, MACRO_RELAX).filter((f) => !seen.has(f.name));
     }
     // In strict-local mode, international dishes are never offered when the
     // user's region has dishes of its own — fewer local alternatives beats
@@ -2543,7 +2594,10 @@ export function getMealAlternatives(
   if (candidates.length < count) {
     let fb = filterFoods(FALLBACK_POOL, profile)
       .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
+    if (fb.length === 0) fb = filterFoods(FALLBACK_POOL, profile, MACRO_RELAX)
+      .filter((f) => budgetAllows(estimateCostTier(f), budget) && !seen.has(f.name));
     if (fb.length === 0) fb = filterFoods(FALLBACK_POOL, profile).filter((f) => !seen.has(f.name));
+    if (fb.length === 0) fb = filterFoods(FALLBACK_POOL, profile, MACRO_RELAX).filter((f) => !seen.has(f.name));
     if (taste?.dislikes.length) {
       const kept = fb.filter((f) => !tasteMatchesAny(f.name, taste.dislikes));
       if (kept.length) fb = kept;
