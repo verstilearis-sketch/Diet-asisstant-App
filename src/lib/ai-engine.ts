@@ -2234,9 +2234,13 @@ function pickSmart(
     if (!strictLocal) collect(secondary, false, true, 0.07);
   }
   // Budget is the hardest constraint: relax it only when nothing else works.
+  // In strict-local mode the international pool is NEVER the answer — a
+  // thin regional pool falls through to the honest fallback dishes below,
+  // not to a foreign guess. (When the region has no dishes at all for this
+  // slot, the universal pool is the only food there is, so it stays open.)
   if (scored.length < 2) {
     collect(primary, true, false, 0.06);
-    collect(secondary, true, false, 0.08);
+    if (!strictLocal || !pools[type].regional.length) collect(secondary, true, false, 0.08);
   }
   if (!scored.length) {
     const fb = pickFallback(target, profile, budget, proteinWeight, recent, type, dayUsed, rng);
@@ -2318,7 +2322,7 @@ export async function generateDietPlan(
   const rawRegion = detectRegion(profile.location);
   const region = resolveRegion(rawRegion);
   const budget: BudgetTier = profile.budget || 'moderate';
-  const cuisineMix: CuisineMix = profile.cuisineMix || 'mixed';
+  const cuisineMix: CuisineMix = profile.cuisineMix || 'local';
   // Deterministic plan: the RNG is seeded from the profile, so identical
   // details always produce the identical plan — unless a shuffle salt
   // was passed, which shifts the stream to a fresh plan.
@@ -2507,7 +2511,7 @@ export function getMealAlternatives(
   const pools = buildMealPools(region);
   const seen = new Set<string>([current.name]);
   const candidates: { f: FoodItem; regional: boolean }[] = [];
-  const cuisineMix: CuisineMix = profile.cuisineMix || 'mixed';
+  const cuisineMix: CuisineMix = profile.cuisineMix || 'local';
   const strictLocal = cuisineMix === 'local';
   // Strict place-based: international alternatives only fill gaps.
   const sources = strictLocal ? ['regional', 'international'] as const : ['regional', 'international'] as const;
@@ -2517,9 +2521,11 @@ export function getMealAlternatives(
     if (pool.length === 0) {
       pool = filterFoods(pools[slotType][source], profile).filter((f) => !seen.has(f.name));
     }
-    // In strict-local mode, only reach for international dishes when the
-    // regional pool can't fill the alternatives.
-    if (strictLocal && source === 'international' && candidates.length >= count) break;
+    // In strict-local mode, international dishes are never offered when the
+    // user's region has dishes of its own — fewer local alternatives beats
+    // a foreign guess. (Only when the regional pool is empty entirely do we
+    // fall through to the universal foods.)
+    if (strictLocal && source === 'international' && pools[slotType].regional.length > 0) break;
     // Taste learning: never suggest something the user keeps rejecting.
     if (taste?.dislikes.length) {
       const filtered = pool.filter((f) => !tasteMatchesAny(f.name, taste.dislikes));

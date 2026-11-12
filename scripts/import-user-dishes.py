@@ -119,6 +119,132 @@ def existing_names():
     return names
 
 
+KASHMIRI_JSON = Path.home() / "workspace/datasets/200_Kashmiri_food_dishes/kashmiri-dishes-200.json"
+KASHMIRI_MD = Path.home() / "workspace/user/files/Kashmiri_Food_Dishes_with_Recipes.md"
+
+ANIMAL_WORD = re.compile(r"\b(lamb|mutton|chicken|fish|prawn|shrimp|keema|gosht|meat|beef|pork|duck|crab|egg)\b", re.I)
+DAIRY_WORD = re.compile(r"\b(ghee|curd|yogurt|yoghurt|paneer|milk|butter|cream|khoya|cheese)\b", re.I)
+NUT_WORD = re.compile(r"\b(walnut|almond|cashew|peanut|pistachio|hazelnut|pecan|macadamia)\b", re.I)
+SESAME_WORD = re.compile(r"\b(sesame|til)\b", re.I)
+SOY_WORD = re.compile(r"\b(soya|soy|tofu)\b", re.I)
+FISH_WORD = re.compile(r"\b(fish|prawn|shrimp|crab)\b", re.I)
+HONEY_WORD = re.compile(r"\bhoney\b", re.I)
+TAG_ORDER = ["vegetarian", "vegan", "gluten-free", "high-protein", "low-carb"]
+
+
+def parse_kashmiri_md():
+    """name -> {'veg': bool, 'ingredients': str} from the recipes file."""
+    text = KASHMIRI_MD.read_text()
+    recipes = {}
+    for m in re.finditer(r"^### \d+\. (.+)$", text, flags=re.M):
+        name = m.group(1).strip()
+        chunk = text[m.start():]
+        nxt = re.search(r"^### \d+\. ", chunk[10:], flags=re.M)
+        if nxt:
+            chunk = chunk[:10 + nxt.start()]
+        vegm = re.search(r"\*\*Veg / Non-veg:\*\*\s*(Veg|Non-veg)", chunk)
+        ingm = re.search(r"\*\*Ingredients:\*\*\n(.*?)\n\*\*Method:\*\*", chunk, flags=re.S)
+        recipes[name.lower()] = {
+            "veg": bool(vegm and vegm.group(1) == "Veg"),
+            "ingredients": re.sub(r"^-\s*", "", ingm.group(1), flags=re.M) if ingm else "",
+        }
+    return recipes
+
+
+def merge_kashmiri_200(out, stats):
+    """Merge Salik's 200-dish Kashmiri dataset (JSON, built from the recipes
+    file) into the kashmir pools. This dataset wins on name collisions: it is
+    the one he just handed over. Tags are verified against the recipe's own
+    ingredients — a 'vegan' tag on a ghee recipe, or a missing 'Contains:'
+    allergen note, would be a safety hole, so both are fixed from evidence.
+    Lunch/dinner mains serve both slots (Kashmiri mains are eaten at either
+    meal, same as the XLSX dishes)."""
+    data = json.loads(KASHMIRI_JSON.read_text())
+    recipes = parse_kashmiri_md()
+    for slot, items in data["slots"].items():
+        target_slots = {"lunch", "dinner"} if slot in ("lunch", "dinner") else {slot}
+        for it in items:
+            name = it["name"].strip()
+            rec = recipes.get(name.lower())
+            if rec is None:
+                stats["k200_no_recipe"] += 1
+                continue
+            ing = rec["ingredients"]
+            allergen_list = []
+            if DAIRY_WORD.search(ing):
+                allergen_list.append("Dairy")
+            if NUT_WORD.search(ing):
+                allergen_list.append("Nuts")
+            if re.search(r"\begg\b", ing, re.I):
+                allergen_list.append("Egg")
+            if GLUTEN_WORD.search(ing):
+                allergen_list.append("Gluten")
+            if SESAME_WORD.search(ing):
+                allergen_list.append("Sesame")
+            if SOY_WORD.search(ing):
+                allergen_list.append("Soy")
+            if FISH_WORD.search(ing):
+                allergen_list.append("Fish")
+            tags = set(it.get("tags", []))
+            has_meat = ANIMAL_WORD.search(ing) is not None
+            has_dairy = DAIRY_WORD.search(ing) is not None
+            has_animal = (
+                has_meat or has_dairy
+                or re.search(r"\begg\b", ing, re.I) is not None
+                or HONEY_WORD.search(ing) is not None
+            )
+            if not rec["veg"] or has_meat:
+                if "vegetarian" in tags:
+                    tags.discard("vegetarian"); stats["k200_tagfix_veg"] += 1
+                if "vegan" in tags:
+                    tags.discard("vegan"); stats["k200_tagfix_vegan"] += 1
+            else:
+                tags.add("vegetarian")
+                if not has_animal:
+                    if "vegan" not in tags:
+                        stats["k200_tagfix_vegan_add"] += 1
+                    tags.add("vegan")
+                elif "vegan" in tags:
+                    tags.discard("vegan"); stats["k200_tagfix_vegan"] += 1
+            if GLUTEN_WORD.search(ing):
+                if "gluten-free" in tags:
+                    tags.discard("gluten-free"); stats["k200_tagfix_gf"] += 1
+            else:
+                tags.add("gluten-free")
+            if float(it["carbs"]) <= 25:
+                tags.add("low-carb")
+            else:
+                tags.discard("low-carb")
+            if float(it["protein"]) >= 20:
+                tags.add("high-protein")
+            else:
+                tags.discard("high-protein")
+            desc = re.sub(r"eggplant", "brinjal", str(it.get("description", "")), flags=re.I)
+            desc = re.sub(r"\s+", " ", desc).strip()
+            if allergen_list:
+                desc += f" · Contains: {', '.join(allergen_list)}"
+            if len(desc) > 140:
+                desc = desc[:137].rstrip() + "…"
+            item = {
+                "name": name,
+                "emoji": it.get("emoji", "🍛"),
+                "cal": int(it["cal"]),
+                "protein": float(it["protein"]),
+                "carbs": float(it["carbs"]),
+                "fat": float(it["fat"]),
+                "prepTime": it.get("prepTime", "20 min"),
+                "description": desc,
+                "tags": sorted(tags, key=lambda t: TAG_ORDER.index(t) if t in TAG_ORDER else 99),
+            }
+            for s in sorted(target_slots):
+                lst = out["kashmir"][s]
+                idx = next((i for i, e in enumerate(lst) if e["name"].lower() == name.lower()), None)
+                if idx is not None:
+                    lst[idx] = item; stats["k200_replaced"] += 1
+                else:
+                    lst.append(item); stats["k200_added"] += 1
+
+
 def main() -> None:
     wb = openpyxl.load_workbook(XLSX, read_only=True, data_only=True)
     ws = wb["Pan_India_Dishes_Dataset"]
@@ -217,12 +343,17 @@ def main() -> None:
             stats["imported_slots"] += 1
         stats["imported_dishes"] += 1
 
+    # Salik's 200-dish Kashmiri dataset (JSON + recipes file) merges into the
+    # kashmir pools, winning on name collisions.
+    merge_kashmiri_200(out, stats)
+
     total = sum(len(v) for reg in out.values() for v in reg.values())
     lines = []
-    lines.append("// Generated by scripts/import-user-dishes.py from Salik's dataset")
-    lines.append("// (pan_india_and_kashmir_2000plus_dishes.xlsx — 2,048 rows, Nov 12, 2026).")
+    lines.append("// Generated by scripts/import-user-dishes.py from Salik's datasets:")
+    lines.append("// pan_india_and_kashmir_2000plus_dishes.xlsx (2,048 rows) + the 200-dish")
+    lines.append("// Kashmiri set (kashmiri-dishes-200.json, built from the recipes file).")
     lines.append("// The 60-row J&K CSV is fully contained in the XLSX, so it is not imported twice.")
-    lines.append(f"// Imported {stats['imported_dishes']} dishes into {total} region/slot entries.")
+    lines.append(f"// Imported {stats['imported_dishes']} XLSX dishes + {stats['k200_added'] + stats['k200_replaced']} Kashmiri-200 slot entries ({total} region/slot entries total).")
     lines.append(f"// Dropped: {stats['pork_in_veg']} veg/vegan rows naming pork/beef, "
                  f"{stats['condiment']} condiments, {stats['already_in_app']} names already in the app.")
     lines.append("// Tags: diet_type drives vegetarian/vegan; 'gluten-free' when no gluten in")

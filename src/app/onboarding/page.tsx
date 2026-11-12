@@ -71,7 +71,7 @@ const initProfile: Partial<UserProfile> = {
   name: '', gender: 'male', age: 25, heightCm: 170, weightKg: 70,
   goal: 'lose_weight', activityLevel: 'moderate',
   dietaryRestrictions: [], allergies: [], location: '',
-  budget: 'moderate', cuisineMix: 'mixed',
+  budget: 'moderate', cuisineMix: 'local',
   sleepHours: 7, stressLevel: 3, workType: 'desk',
   // No exerciseFrequency/Duration/Type here: the Activity level choice
   // already covers exercise (its labels say "1–3 days/week" etc.), so
@@ -593,7 +593,7 @@ export default function OnboardingPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.6rem' }}>
                   {CUISINE_OPTIONS.map((c) => (
                     <button key={c.value} type="button"
-                      className={`option-card ${(profile.cuisineMix || 'mixed') === c.value ? 'selected' : ''}`}
+                      className={`option-card ${(profile.cuisineMix || 'local') === c.value ? 'selected' : ''}`}
                       onClick={() => update('cuisineMix', c.value)}
                       style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.2rem' }}>
                       <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{c.label}</span>
