@@ -1,6 +1,7 @@
 // ── Smart AI Diet Plan Engine — Enhanced Regional Food Database ──────────────
 import type { UserProfile, Calculations, BudgetTier, CuisineMix, Goal } from './calculations';
 import type { TasteProfile } from './taste';
+import { USER_DISHES } from './user-dishes';
 
 export interface Meal {
   name: string;
@@ -1913,7 +1914,9 @@ function buildMealPools(region: string): PoolSet {
   const pools = {} as PoolSet;
   (['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).forEach((mt) => {
     pools[mt] = {
-      regional: db[mt] || [],
+      // Salik's datasets (src/lib/user-dishes.ts, 2,000 dishes) sit alongside
+      // the curated pool — same filters, same scoring, just more real food.
+      regional: [...(db[mt] || []), ...(USER_DISHES[region]?.[mt] || [])],
       // No more random foreign regions — the "international" pool is only the
       // universal global foods (eggs, oats, salads…). Place of the user first.
       international: [...(globalDb[mt] || [])],
@@ -2063,8 +2066,8 @@ function tasteNorm(name: string): string {
 // allergy or an avoided food can never slip through on wording alone.
 const ALLERGY_KEYWORDS: Record<string, string[]> = {
   nuts: ['walnut', 'almond', 'cashew', 'peanut', 'pistachio', 'hazelnut', 'pecan', 'macadamia', 'pine nut', 'groundnut', 'mixed nuts'],
-  dairy: ['milk', 'paneer', 'cheese', 'curd', 'yogurt', 'yoghurt', 'ghee', 'butter', 'cream', 'khoya', 'doodh'],
-  milk: ['milk', 'paneer', 'cheese', 'curd', 'yogurt', 'yoghurt', 'ghee', 'butter', 'cream', 'khoya', 'doodh'],
+  dairy: ['dairy', 'milk', 'paneer', 'cheese', 'curd', 'yogurt', 'yoghurt', 'ghee', 'butter', 'cream', 'khoya', 'doodh'],
+  milk: ['dairy', 'milk', 'paneer', 'cheese', 'curd', 'yogurt', 'yoghurt', 'ghee', 'butter', 'cream', 'khoya', 'doodh'],
   gluten: ['wheat', 'roti', 'naan', 'maida', 'atta', 'kulcha', 'lavasa', 'bread', 'tchot', 'girda', 'bakarkhani', 'barley'],
   wheat: ['wheat', 'roti', 'naan', 'maida', 'atta', 'kulcha', 'lavasa', 'bread', 'tchot', 'girda', 'bakarkhani'],
   egg: ['egg', 'anda'],
