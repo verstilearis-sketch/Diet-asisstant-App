@@ -11,12 +11,12 @@
 
 :root {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Surfaces */
-  --color-bg: #f7f7f5;
-  --color-surface: #ffffff;
-  --color-surface2: #f0efec;
+  /* Surfaces — warm cream, soft pastel */
+  --color-bg: #faf5e9;
+  --color-surface: #fffdf8;
+  --color-surface2: #f3ede0;
 
   /* Text */
   --color-text: #1b1b19;
@@ -24,8 +24,8 @@
   --color-faint: #a3a29c;
 
   /* Borders */
-  --color-border: #e6e5e0;
-  --color-border-strong: #d8d7d1;
+  --color-border: #eae3d2;
+  --color-border-strong: #dcd2b8;
 
   /* Brand — deep botanical green */
   --color-accent: #177245;
@@ -844,15 +844,15 @@ input[type="range"]::-moz-range-thumb {
   min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 2rem 1.25rem; position: relative; gap: 1.5rem;
 }
-/* ── Modern sign-in card (dark, centered) ─────────────────────────── */
+/* ── Modern sign-in card (centered) ─────────────────────────── */
 .signin-card {
   width: 100%; max-width: 400px; position: relative; z-index: 1;
-  background: #141414;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 1.5rem;
   padding: 2.5rem 2rem 2rem;
   text-align: center;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(27, 27, 25, 0.10);
 }
 .signin-logo {
   width: 60px; height: 60px; border-radius: 50%;
@@ -888,7 +888,7 @@ input[type="range"]::-moz-range-thumb {
 }
 .signin-toggle {
   margin-top: 1.5rem; padding-top: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--color-border);
   font-size: 0.85rem; color: var(--color-muted);
 }
 .signin-toggle a { color: var(--color-text); text-decoration: underline; font-weight: 600; }

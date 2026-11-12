@@ -5,7 +5,7 @@ import { GlobalChrome } from '@/components/GlobalChrome';
 import { VortexBackground } from '@/components/ui/vortex-background';
 
 export const viewport: Viewport = {
-  themeColor: '#131311',
+  themeColor: '#faf5e9',
 };
 
 export const metadata: Metadata = {
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark">
-      {/* Dark mode only — light theme removed Oct 2026 */}
+    <html lang="en" data-theme="light">
+      {/* Cream light theme — warm pastel background (Nov 2026) */}
       <body suppressHydrationWarning>
         <VortexBackground />
         <GlobalChrome />
