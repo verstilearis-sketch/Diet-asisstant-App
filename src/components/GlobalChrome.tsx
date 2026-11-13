@@ -3,12 +3,13 @@
 import { useEffect } from 'react';
 import { CookieBanner } from '@/components/CookieBanner';
 import { ScrollProgress } from '@/components/ScrollProgress';
-import { FloatingContact } from '@/components/FloatingContact';
 import { captureUtmParams } from '@/lib/utm';
 
 // ── Global UI chrome ──────────────────────────────────────────────
 // Site-wide floating elements: cookie banner, back-to-top, scroll
-// progress, contact button. Also captures UTM params on first visit.
+// progress. Also captures UTM params on first visit.
+// (The floating contact button was removed Nov 13, 2026 at Salik's word —
+// the component file is kept so it can be restored with one line.)
 
 export function GlobalChrome() {
   useEffect(() => {
@@ -43,7 +44,6 @@ export function GlobalChrome() {
       </a>
       <ScrollProgress />
       <CookieBanner />
-      <FloatingContact />
     </>
   );
 }
