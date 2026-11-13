@@ -2,13 +2,16 @@ import { estimateMealOffline } from './offline-estimate';
 
 // ── Food database lookups ─────────────────────────────────────
 // Local Indian food composition data (ICMR-NIN IFCT 2017 + Anuvaad INDB,
-// bundled at build time — see scripts/build-indian-foods.py) plus live
-// lookups against Open Food Facts (packaged foods, worldwide) and the
-// USDA FoodData Central API (generic foods, worldwide).
+// bundled at build time — see scripts/build-indian-foods.py), the
+// unified Indian Cuisines Database (3,970 dishes, per-serving values —
+// see scripts/build-cuisines-db.py), plus live lookups against Open Food
+// Facts (packaged foods, worldwide) and the USDA FoodData Central API
+// (generic foods, worldwide).
 //
 // Attribution (also shown on /privacy):
 // - ICMR-NIN Indian Food Composition Tables 2017
 // - Anuvaad Indian Nutrient Databank (INDB)
+// - Indian Cuisines Database — Pan-India dishes, Kashmiri 200, BulkUp
 // - Open Food Facts (ODbL) — https://world.openfoodfacts.org
 // - U.S. Dept. of Agriculture, FoodData Central — https://fdc.nal.usda.gov
 
@@ -52,6 +55,175 @@ function loadIndianFoods(): IndianFoodJson[] {
     indianFoods = [];
   }
   return indianFoods;
+}
+
+// ── Unified Indian Cuisines Database (3,970 dishes) ───────────
+// Compact per-serving lookup built by scripts/build-cuisines-db.py from
+// the unified database Salik provided (Pan-India xlsx + Kashmiri 200 +
+// INDB/IFCT + BulkUp + app meal pools). Only per-serving rows with full
+// macros (3,333); per-100g rows are skipped — the composition table
+// above already covers those, and a serving can't be derived from them
+// (no serving weight). Dish names are unique across the database, so
+// one name maps to exactly one entry. Server-side only.
+interface CuisineDish {
+  n: string;
+  a: string[];
+  k: number;
+  p: number;
+  c: number;
+  f: number;
+  s: number | null;
+}
+
+let cuisines: CuisineDish[] | null = null;
+
+function loadCuisines(): CuisineDish[] {
+  if (cuisines) return cuisines;
+  try {
+    // Relative require (not @/): jiti — the only way to run this code
+    // outside Next — does not resolve the @/ alias, so a @/ require here
+    // would silently load nothing in tests while working in production.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const data = require('../data/indian-cuisines.json') as CuisineDish[];
+    cuisines = Array.isArray(data) ? data : [];
+  } catch {
+    cuisines = [];
+  }
+  return cuisines;
+}
+
+/** Generic single word → the most representative dish. Only where the
+ *  shortest-name pick would be a different dish (Vada Pav for "vada",
+ *  Paneer soup for "paneer"). Words with no good generic (chole, curry,
+ *  pulao) are absent on purpose — the AI estimates those instead. */
+const CUISINE_GENERIC: Record<string, string> = {
+  biryani: 'chicken biryani',
+  dosa: 'plain dosa',
+  vada: 'medu vada',
+  paneer: 'paneer curry',
+  halwa: 'carrot halwa',
+  dal: 'mixed dal',
+};
+
+/** Words too vague to guess alone — they need a qualifier ("chole" on its
+ *  own is not Chole Bhature, "roti" is not Soya roti). Blocked from the
+ *  single-word fallback so the composition table or offline table answers
+ *  them instead (both know the plain staples). */
+const CUISINE_VAGUE = new Set([
+  'chole', 'curry', 'masala', 'gravy', 'sauce', 'fry', 'bhaji', 'sabzi', 'sabji',
+  'roti', 'rice', 'chawal',
+]);
+
+const CUISINE_STOPWORDS = new Set(['of', 'a', 'an', 'the', 'with', 'and']);
+
+/** Match a named dish from the cuisines database inside one part of a
+ *  meal description ("rogan josh"). Mirrors matchFoodInPart: full
+ *  name/alias as whole words wins (longest first), then a single
+ *  content word falls back to a generic dish or the shortest name
+ *  containing it, with the same coverage guard. */
+function matchCuisineDishInPart(part: string): CuisineDish | null {
+  const dishes = loadCuisines();
+  if (dishes.length === 0) return null;
+  const words = norm(part)
+    .split(' ')
+    .filter((w) => w && !SERVING_WORDS.has(w) && !CUISINE_STOPWORDS.has(w));
+  if (words.length === 0) return null;
+  const p = ` ${words.join(' ')} `;
+  const variants = words.map(wordForms);
+
+  // Tier 1: a dish name/alias appears as whole words in the part.
+  const candidates: { dish: CuisineDish; matchLen: number }[] = [];
+  for (const d of dishes) {
+    let ml = 0;
+    for (const alias of d.a) {
+      if (alias.length >= 3 && p.includes(` ${alias} `) && alias.length > ml) ml = alias.length;
+    }
+    if (ml > 0) candidates.push({ dish: d, matchLen: ml });
+  }
+  candidates.sort((a, b) => b.matchLen - a.matchLen);
+  // Tier 2: one content word left — a generic dish, else the shortest
+  // name containing it. The vague check tests every word form, so
+  // "rotis" is still blocked even though only "roti" is listed.
+  if (candidates.length === 0 && words.length === 1 && !variants[0].some((v) => CUISINE_VAGUE.has(v))) {
+    const forms = variants[0];
+    const generic = forms.map((v) => CUISINE_GENERIC[v]).find(Boolean);
+    if (generic) {
+      const hit = dishes.find((d) => d.a.includes(generic));
+      if (hit) candidates.push({ dish: hit, matchLen: 99 });
+    }
+    if (candidates.length === 0) {
+      let shortest: CuisineDish | null = null;
+      for (const d of dishes) {
+        if (d.a.some((alias) => alias.split(' ').some((w) => forms.includes(w)))) {
+          if (!shortest || d.n.length < shortest.n.length) shortest = d;
+        }
+      }
+      if (shortest) candidates.push({ dish: shortest, matchLen: 99 });
+    }
+  }
+  if (candidates.length === 0) return null;
+  // Coverage guard: the match must account for MORE than half the part's
+  // content words — otherwise it's a coincidental hit. Let the AI handle those.
+  for (const { dish: best } of candidates) {
+    const matchedWords = new Set(best.a.join(' ').split(' ').flatMap(wordForms));
+    const covered = words.filter((w) => wordForms(w).some((v) => matchedWords.has(v))).length;
+    if (covered * 2 > words.length) return best;
+  }
+  return null;
+}
+
+/** Find named dishes from the cuisines database inside free text — used
+ *  by the health coach so it quotes dataset numbers instead of guessing.
+ *  Full dish names only (no single-word fallback here); drops a match
+ *  fully contained in a longer one ("Idli" inside "Idli Sambar"). */
+export function lookupCuisineDishes(
+  text: string,
+  limit = 3,
+): { name: string; calories: number; proteinG: number; carbsG: number; fatG: number; servingG: number | null }[] {
+  const dishes = loadCuisines();
+  const q = ` ${norm(text)} `;
+  if (!q.trim() || dishes.length === 0) return [];
+  const hits: { dish: CuisineDish; matchLen: number }[] = [];
+  for (const d of dishes) {
+    let ml = 0;
+    for (const alias of d.a) {
+      if (alias.length >= 3 && q.includes(` ${alias} `) && alias.length > ml) ml = alias.length;
+    }
+    if (ml > 0) hits.push({ dish: d, matchLen: ml });
+  }
+  hits.sort((a, b) => b.matchLen - a.matchLen);
+  const picked: CuisineDish[] = [];
+  for (const { dish } of hits) {
+    if (picked.length >= limit) break;
+    if (
+      picked.some((pd) =>
+        pd.a.some((pa) => dish.a.some((da) => pa.includes(da) || da.includes(pa))),
+      )
+    ) {
+      continue;
+    }
+    picked.push(dish);
+  }
+  // Generic words ("is biryani healthy?") name no dish exactly — answer
+  // them with the representative dish, unless one is already picked.
+  if (picked.length < limit) {
+    const words = new Set(norm(text).split(' ').filter(Boolean));
+    for (const [word, target] of Object.entries(CUISINE_GENERIC)) {
+      if (picked.length >= limit) break;
+      if (!words.has(word)) continue;
+      if (picked.some((pd) => pd.a.some((pa) => pa.split(' ').includes(word)))) continue;
+      const hit = dishes.find((d) => d.a.includes(target));
+      if (hit) picked.push(hit);
+    }
+  }
+  return picked.map((d) => ({
+    name: d.n,
+    calories: d.k,
+    proteinG: d.p,
+    carbsG: d.c,
+    fatG: d.f,
+    servingG: d.s,
+  }));
 }
 
 const norm = (s: string) =>
@@ -196,13 +368,13 @@ function parseQuantity(part: string): { qty: number; grams: number | null; rest:
 /**
  * Try to estimate a meal purely from the bundled Indian food database.
  * Handles multi-part descriptions ("2 rotis and dal"). Best-effort per
- * part: a part the database doesn't know (dish names like "rogan josh"
- * aren't in a composition table) falls back to the offline unit-food
- * table instead of killing the whole meal — one unknown item used to
- * make the entire log fail. `verified` is true only when every part
- * came from the published database; mixed estimates are labelled
- * offline in the UI. Returns null only when no part can be estimated
- * at all — then the AI estimator takes over.
+ * part: a part the composition table doesn't know (dish names like
+ * "rogan josh") is tried against the unified cuisines database next,
+ * then the offline unit-food table, instead of killing the whole meal —
+ * one unknown item used to make the entire log fail. `verified` is true
+ * only when every part came from the published database; mixed estimates
+ * are labelled offline in the UI. Returns null only when no part can be
+ * estimated at all — then the AI estimator takes over.
  */
 export function estimateFromDb(text: string): { meal: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number }; source: string; verified: boolean } | null {
   const parts = text.split(PART_SPLIT).map((s) => s.trim()).filter(Boolean);
@@ -229,7 +401,25 @@ export function estimateFromDb(text: string): { meal: { name: string; calories: 
       matchedAny = true;
       continue;
     }
-    // Not in the composition database — try the offline unit-food table
+    // Not in the composition database — try the unified cuisines database
+    // (named dishes with per-serving values, e.g. "rogan josh" — dish
+    // names aren't in a composition table). Grams scale against the
+    // dish's serving weight when known, otherwise the quantity counts
+    // whole servings. Estimates, not lab values — verified stays false.
+    const dish = matchCuisineDishInPart(rest);
+    if (dish) {
+      const factor = (grams && dish.s ? grams / dish.s : 1) * qty;
+      kcal += dish.k * factor;
+      protein += dish.p * factor;
+      carbs += dish.c * factor;
+      fat += dish.f * factor;
+      names.push(qty > 1 ? `${qty} ${dish.n}` : dish.n);
+      source = 'Indian Cuisines Database';
+      verified = false;
+      matchedAny = true;
+      continue;
+    }
+    // Not in the cuisines database either — try the offline unit-food table
     // (dish names, common servings) before giving up on this part.
     const off = estimateMealOffline(part);
     if (off) {
@@ -413,4 +603,4 @@ export async function searchUsda(query: string, limit = 5): Promise<FoodEntry[]>
 }
 
 export const FOOD_DB_ATTRIBUTION =
-  'Nutrition data: ICMR-NIN Indian Food Composition Tables 2017, Anuvaad Indian Nutrient Databank, Open Food Facts (ODbL), USDA FoodData Central.';
+  'Nutrition data: ICMR-NIN Indian Food Composition Tables 2017, Anuvaad Indian Nutrient Databank, Indian Cuisines Database (3,970 dishes), Open Food Facts (ODbL), USDA FoodData Central.';

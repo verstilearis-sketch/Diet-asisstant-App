@@ -3,6 +3,7 @@ import { checkRateLimit, clientKey, validString } from '@/lib/api-guard';
 import { requireUser } from '@/lib/api-auth';
 import { GoogleGenAI } from '@google/genai';
 import { tryPollinations } from '@/lib/ai-providers';
+import { lookupCuisineDishes } from '@/lib/food-db';
 
 // 60s execution budget: the failover chain below is tuned to always resolve
 // (or fail over to the instant offline reply) well inside it.
@@ -152,6 +153,21 @@ PLAN:
   })()}
 If a question is completely off-topic (coding, politics, etc.), briefly redirect to health topics.`;
 
+  // Dish facts from Zaiq's food database — when the user asks about a
+  // dish we know, the coach quotes these exact numbers instead of
+  // guessing. Only the latest question is scanned, max 3 dishes.
+  const lastUser = [...typedMessages].reverse().find((m) => m.role === 'user');
+  const dishFacts = lastUser ? lookupCuisineDishes(lastUser.content, 3) : [];
+  const systemPromptWithFacts =
+    dishFacts.length > 0
+      ? `${systemPrompt}\n\nFOOD DATABASE — exact numbers for dishes the user asked about. Quote these instead of estimating:\n${dishFacts
+          .map(
+            (d) =>
+              `- ${d.name}: ${d.calories} kcal, ${d.proteinG}g protein, ${d.carbsG}g carbs, ${d.fatG}g fat per serving${d.servingG ? ` (${d.servingG}g)` : ''}`,
+          )
+          .join('\n')}`
+      : systemPrompt;
+
   const order = rotatedOrder();
 
   // Race with a head start for the first provider (Gemini): it starts
@@ -171,14 +187,14 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
   const flatPrompt = typedMessages
     .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
     .join('\n\n');
-  const pollinationsPromise = tryPollinations(systemPrompt, flatPrompt, { maxTokens: 300, timeoutMs: 45000 });
+  const pollinationsPromise = tryPollinations(systemPromptWithFacts, flatPrompt, { maxTokens: 300, timeoutMs: 45000 });
   // Mark handled so a dropped promise (keyed provider won) can't surface
   // as an unhandled rejection; the fallback path below still awaits it.
   pollinationsPromise.catch(() => {});
 
   const failures: string[] = [];
   try {
-    const { provider, stream } = await raceProviders(order, typedMessages, systemPrompt, failures);
+    const { provider, stream } = await raceProviders(order, typedMessages, systemPromptWithFacts, failures);
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
