@@ -7,10 +7,14 @@ import { estimateFromDb } from '@/lib/food-db';
 
 // ── Free-text meal logging ────────────────────────────────────
 // POST /api/parse-meal  { text, restrictions?, region? }
-// Returns { meal: { name, calories, proteinG, carbsG, fatG }, provider }
+// Returns { meal: { name, calories, proteinG, carbsG, fatG }, provider, source }
 // 1. Bundled Indian food-composition database (ICMR-NIN IFCT 2017 +
 //    Anuvaad INDB) — instant, no AI call, most accurate for Indian dishes.
-// 2. AI estimator chain (Groq → Gemini → …).
+//    Fully matched parts are "verified nutrition"; mixed estimates (part
+//    database, part local table) are labelled source 'database' so the
+//    client never calls them "offline" — the AI was never needed, not
+//    unreachable.
+// 2. AI estimator chain (Gemini → Groq → OpenRouter, Pollinations last).
 // 3. Local offline unit-food estimate so logging keeps working.
 
 function parseMealJson(raw: string): {
@@ -68,6 +72,7 @@ export async function POST(req: Request) {
       meal: dbHit.meal,
       provider: dbHit.verified ? 'food-db' : 'offline',
       dbSource: dbHit.source,
+      source: 'database',
     });
   }
 
@@ -88,14 +93,14 @@ ${region ? `Regional context: ${region}.` : ''}`;
   if (result.ok) {
     // validate() already confirmed this parses.
     const meal = parseMealJson(result.reply)!;
-    return NextResponse.json({ meal, provider: result.provider });
+    return NextResponse.json({ meal, provider: result.provider, source: 'ai' });
   }
   console.error('Parse-meal API: all providers failed —', result.failures.join('; '));
 
   // Offline fallback: local unit-food estimate keeps logging working.
   const offline = estimateMealOffline(text);
   if (offline) {
-    return NextResponse.json({ meal: offline, provider: 'offline' });
+    return NextResponse.json({ meal: offline, provider: 'offline', source: 'offline' });
   }
 
   return NextResponse.json(

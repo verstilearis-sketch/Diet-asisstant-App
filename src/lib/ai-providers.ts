@@ -181,11 +181,11 @@ export async function tryGemini(
   }
 }
 
-/** Run the provider chain with a rotated start, returning the first successful reply.
- *  Each request starts at a random provider (spreading quota evenly instead of
- *  always hammering Groq first) and fails over through the rest. A provider
- *  that just rate-limited sits out for a minute rather than being retried
- *  into the ground. */
+/** Run the provider chain, Gemini first — Salik has a Pro subscription, so
+ *  its quota is the one to spend; Groq then OpenRouter are fallbacks, and
+ *  keyless Pollinations is the last resort. A provider that just
+ *  rate-limited sits out for a minute rather than being retried into the
+ *  ground. Returns the first successful reply. */
 export async function runAiChain(
   systemPrompt: string,
   userPrompt: string,

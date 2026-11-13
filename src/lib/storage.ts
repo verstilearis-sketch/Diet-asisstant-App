@@ -44,6 +44,10 @@ export interface ExtraMeal {
   offline?: boolean;
   /** True when nutrition came from a real food-composition database. */
   verified?: boolean;
+  /** True when the estimate is part database, part local table — more
+   *  accurate than an AI guess for Indian dishes, but not fully verified.
+   *  Shown as "food database", never as "offline estimate". */
+  dbEstimate?: boolean;
 }
 
 export interface ExerciseEntry {

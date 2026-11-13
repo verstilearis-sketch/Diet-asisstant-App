@@ -226,6 +226,7 @@ export default function DashboardPage() {
     m: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number },
     provider: string,
     text: string,
+    source?: string,
   ) => {
     const entry: ExtraMeal = {
       id: newEntryId('em'),
@@ -236,7 +237,11 @@ export default function DashboardPage() {
       carbsG: m.carbsG,
       fatG: m.fatG,
       source: 'text',
-      ...(provider === 'offline' ? { offline: true } : {}),
+      // A mixed database estimate is NOT an offline fallback — the AI was
+      // never needed. Only the local table (source 'offline') gets the
+      // offline badge.
+      ...(provider === 'offline' && source === 'database' ? { dbEstimate: true } : {}),
+      ...(provider === 'offline' && source !== 'database' ? { offline: true } : {}),
       ...(provider === 'food-db' ? { verified: true } : {}),
     };
     setDraftLog((d) => (d ? { ...d, extraMeals: [...(d.extraMeals || []), entry] } : d));
@@ -248,10 +253,10 @@ export default function DashboardPage() {
     if (!text || extraBusy || !savedPlan) return;
     // Serve repeat descriptions from the on-device cache — no API call.
     const cached = readEstimateCache('dpa_meal_estimate_cache')[text.toLowerCase()] as
-      | { meal: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number }; provider: string }
+      | { meal: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number }; provider: string; source?: string }
       | undefined;
     if (cached?.meal) {
-      addExtraMealEntry(cached.meal, cached.provider, text);
+      addExtraMealEntry(cached.meal, cached.provider, text, cached.source);
       setExtraText('');
       return;
     }
@@ -270,8 +275,8 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Could not estimate this meal');
       const m = data.meal as { name: string; calories: number; proteinG: number; carbsG: number; fatG: number };
-      writeEstimateCache('dpa_meal_estimate_cache', text, { meal: m, provider: data.provider });
-      addExtraMealEntry(m, data.provider, text);
+      writeEstimateCache('dpa_meal_estimate_cache', text, { meal: m, provider: data.provider, source: data.source });
+      addExtraMealEntry(m, data.provider, text, data.source);
       setExtraText('');
     } catch (e) {
       setExtraError(e instanceof Error ? e.message : 'Could not estimate this meal');
@@ -1334,6 +1339,11 @@ export default function DashboardPage() {
                           {m.source === 'barcode' && (
                             <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Scanned from the pack's barcode — real label data">
                               barcode
+                            </span>
+                          )}
+                          {m.dbEstimate && (
+                            <span className="badge badge-grey" style={{ fontSize: '0.64rem', padding: '0.12rem 0.45rem', flexShrink: 0 }} title="Estimated from the published food-composition database — more accurate than an AI guess for Indian dishes">
+                              food database
                             </span>
                           )}
                           {m.offline && (
