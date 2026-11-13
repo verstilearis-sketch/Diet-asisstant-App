@@ -9,11 +9,13 @@ import { tryPollinations } from '@/lib/ai-providers';
 export const maxDuration = 60;
 
 // ── Health-coach AI providers ─────────────────────────────────
-// The coach rotates across Groq, Gemini and OpenRouter: each request starts
-// at a random provider (spreading quota evenly) and fails over through the
-// rest. A provider that just rate-limited sits out for a minute. If all
-// three are down, keyword-based offline replies keep the coach talking.
-// Set AI_PROVIDER=gemini to bias the rotation toward Gemini first.
+// Gemini answers first on every request — Salik has a Pro subscription,
+// so its quota is the one to spend. Groq and OpenRouter are fallbacks in
+// that order; a provider that just rate-limited sits out for a minute.
+// The first provider gets a 1s head start in the race below, so Gemini
+// wins whenever it is healthy and the others only spend quota when it
+// is slow or down. If all three are down, keyword-based offline replies
+// keep the coach talking.
 //
 // Groq retires model IDs regularly, so the route asks Groq which models
 // currently exist (/v1/models) and picks the first from the preference list
@@ -23,7 +25,7 @@ export const maxDuration = 60;
 //
 // Put keys in .env.local (project root, next to package.json):
 //   GROQ_API_KEY=...        (fresh key from console.groq.com)
-//   GEMINI_API_KEY=...      (optional backup, from Google AI Studio)
+//   GEMINI_API_KEY=...      (from Google AI Studio — Pro subscription)
 //   OPENROUTER_API_KEY=...  (optional backup, free key from openrouter.ai/keys)
 //   GROQ_MODEL=...          (optional; default auto-selected)
 //   GEMINI_MODEL=...        (optional; default gemini-3-flash-preview)
@@ -48,10 +50,7 @@ const OPENROUTER_MODEL_PREFERENCE = [
   'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
 ].filter((m): m is string => !!m);
 // NOTE: GitHub Models was retired by GitHub on July 30, 2026 — removed from
-// the chat chain. Chain is now: Groq → Gemini → OpenRouter.
-
-const PRIMARY: 'groq' | 'gemini' =
-  process.env.AI_PROVIDER?.toLowerCase() === 'gemini' ? 'gemini' : 'groq';
+// the chat chain. Chain is now: Gemini → Groq → OpenRouter.
 
 interface IncomingMessage {
   role: string;
@@ -61,35 +60,26 @@ interface IncomingMessage {
 type ProviderName = 'groq' | 'gemini' | 'openrouter';
 
 // ── Rotation + cooldown ─────────────────────────────────────────
-// Requests start at the provider that succeeded most recently (it is
-// probably healthy right now); the rest follow in a rotated order so quota
-// spreads evenly. A provider that just rate-limited sits out for a minute.
+// Gemini first, always — Salik's Pro subscription makes it the primary.
+// Groq then OpenRouter are fallbacks. A provider that just rate-limited
+// sits out for a minute (cooling last), so a 429 doesn't make every
+// request wait on a provider that just said no.
 
 const COOLDOWN_MS = 60000;
 const cooldownUntil = new Map<ProviderName, number>();
-let lastGoodProvider: ProviderName | null = null;
 
 function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
   cooldownUntil.set(provider, Date.now() + ms);
 }
 
-function rotatedOrder(primary: 'groq' | 'gemini'): ProviderName[] {
+function rotatedOrder(): ProviderName[] {
   const now = Date.now();
-  const base: ProviderName[] = primary === 'groq'
-    ? ['groq', 'gemini', 'openrouter']
-    : ['gemini', 'groq', 'openrouter'];
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
-  for (const p of base) {
+  for (const p of ['gemini', 'groq', 'openrouter'] as ProviderName[]) {
     ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
   }
-  // Prefer the last provider that actually answered — avoids stumbling into
-  // a degraded provider on every few requests just because of the rotation.
-  if (lastGoodProvider && ready.includes(lastGoodProvider)) {
-    return [lastGoodProvider, ...ready.filter((p) => p !== lastGoodProvider), ...cooling];
-  }
-  const start = ready.length ? Math.floor(Math.random() * ready.length) : 0;
-  return [...ready.slice(start), ...ready.slice(0, start), ...cooling];
+  return [...ready, ...cooling];
 }
 
 // ── POST handler ────────────────────────────────────────────
@@ -162,15 +152,16 @@ PLAN:
   })()}
 If a question is completely off-topic (coding, politics, etc.), briefly redirect to health topics.`;
 
-  const order = rotatedOrder(PRIMARY);
+  const order = rotatedOrder();
 
-  // Race all ready providers in parallel — the first one to yield a real
-  // token wins, the losers are aborted. This is dramatically faster than
-  // the old sequential chain when the preferred provider is slow or cold.
+  // Race with a head start for the first provider (Gemini): it starts
+  // immediately and the rest join 1s later, so Gemini wins whenever it
+  // is healthy and the others only spend quota when it is slow or down.
+  // If the first provider fails fast, the rest start at once instead of
+  // waiting out the head start.
   const failures: string[] = [];
   try {
     const { provider, stream } = await raceProviders(order, typedMessages, systemPrompt, failures);
-    lastGoodProvider = provider;
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
@@ -219,7 +210,11 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 
 const FIRST_TOKEN_TIMEOUT_MS = 3000;
 
-/** Race providers in parallel: first real token wins, losers get aborted. */
+/** Race providers with a head start for the first one (Gemini): it starts
+ *  immediately, the rest join HEAD_START_MS later unless it already won
+ *  or failed fast. First real token wins, losers get aborted. */
+const HEAD_START_MS = 1000;
+
 async function raceProviders(
   providers: ProviderName[],
   messages: IncomingMessage[],
@@ -227,28 +222,17 @@ async function raceProviders(
   failures: string[],
 ): Promise<{ provider: ProviderName; stream: ReadableStream<Uint8Array> }> {
   return await new Promise((resolve, reject) => {
+    if (providers.length === 0) {
+      reject(new Error('no providers available'));
+      return;
+    }
     const controllers = new Map<ProviderName, AbortController>();
     let settled = 0;
     let won = false;
+    let restStarted = false;
+    let restTimer: ReturnType<typeof setTimeout> | undefined;
 
-    const fail = (provider: ProviderName, err: unknown) => {
-      const reason = String(
-        err && typeof err === 'object' && 'message' in err ? (err as Error).message : err,
-      ).slice(0, 120);
-      // Aborted losers are expected — don't log them as failures.
-      if (!/abort/i.test(reason)) {
-        failures.push(`${provider} (${reason})`);
-        if (/429|rate.?limit|quota|resource.?exhausted/i.test(reason)) {
-          markCooldown(provider);
-        }
-      }
-      settled++;
-      if (settled === providers.length && !won) {
-        reject(new Error('all providers failed'));
-      }
-    };
-
-    for (const provider of providers) {
+    const startProvider = (provider: ProviderName) => {
       const controller = new AbortController();
       controllers.set(provider, controller);
       (async () => {
@@ -268,16 +252,42 @@ async function raceProviders(
           return;
         }
         won = true;
+        if (restTimer) clearTimeout(restTimer);
         for (const [p, c] of controllers) {
           if (p !== provider) c.abort();
         }
         resolve({ provider, stream });
       }).catch((err) => fail(provider, err));
-    }
+    };
 
-    if (providers.length === 0) {
-      reject(new Error('no providers available'));
-    }
+    const startRest = () => {
+      if (restStarted || won) return;
+      restStarted = true;
+      if (restTimer) clearTimeout(restTimer);
+      for (const p of providers.slice(1)) startProvider(p);
+    };
+
+    const fail = (provider: ProviderName, err: unknown) => {
+      const reason = String(
+        err && typeof err === 'object' && 'message' in err ? (err as Error).message : err,
+      ).slice(0, 120);
+      // Aborted losers are expected — don't log them as failures.
+      if (!/abort/i.test(reason)) {
+        failures.push(`${provider} (${reason})`);
+        if (/429|rate.?limit|quota|resource.?exhausted/i.test(reason)) {
+          markCooldown(provider);
+        }
+      }
+      // The head-start provider failed fast — bring the rest in at once.
+      if (!restStarted) startRest();
+      settled++;
+      if (settled === providers.length && !won) {
+        reject(new Error('all providers failed'));
+      }
+    };
+
+    startProvider(providers[0]);
+    restTimer = setTimeout(startRest, HEAD_START_MS);
   });
 }
 

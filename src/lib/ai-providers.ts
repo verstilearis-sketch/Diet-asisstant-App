@@ -214,7 +214,6 @@ export async function runAiChain(
             failures.push(`${provider} (unusable response)`);
             continue;
           }
-          if (provider !== 'pollinations') lastGoodProvider = provider;
           return { ok: true, reply: bumped.reply, provider };
         }
         // Retry also truncated/failed — fall through and treat the original
@@ -229,7 +228,6 @@ export async function runAiChain(
         continue;
       }
       // Never promote the last-resort provider to the front of the rotation.
-      if (provider !== 'pollinations') lastGoodProvider = provider;
       return { ok: true, reply: attempt.reply, provider };
     }
     failures.push(`${provider} (${attempt.reason})`);
@@ -244,29 +242,24 @@ export async function runAiChain(
 
 const COOLDOWN_MS = 60000;
 const cooldownUntil = new Map<ProviderName, number>();
-let lastGoodProvider: ProviderName | null = null;
 
 function markCooldown(provider: ProviderName, ms: number = COOLDOWN_MS) {
   cooldownUntil.set(provider, Date.now() + ms);
 }
 
-/** Providers in rotation order: the last one that answered goes first
- *  (probably healthy right now), then the rest rotated for even quota
- *  spread, cooling-down providers last. */
+/** Provider order: Gemini first, always — Salik has a Pro subscription,
+ *  so its quota is the one to spend; Groq then OpenRouter are fallbacks,
+ *  cooling-down providers last. */
 function rotatedOrder(): ProviderName[] {
   const now = Date.now();
   const ready: ProviderName[] = [];
   const cooling: ProviderName[] = [];
-  for (const p of ['groq', 'gemini', 'openrouter'] as ProviderName[]) {
+  for (const p of ['gemini', 'groq', 'openrouter'] as ProviderName[]) {
     ((cooldownUntil.get(p) ?? 0) > now ? cooling : ready).push(p);
   }
   // Pollinations is keyless and weakest — always absolute last, never rotated
   // into the lead, so it only fires when every real provider has failed.
-  if (lastGoodProvider && ready.includes(lastGoodProvider)) {
-    return [lastGoodProvider, ...ready.filter((p) => p !== lastGoodProvider), ...cooling, 'pollinations'];
-  }
-  const start = ready.length ? Math.floor(Math.random() * ready.length) : 0;
-  return [...ready.slice(start), ...ready.slice(0, start), ...cooling, 'pollinations'];
+  return [...ready, ...cooling, 'pollinations'];
 }
 
 // ── OpenRouter (third link — separate free-model quota pool) ────
