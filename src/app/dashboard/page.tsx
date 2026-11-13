@@ -579,6 +579,8 @@ export default function DashboardPage() {
         savedPlan.profile,
         { ...baseCalcs, dailyCalorieGoal: dailyGoal },
         taste,
+        undefined,
+        savedPlan.userId,
       );
       const updated = {
         ...fresh,
@@ -611,6 +613,7 @@ export default function DashboardPage() {
         { ...baseCalcs, dailyCalorieGoal: dailyGoal },
         undefined,
         salt,
+        savedPlan.userId,
       );
       const updated = {
         ...fresh,

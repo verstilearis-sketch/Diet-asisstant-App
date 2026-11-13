@@ -158,7 +158,7 @@ export default function OnboardingPage() {
       // The meal engine (all regional food databases) is heavy — load it
       // only now, so steps 1–4 stay light and fast on mobile.
       const { generateDietPlan } = await import('@/lib/ai-engine');
-      const plan = await generateDietPlan(fullProfile, calculations);
+      const plan = await generateDietPlan(fullProfile, calculations, undefined, undefined, userId);
       await savePlan(userId, fullProfile, plan);
       router.push('/dashboard');
     } catch (err) {

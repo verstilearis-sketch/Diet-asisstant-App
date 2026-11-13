@@ -1892,7 +1892,7 @@ function mulberry32(seed: number): () => number {
 type Rng = () => number;
 
 /** Build the plan seed from every profile field that affects meal selection. */
-export function planSeedFor(profile: UserProfile): number {
+export function planSeedFor(profile: UserProfile, userId?: string): number {
   const parts = [
     profile.age, profile.heightCm, profile.weightKg, profile.targetWeightKg ?? '',
     profile.goal, profile.activityLevel, profile.exerciseType ?? '', profile.exerciseFrequency ?? '',
@@ -1904,6 +1904,10 @@ export function planSeedFor(profile: UserProfile): number {
     profile.foodsToAvoid ?? '', profile.bodyType ?? '', profile.metabolism ?? '',
     profile.location ?? '', profile.budget ?? '', profile.cuisineMix ?? '',
     profile.gender,
+    // Per-user salt: two users with identical details must NOT get the
+    // identical plan (Nov 13, 2026). Same user + same details still
+    // reproduces the same plan; a different user gets a different one.
+    userId ?? '',
   ];
   return hashSeed(parts.join('|'));
 }
@@ -2361,16 +2365,20 @@ export async function generateDietPlan(
   // Lets the dashboard offer a one-tap "Shuffle week" without re-entering
   // onboarding, while the default (0) keeps plans reproducible.
   seedSalt?: number,
+  // Per-user salt: two users with identical details get different plans.
+  // Same user + same details still reproduces the same plan.
+  userId?: string,
 ): Promise<DietPlan> {
   // No artificial delay: the plan builds locally in milliseconds.
   const rawRegion = detectRegion(profile.location);
   const region = resolveRegion(rawRegion);
   const budget: BudgetTier = profile.budget || 'moderate';
   const cuisineMix: CuisineMix = profile.cuisineMix || 'local';
-  // Deterministic plan: the RNG is seeded from the profile, so identical
-  // details always produce the identical plan — unless a shuffle salt
+  // Deterministic plan: the RNG is seeded from the profile + user, so the
+  // same user with identical details always gets the identical plan —
+  // but a different user gets a different one — unless a shuffle salt
   // was passed, which shifts the stream to a fresh plan.
-  const rng = mulberry32(planSeedFor(profile) + (seedSalt || 0));
+  const rng = mulberry32(planSeedFor(profile, userId) + (seedSalt || 0));
   const pools = buildMealPools(region);
   // High-protein goals get extra protein weighting in meal scoring
   const proteinWeight = profile.goal === 'lose_weight' ? 0.36
