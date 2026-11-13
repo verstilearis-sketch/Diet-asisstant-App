@@ -204,6 +204,32 @@ const ACTIVITIES: Activity[] = [
   { keys: ['plank', 'core'], name: 'Core training', met: 4 },
   { keys: ['housework', 'cleaning', 'mopping', 'chores', 'sweeping'], name: 'Household chores', met: 3.3 },
   { keys: ['gardening'], name: 'Gardening', met: 4 },
+  { keys: ['trek', 'trekking', 'hike', 'hiking'], name: 'Trekking / hiking', met: 6 },
+  { keys: ['zumba'], name: 'Zumba', met: 6.5 },
+  { keys: ['pilates'], name: 'Pilates', met: 3 },
+  { keys: ['crossfit'], name: 'CrossFit', met: 8 },
+  { keys: ['volleyball'], name: 'Volleyball', met: 4 },
+  { keys: ['table tennis', 'ping pong'], name: 'Table tennis', met: 4 },
+  { keys: ['squash'], name: 'Squash', met: 7.3 },
+  { keys: ['karate', 'martial arts', 'taekwondo', 'judo'], name: 'Martial arts', met: 7 },
+  { keys: ['aerobics', 'step aerobics'], name: 'Aerobics', met: 6.5 },
+  { keys: ['rowing', 'rower'], name: 'Rowing', met: 6 },
+  { keys: ['kabaddi'], name: 'Kabaddi', met: 7 },
+  { keys: ['stretching', 'stretch'], name: 'Stretching', met: 2.5 },
+];
+
+/** Rep-based moves ("50 pushups") — the MET formula assumes a 30-minute
+ *  session when no duration is given, which turns 50 pushups into 255 kcal.
+ *  Count the reps instead: ~0.4 kcal per pushup rep for a 70kg person,
+ *  scaled by body weight. Only when no duration is stated — a timed
+ *  session ("pushups for 10 minutes") uses the MET path instead. */
+const REP_MOVES: { keys: string[]; name: string; kcalPerRep70kg: number }[] = [
+  { keys: ['pushup', 'push-up', 'pushups', 'push-ups'], name: 'Pushups', kcalPerRep70kg: 0.4 },
+  { keys: ['pullup', 'pull-up', 'pullups', 'pull-ups', 'chinup', 'chin-up'], name: 'Pull-ups', kcalPerRep70kg: 0.5 },
+  { keys: ['squat', 'squats'], name: 'Squats', kcalPerRep70kg: 0.35 },
+  { keys: ['situp', 'sit-up', 'situps', 'sit-ups', 'crunch', 'crunches'], name: 'Sit-ups', kcalPerRep70kg: 0.3 },
+  { keys: ['lunge', 'lunges'], name: 'Lunges', kcalPerRep70kg: 0.3 },
+  { keys: ['burpee', 'burpees'], name: 'Burpees', kcalPerRep70kg: 0.8 },
 ];
 
 /** Estimate workout burn from MET values. Returns null if no known activity matched. */
@@ -220,6 +246,23 @@ export function estimateExerciseOffline(text: string, weightKg: number): Offline
   }
   minutes = Math.min(300, Math.max(1, minutes));
 
+  const kg = weightKg > 0 ? weightKg : 70;
+
+  if (!hasDuration) {
+    const rm = lower.match(/(\d+)\s*(pushups?|push-ups?|pullups?|pull-ups?|chinups?|chin-ups?|squats?|situps?|sit-ups?|crunches?|lunges?|burpees?)\b/);
+    if (rm) {
+      const reps = parseInt(rm[1], 10);
+      const move = REP_MOVES.find((m) => m.keys.some((k) => new RegExp(`^${escapeRegExp(k)}s?$`).test(rm[2])));
+      if (move && reps > 0 && reps <= 1000) {
+        return {
+          name: move.name,
+          caloriesBurned: Math.max(1, Math.round(move.kcalPerRep70kg * (kg / 70) * reps)),
+          durationMin: Math.max(1, Math.round((reps * 3) / 60)),
+        };
+      }
+    }
+  }
+
   const sorted = [...ACTIVITIES].sort(
     (a, b) => Math.max(...b.keys.map((k) => k.length)) - Math.max(...a.keys.map((k) => k.length)),
   );
@@ -228,7 +271,6 @@ export function estimateExerciseOffline(text: string, weightKg: number): Offline
   );
   if (!found) return null;
 
-  const kg = weightKg > 0 ? weightKg : 70;
   const caloriesBurned = Math.round(found.met * kg * (minutes / 60));
   return {
     name: found.name,

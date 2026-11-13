@@ -7,8 +7,9 @@ import { estimateExerciseOffline } from '@/lib/offline-estimate';
 // ── Exercise estimation ─────────────────────────────────────────
 // POST /api/parse-exercise  { text, weightKg? }
 // Returns { exercise: { name, caloriesBurned, durationMin? }, provider }
-// Estimates calorie burn for a described workout. AI first (Groq → Gemini
-// with 429 backoff); MET-formula fallback keeps logging working offline.
+// Estimates calorie burn for a described workout. Gemini first (Pro
+// subscription), then Groq and OpenRouter; MET-formula fallback keeps
+// logging working offline.
 
 function parseExerciseJson(raw: string): {
   name: string; caloriesBurned: number; durationMin?: number;

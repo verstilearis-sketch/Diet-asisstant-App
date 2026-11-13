@@ -461,7 +461,7 @@ export default function DashboardPage() {
     setDraftLog((d) => {
       if (!d) return d;
       const exercises = (d.exercises || []).filter((e) => e.id !== id);
-      return { ...d, exercises, exerciseDone: d.exerciseDone || exercises.length > 0 };
+      return { ...d, exercises, exerciseDone: exercises.length > 0 };
     });
     setSaveState('idle');
   };
