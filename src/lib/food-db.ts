@@ -1,3 +1,5 @@
+import { estimateMealOffline } from './offline-estimate';
+
 // ── Food database lookups ─────────────────────────────────────
 // Local Indian food composition data (ICMR-NIN IFCT 2017 + Anuvaad INDB,
 // bundled at build time — see scripts/build-indian-foods.py) plus live
@@ -193,31 +195,59 @@ function parseQuantity(part: string): { qty: number; grams: number | null; rest:
 
 /**
  * Try to estimate a meal purely from the bundled Indian food database.
- * Handles multi-part descriptions ("2 rotis and dal") — every part must
- * match, otherwise returns null so the AI estimator can take over.
+ * Handles multi-part descriptions ("2 rotis and dal"). Best-effort per
+ * part: a part the database doesn't know (dish names like "rogan josh"
+ * aren't in a composition table) falls back to the offline unit-food
+ * table instead of killing the whole meal — one unknown item used to
+ * make the entire log fail. `verified` is true only when every part
+ * came from the published database; mixed estimates are labelled
+ * offline in the UI. Returns null only when no part can be estimated
+ * at all — then the AI estimator takes over.
  */
-export function estimateFromDb(text: string): { meal: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number }; source: string } | null {
+export function estimateFromDb(text: string): { meal: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number }; source: string; verified: boolean } | null {
   const parts = text.split(PART_SPLIT).map((s) => s.trim()).filter(Boolean);
   if (parts.length === 0 || parts.length > 4) return null;
 
   let kcal = 0, protein = 0, carbs = 0, fat = 0;
   const names: string[] = [];
   let source = '';
+  let verified = true;
+  let matchedAny = false;
 
   for (const part of parts) {
     const { qty, grams, rest } = parseQuantity(part);
     const food = matchFoodInPart(rest);
-    if (!food) return null;
-    const g = grams ?? (food.serving ? food.serving.grams * qty : 150);
-    const f = g / 100;
-    kcal += food.per100g.kcal * f;
-    protein += food.per100g.protein * f;
-    carbs += food.per100g.carbs * f;
-    fat += food.per100g.fat * f;
-    names.push(qty > 1 ? `${qty} ${food.name}` : food.name);
-    source = food.source === 'INDB' ? 'Anuvaad INDB' : 'ICMR-NIN IFCT 2017';
+    if (food) {
+      const g = grams ?? (food.serving ? food.serving.grams * qty : 150);
+      const f = g / 100;
+      kcal += food.per100g.kcal * f;
+      protein += food.per100g.protein * f;
+      carbs += food.per100g.carbs * f;
+      fat += food.per100g.fat * f;
+      names.push(qty > 1 ? `${qty} ${food.name}` : food.name);
+      source = food.source === 'INDB' ? 'Anuvaad INDB' : 'ICMR-NIN IFCT 2017';
+      matchedAny = true;
+      continue;
+    }
+    // Not in the composition database — try the offline unit-food table
+    // (dish names, common servings) before giving up on this part.
+    const off = estimateMealOffline(part);
+    if (off) {
+      kcal += off.calories;
+      protein += off.proteinG;
+      carbs += off.carbsG;
+      fat += off.fatG;
+      names.push(off.name);
+      verified = false;
+      matchedAny = true;
+      continue;
+    }
+    // This part is unknown everywhere — let the AI estimator take over
+    // the whole meal rather than silently undercounting it.
+    return null;
   }
 
+  if (!matchedAny) return null;
   const r1 = (n: number) => Math.round(n * 10) / 10;
   return {
     meal: {
@@ -227,7 +257,8 @@ export function estimateFromDb(text: string): { meal: { name: string; calories: 
       carbsG: r1(carbs),
       fatG: r1(fat),
     },
-    source,
+    source: source || 'Offline estimate',
+    verified,
   };
 }
 

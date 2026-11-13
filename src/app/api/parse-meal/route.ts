@@ -60,12 +60,13 @@ export async function POST(req: Request) {
   }
 
   // 1. Real food-composition data first — instant and most accurate for
-  //    Indian dishes (no AI call needed).
+  //    Indian dishes (no AI call needed). Mixed estimates (part database,
+  //    part offline table) are labelled offline, never "verified".
   const dbHit = estimateFromDb(text);
   if (dbHit) {
     return NextResponse.json({
       meal: dbHit.meal,
-      provider: 'food-db',
+      provider: dbHit.verified ? 'food-db' : 'offline',
       dbSource: dbHit.source,
     });
   }
