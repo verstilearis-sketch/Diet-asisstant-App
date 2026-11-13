@@ -63,7 +63,7 @@ export const FAQS: Faq[] = [
   },
   {
     q: 'How do you handle allergies and dietary restrictions?',
-    a: 'Step 4 of the questionnaire asks for dietary restrictions (vegetarian, vegan, keto, halal, kosher, gluten-free…) and allergies (nuts, dairy, shellfish…). Meals are built around your exclusions, not on top of them.',
+    a: 'Step 4 of the questionnaire asks for your diet preference (vegetarian, vegan, high-protein, low-carb, keto, gluten-free — or type your own, like Jain, halal or pescatarian) and allergies (nuts, dairy, shellfish…). Meals are built around your exclusions, not on top of them.',
   },
   {
     q: 'Will the food match what I actually eat?',

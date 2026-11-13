@@ -1822,16 +1822,28 @@ function filterFoods(foods: FoodItem[], profile: UserProfile, relax?: FilterRela
   const allergies = (profile.allergies || []).map(a => a.toLowerCase());
 
   return foods.filter(f => {
+    const hay = `${f.name} ${f.description}`.toLowerCase();
     if (restrictions.includes('vegan') && !f.tags.includes('vegan')) return false;
     if (restrictions.includes('vegetarian') && !f.tags.includes('vegetarian')) return false;
     // Indian-style vegetarian excludes egg (dishes tagged veg but containing egg slip through otherwise)
-    if (restrictions.includes('vegetarian') && /egg|huevo/.test(`${f.name} ${f.description}`.toLowerCase())) return false;
+    if (restrictions.includes('vegetarian') && /egg|huevo/.test(hay)) return false;
     if (restrictions.includes('keto') || restrictions.includes('low-carb')) {
       const cap = relax?.carbCap === undefined ? 25 : relax.carbCap;
       if (cap !== null && f.carbs > cap) return false;
     }
     if (restrictions.includes('gluten-free') && !f.tags.includes('gluten-free')) return false;
     if (restrictions.includes('high-protein') && !relax?.dropHighProteinTag && !f.tags.includes('high-protein')) return false;
+    // Free-text diets from the "Other" box ("e.g. Jain, pescatarian…"):
+    // anything a user types must be honored, never silently ignored.
+    // Jain: no onion, garlic or root vegetables.
+    if (restrictions.some((r) => r.includes('jain')) && /\bonion\b|garlic|\bpotato\b|\baloo\b|carrot|\bgajar\b|radish|\bmooli\b|beetroot|chukandar|ginger|\badrak\b|\byam\b|turnip|shallot|\bleek\b/.test(hay)) return false;
+    // Halal: pork and alcohol are forbidden outright. Beef, chicken and
+    // mutton stay — they are halal when slaughtered halal, and the dish
+    // name can't tell us the slaughter method; excluding them would wrongly
+    // force halal users onto a vegetarian plan.
+    if (restrictions.some((r) => r.includes('halal')) && /\bpork\b|\bham\b|bacon|\blard\b|alcohol|wine|\bbeer\b|\brum\b|whisk|vodka|brandy/.test(hay)) return false;
+    // Pescatarian: fish and seafood stay; all other meat goes.
+    if (restrictions.some((r) => r.includes('pescatarian') || r.includes('pescetarian')) && /chicken|mutton|\blamb\b|\bbeef\b|\bpork\b|keema|\bduck\b|turkey|venison|\bmeat\b/.test(hay)) return false;
     // NOTE: cooking time is a soft preference applied as a score penalty in
     // pickSmart — never a hard filter. A hard filter starves small regional
     // pools and forces the same 2-3 quick dishes on repeat all week.
@@ -1839,7 +1851,6 @@ function filterFoods(foods: FoodItem[], profile: UserProfile, relax?: FilterRela
       // "nuts" must also catch walnut chutney; "dairy" must catch paneer —
       // match the whole ingredient family, not just the literal word.
       const keywords = ALLERGY_KEYWORDS[allergy] ?? [allergy];
-      const hay = `${f.name} ${f.description}`.toLowerCase();
       if (keywords.some((k) => hay.includes(k))) return false;
     }
     return true;
