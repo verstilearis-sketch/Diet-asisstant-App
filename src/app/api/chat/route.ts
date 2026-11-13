@@ -159,6 +159,23 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
   // is healthy and the others only spend quota when it is slow or down.
   // If the first provider fails fast, the rest start at once instead of
   // waiting out the head start.
+  //
+  // Last resort: keyless Pollinations (non-streaming) before the offline
+  // reply. It starts NOW, in parallel with the keyed race — if the keys
+  // are dead, its generation is already running when the race fails
+  // instead of starting from zero then. If a keyed provider wins, this
+  // promise is simply dropped (keyless, no quota to protect). 300 tokens:
+  // the coach answers in 3–5 sentences, and the shorter budget finishes
+  // a few seconds sooner — a 600-token ask usually times out and lands
+  // on the offline reply instead.
+  const flatPrompt = typedMessages
+    .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
+    .join('\n\n');
+  const pollinationsPromise = tryPollinations(systemPrompt, flatPrompt, { maxTokens: 300, timeoutMs: 45000 });
+  // Mark handled so a dropped promise (keyed provider won) can't surface
+  // as an unhandled rejection; the fallback path below still awaits it.
+  pollinationsPromise.catch(() => {});
+
   const failures: string[] = [];
   try {
     const { provider, stream } = await raceProviders(order, typedMessages, systemPrompt, failures);
@@ -174,17 +191,8 @@ If a question is completely off-topic (coding, politics, etc.), briefly redirect
 
   console.error('Health coach: streaming providers failed —', failures.join('; '));
 
-  // Last resort: keyless Pollinations (non-streaming) before the offline
-  // reply. Flatten the conversation into one prompt — at this point any
-  // real answer beats a canned one. 400 tokens + 45s: when the keyed
-  // providers fail fast (no keys) this is the whole budget, and a short
-  // reply is what actually finishes inside it — a 600-token ask usually
-  // times out and lands on the offline reply instead.
   try {
-    const flatPrompt = typedMessages
-      .map((m) => `${m.role === 'user' ? 'User' : 'Coach'}: ${m.content}`)
-      .join('\n\n');
-    const attempt = await tryPollinations(systemPrompt, flatPrompt, { maxTokens: 400, timeoutMs: 45000 });
+    const attempt = await pollinationsPromise;
     if (attempt.ok) {
       return new Response(attempt.reply, {
         headers: {
